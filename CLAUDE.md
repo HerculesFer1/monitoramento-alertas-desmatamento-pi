@@ -346,10 +346,12 @@ result[k].autp += r.ha_autorizado_parcialmente || 0;
 | Backend / API | Supabase PostgREST (auto-gerado) — substitui FastAPI | **EM ANDAMENTO** |
 | Banco de dados | Supabase PostgreSQL + PostGIS | **EM ANDAMENTO** (`infra/supabase/`) |
 | Upload pipeline | `pipeline/_upload_supabase.py` (psycopg2) | **CRIADO** |
-| Orquestração | Prefect Cloud (substituiu Airflow — mais simples) | PLANEJADO (`infra/prefect/`) |
+| Orquestração | Prefect Cloud — 3 deployments (mensal/anual/dry-run) | **CRIADO** (`infra/prefect/`) |
+| CI/CD | GitHub Actions — 5 workflows (ci, deploy, alertas, asvs, prodes) | **CRIADO** (`.github/workflows/`) |
+| Deploy Frontend | Vercel — auto-deploy em push + preview em PR | **CRIADO** (`deploy-frontend.yml` + `vercel.json`) |
 | Versionamento de dados | DVC | PLANEJADO |
 | Containerização | Docker + Docker Compose | **CRIADO** (`Dockerfile`, `docker-compose.yml`) |
-| Ingestão DERADSA | Manual controlado via Supabase dashboard | PLANEJADO |
+| Ingestão DERADSA | Página Gestão de Dados no frontend (6ª aba) | **CRIADO** (`DadosPage.tsx`) |
 
 ### Fontes com atualização automática planejada
 | Fonte | Método | Frequência |
@@ -393,11 +395,16 @@ result[k].autp += r.ha_autorizado_parcialmente || 0;
 | 12 | Bug concordância PRODES: 63%→70,9% corrigido em `ProdesPage.tsx` (n_concordantes+n_discordantes) | **CONCLUÍDO** (2026-05-21) |
 | 13 | Migration `004_prodes_rpc_fix.sql` criada — corrige n_total na RPC `get_resumo_prodes` | **PENDENTE aplicar no SQL Editor** |
 | 14 | Dados brutos `base de dados/*.geojson` ausentes neste PC — estão no computador MARCO | **PENDENTE copiar** |
-| 15 | Fetchers automáticos: `_baixar_mapbiomas.py` (precisa MAPBIOMAS_TOKEN) + `_baixar_asvs.py` (IBAMA WFS retorna 400/403) | PLANEJADO |
-| 16 | Prefect Cloud: DAG de orquestração com schedules automáticos | PLANEJADO |
-| 17 | DVC — versionamento de dados | PLANEJADO |
-| 18 | Slide Biomas (Cerrado × Caatinga) — tab futura no frontend | PLANEJADO |
-| 19 | Integração CAR / Unidades de Conservação / TIs como camadas | PLANEJADO |
+| 15 | Phase 5: TypeScript cleanup — v:any→v:unknown, calcAutTotal(), n_sem_prodes, hooks cast fix | **CONCLUÍDO** (2026-05-22) |
+| 16 | Phase 4: Aba "Gestão de Dados" — status pipeline, DERADSAs, fontes, guia 8 passos | **CONCLUÍDO** (2026-05-22) |
+| 17 | Git repo inicializado — commit inicial (106 arquivos) | **CONCLUÍDO** (2026-05-22) |
+| 18 | CI/CD: 5 GitHub Actions (ci, deploy-frontend, alertas, asvs, prodes) + vercel.json | **CONCLUÍDO** (2026-05-22) |
+| 19 | Prefect Cloud: pipeline_flow.py ampliado + prefect.yaml (3 deployments: mensal, PRODES anual, dry-run) | **CONCLUÍDO** (2026-05-22) |
+| 20 | Para publicar: criar repo GitHub → `git remote add origin <url>` → `git push -u origin master` → configurar 5 secrets | **PENDENTE** |
+| 21 | Para CI/CD ativo: configurar secrets GitHub (VERCEL_TOKEN, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY, MAPBIOMAS_TOKEN) | **PENDENTE** |
+| 22 | DVC — versionamento de dados | PLANEJADO |
+| 23 | Slide Biomas (Cerrado × Caatinga) — tab futura no frontend | PLANEJADO |
+| 24 | Integração CAR / Unidades de Conservação / TIs como camadas | PLANEJADO |
 
 ---
 
@@ -581,4 +588,4 @@ Gerados de `Resultado/alertas_classificados.geojson` em 2026-05-21. Regenerar vi
 
 ---
 
-*Última atualização: 2026-05-21 | Pipeline v2 | 9/9 testes OK | 5 abas AO VIVO | PRODES 70,9% ✓ | monthly_alertas.json gerado | dados brutos em MARCO*
+*Última atualização: 2026-05-22 | Pipeline v2 | 9/9 testes OK | 6 abas AO VIVO | PRODES 70,9% ✓ | Git inicializado (2 commits) | CI/CD 5 workflows | Prefect 3 deployments | dados brutos em MARCO*
