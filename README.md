@@ -1,201 +1,247 @@
-# Monitoramento de Alertas de Desmatamento — Piauí (2022–2025)
+# Dashboard de Monitoramento de Alertas de Desmatamento — Piauí
 
-> **Plataforma de inteligência geoespacial** para análise e classificação de alertas de desmatamento no estado do Piauí, desenvolvida pela Gerência do Centro de Geotecnologia Fundiária e Ambiental (GCGEO) — SEMARH-PI.
+**Órgão:** GCGEO — Gerência do Centro de Geotecnologia Fundiária e Ambiental / SEMARH-PI  
+**Período:** 2022–2025 | **Pipeline:** v2 | **Status:** em produção
 
-[![Dashboard](https://img.shields.io/badge/Dashboard-Protótipo_HTML-2d6a4f?style=for-the-badge&logo=html5)]()
-[![Pipeline](https://img.shields.io/badge/Pipeline-v2-52b788?style=for-the-badge&logo=python)]()
-[![Licença](https://img.shields.io/badge/Uso-Interno_SEMARH--PI-orange?style=for-the-badge)]()
+[![CI](https://github.com/HerculesFer1/monitoramento-alertas-desmatamento-pi/actions/workflows/ci.yml/badge.svg)](https://github.com/HerculesFer1/monitoramento-alertas-desmatamento-pi/actions/workflows/ci.yml)
+[![Deploy Frontend](https://github.com/HerculesFer1/monitoramento-alertas-desmatamento-pi/actions/workflows/deploy-frontend.yml/badge.svg)](https://github.com/HerculesFer1/monitoramento-alertas-desmatamento-pi/actions/workflows/deploy-frontend.yml)
 
 ---
 
 ## Visão Geral
 
-Este projeto implementa um **pipeline de análise geoespacial em cascata** para classificar alertas de desmatamento identificados pelo MapBiomas no Piauí, cruzando-os com os instrumentos de regularização ambiental emitidos:
+Sistema de monitoramento que cruza alertas de desmatamento do **MapBiomas** com instrumentos de autorização e regularização ambiental (ASVs SINAFLOR+ e DERADSAs SEMARH-PI), gerando classificação espacial em 4 classes para o estado do Piauí.
 
-- **ASVs** — Autorizações de Supressão de Vegetação (SINAFLOR+/IBAMA)
-- **DERADSAs** — Declarações de Regularidade de Desmatamento (SEMARH-PI)
-
-O resultado alimenta um **dashboard interativo** que permite avaliar a situação legal de cada alerta, identificar irregularidades e subsidiar decisões de fiscalização e política ambiental.
+Inclui validação cruzada com o **PRODES-Cerrado/INPE** e recorte especial para os 26 municípios piauienses do **MATOPIBA** (Decreto Federal nº 8.447/2015).
 
 ---
 
-## Metodologia — Classificação em 4 Classes
+## Resultados (Pipeline v2 — última execução)
 
-O pipeline classifica cada alerta de desmatamento em quatro categorias, aplicadas em cascata com precedência ASV > DERADSA:
+| Ano | Alertas | Área Total | Irregular | IPI (%) |
+|-----|---------|-----------|-----------|---------|
+| 2022 | 3.062 | 150.350 ha | 123.394 ha | 82,1% |
+| 2023 | 4.527 | 138.035 ha | 97.997 ha | 71,0% |
+| 2024 | 3.034 | 145.146 ha | 75.228 ha | 51,8% |
+| 2025 | 2.676 | 152.527 ha | 42.376 ha | 27,8% |
 
-| Classificação | Cor | Condição |
-|---|---|---|
-| **AUTORIZADO** | Verde `#10B981` | Coberto por ASV válida (cobertura ≥ 99% da área do alerta) |
-| **AUTORIZADO_PARCIALMENTE** | Verde claro | Parcialmente coberto por ASV válida (0% < cobertura < 99%) |
-| **REGULARIZADO** | Laranja `#F97316` | Área residual coberta por DERADSA (disponível apenas 2024–2025) |
-| **IRREGULAR** | Vermelho `#EF4444` | Sem cobertura por ASV nem DERADSA válidas |
+> **IPI** = Índice de Pressão Irregular = ha_irregular / ha_total × 100
 
-### Regra de validação temporal das ASVs
-
-A ASV é válida para um alerta **somente se**:
-
-```
-data_inicio_validade  ≤  data_detecção_alerta  ≤  data_fim_validade
-```
-
-### Precedência instrumental
-
-```
-Passo 1 → Interseção com ASVs válidas   → AUTORIZADO ou AUTORIZADO_PARCIALMENTE
-Passo 2 → DERADSA aplicada no residual  → REGULARIZADO
-Passo 3 → Área restante                 → IRREGULAR
-```
-
-> A análise usa **interseção geométrica real** (não critério de maioria de área).
-> Fragmentos menores que 1 m² são descartados como artefatos geométricos.
-
-### Duas séries temporais
-
-- **Série A** (2022–2025, sem DERADSA): comparabilidade histórica garantida
-- **Série B** (2024–2025, com DERADSA): quantifica impacto da regularização estadual
+**Validação PRODES (Cerrado):** 70,9% de concordância (5.918 alertas validados, ciclos 2022–2025)
 
 ---
 
-## Resultados (Pipeline v2)
+## Arquitetura
 
-| Ano | Alertas | Área Total (ha) | Irregular (ha) | IPI (%) |
-|-----|---------|-----------------|----------------|---------|
-| 2022 | 3.062 | 150.350 | 123.394 | 82,1% |
-| 2023 | 4.527 | 138.035 | 97.997 | 71,0% |
-| 2024 | 3.034 | 145.146 | 75.228 | 51,8% |
-| 2025 | 2.676 | 152.527 | 42.376 | 27,8% |
+```
+┌─────────────────────────────────────────────────────────┐
+│  Python pipeline (conda env "geo")                      │
+│  GeoPandas · Shapely · Fiona · psycopg2                 │
+│  11 etapas · 9 testes automáticos                       │
+└───────────────────┬─────────────────────────────────────┘
+                    │ upsert via psycopg2
+┌───────────────────▼─────────────────────────────────────┐
+│  Supabase PostgreSQL + PostGIS                          │
+│  5 tabelas · 8 RPCs · Row Level Security                │
+└───────────────────┬─────────────────────────────────────┘
+                    │ PostgREST + anon key
+┌───────────────────▼─────────────────────────────────────┐
+│  React 18 + TypeScript + Vite                           │
+│  MapLibre GL JS · Recharts · Tailwind CSS · Zustand     │
+│  6 abas: Executiva · Municipal · Temporal ·             │
+│          PRODES · MATOPIBA · Gestão de Dados            │
+│  Deploy: Vercel (automático via GitHub Actions)         │
+└─────────────────────────────────────────────────────────┘
+```
 
-> IPI = Índice de Pressão Irregular = ha_irregular / ha_total × 100
+**Orquestração:** Prefect Cloud v3 — 3 deployments (mensal / anual PRODES / dry-run)
 
 ---
 
-## Estrutura do Projeto
+## Pré-requisitos
+
+### Ambiente Python
 
 ```
-9.1 Monitoramento de Alertas de Desmatamento/
+Gerenciador: Miniconda
+Ambiente:    geo
+Python:      3.12.7
+```
+
+Instalar dependências:
+```powershell
+conda env create -f environment.yml
+conda activate geo
+```
+
+Pacotes principais: `geopandas 1.1.1`, `shapely 2.0.7`, `fiona 1.10.1`, `pandas 2.3.3`, `numpy 2.3.4`, `requests 2.32.5`, `supabase 2.30.0`
+
+### Variáveis de ambiente
+
+Copiar `.env.example` para `.env` e preencher:
+
+```
+SUPABASE_URL=https://...supabase.co
+SUPABASE_SERVICE_KEY=sb_secret_...   # NUNCA commitar; nunca usar no frontend
+SUPABASE_ANON_KEY=eyJ...
+MAPBIOMAS_TOKEN=...
+```
+
+> **Segurança**: O `.env` está no `.gitignore`. A `SUPABASE_SERVICE_KEY` jamais deve aparecer no frontend ou ser commitada.
+
+---
+
+## Executar o Pipeline
+
+```powershell
+# Opcao 1 — duplo clique
+rodar_pipeline.ps1
+
+# Opcao 2 — linha de comando
+conda activate geo
+$env:PYTHONUTF8 = "1"
+python -m pipeline
+```
+
+O pipeline executa 11 etapas e 9 testes automáticos (T1–T9). Todos devem passar antes de uso institucional.
+
+---
+
+## Estrutura do Repositório
+
+```
+├── pipeline/               # Módulo Python — 11 etapas, 9 testes
+│   ├── __main__.py         # Ponto de entrada: python -m pipeline
+│   ├── readers.py          # Leitura dos GeoJSONs brutos
+│   ├── parsers.py          # Parse de campos (datas, status, flags)
+│   ├── classify.py         # Núcleo metodológico — fragmentação em 4 classes
+│   ├── spatial.py          # Operações espaciais (reprojeção, interseção)
+│   ├── aggregate.py        # Agregado por município × ano
+│   ├── indicators.py       # Reincidência, defasagem, MATOPIBA
+│   ├── quality.py          # Testes T1–T9
+│   ├── validation.py       # Validação cruzada PRODES
+│   ├── constants.py        # Constantes metodológicas
+│   ├── constants.json      # Export JSON para CI (sincronizado com constants.py)
+│   └── _upload_supabase.py # Upload para Supabase via psycopg2
 │
-├── base de dados/                    ← dados brutos — NÃO modificar
-│   ├── Alertas de Desmatamento(MAPBIOMAS).geojson
-│   ├── ASVs Emitidas-PI(SINAFLOR+).geojson
-│   ├── DERADSAs Emitidas[SEMARH-2024].geojson
-│   └── DERADSAs Emitidas[SEMARH-2025].geojson
+├── frontend/               # React 18 + TypeScript — dashboard web
+│   ├── src/pages/          # ExecutivaPage, MunicipalPage, TemporalPage,
+│   │                       # ProdesPage, MatopibaPage, DadosPage
+│   ├── src/lib/            # supabase.ts, queries.ts, hooks.ts, constants.ts
+│   ├── src/components/     # MapView, FilterPanel, ErrorBoundary, StatusBadge
+│   └── public/data/        # monthly_alertas.json, resumo_estatico.json (fallback)
 │
-├── Resultado/                        ← gerado pelo pipeline
-│   ├── alertas_classificados.geojson ← fragmentos com classificação jurídica
-│   ├── agregado_municipios.json      ← indicadores por município/ano
-│   ├── municipios_pi.geojson         ← geometrias dos municípios do PI (IBGE)
-│   ├── pipeline.log                  ← log de auditoria da execução
-│   └── index.html                   ← dashboard interativo (protótipo)
+├── infra/
+│   ├── supabase/migrations/ # 001–004 SQL migrations
+│   └── prefect/            # pipeline_flow.py + prefect.yaml (3 deployments)
 │
-├── preprocess.py                     ← pipeline de geoprocessamento v2
-├── rodar_pipeline.ps1                ← execução com duplo clique (Windows)
-├── _gerar_documentacao.py            ← gerador da documentação técnica .docx
-└── CLAUDE.md                         ← decisões técnicas do projeto
+├── tests/                  # pytest — testes unitários Python
+├── base de dados/          # Dados brutos (GeoJSONs não versionados — ver .gitignore)
+├── Resultado/              # Outputs do pipeline (GeoJSONs, JSONs, logs)
+│
+├── _baixar_prodes.py       # Download PRODES via WFS TerraBrasilis
+├── _gerar_documentacao.py  # Gera Documentacao_Tecnica_Desmatamento_PI.docx
+├── _gerar_nota_tecnica.py  # Gera NT-GCGEO-001/2026.docx
+├── rodar_pipeline.ps1      # Execução com um clique (Windows)
+├── rodar_download_prodes.ps1
+├── Dockerfile              # Container para execução isolada
+├── docker-compose.yml
+└── environment.yml         # Dependências conda
 ```
 
 ---
 
-## Como Executar o Pipeline
+## Classificação em 4 Classes
 
-### Pré-requisitos
+| Classe | Condição | Cor |
+|--------|----------|-----|
+| `AUTORIZADO` | Cobertura ASV >= 99% da área do alerta | Verde `#10B981` |
+| `AUTORIZADO_PARCIALMENTE` | Cobertura ASV entre 0% e 99% | Verde c/ opacidade |
+| `REGULARIZADO` | Área residual coberta por DERADSA (2024–2025) | Laranja `#F97316` |
+| `IRREGULAR` | Sem instrumento válido | Vermelho `#EF4444` |
 
-O pipeline requer o ambiente conda `desmatamento` (Miniconda):
+**Precedência:** ASV → DERADSA → IRREGULAR (nunca invertida)  
+**Limiar:** `THRESHOLD_AUTORIZADO = 0.99` (99%)  
+**CRS de cálculo:** EPSG:5880 (SIRGAS 2000 / Brasil Policônico — equivalente)  
+**CRS de exportação:** EPSG:4326 (WGS 84 geográfico — GeoJSON padrão)
+
+---
+
+## Frontend — Executar Localmente
 
 ```bash
-# Criar o ambiente (primeira vez)
-conda create -n desmatamento python=3.11
-conda activate desmatamento
-conda install -c conda-forge geopandas=1.1.3 shapely=2.1.2 fiona=1.10.1 pandas requests numpy
+cd frontend
+npm install
+npm run dev        # http://localhost:5173
+
+# Build de produção
+npm run build
 ```
 
-### Execução
-
-**Windows — recomendado:** duplo clique em `rodar_pipeline.ps1`
-
-**Linha de comando:**
-```bash
-conda activate desmatamento
-python preprocess.py
+Variáveis de ambiente para o frontend (`frontend/.env`):
+```
+VITE_SUPABASE_URL=https://...supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...   # Apenas a chave pública (anon)
 ```
 
-O pipeline lê os dados de `base de dados/` e gera os arquivos em `Resultado/`.
-Tempo médio: ~1,5 minutos. Ao final, 8 testes automáticos de qualidade são executados.
+---
 
-### Visualização do dashboard
+## CI/CD
 
-Abra `Resultado/index.html` no navegador — não requer servidor web.
+| Workflow | Trigger | O que faz |
+|----------|---------|-----------|
+| `ci.yml` | Push/PR → main | TypeScript build · ruff lint · pytest · SQL check · constants sync |
+| `deploy-frontend.yml` | Push/PR → main (frontend/) | Build Vite → Deploy Vercel |
+| `update-alertas.yml` | Mensal (cron) | Download MapBiomas → atualiza Supabase |
+| `update-asvs.yml` | Semanal (cron) | Download ASVs SINAFLOR+ → atualiza Supabase |
+| `update-prodes.yml` | Anual — outubro (cron) | Download PRODES WFS → re-executa pipeline |
+
+**Secrets necessários (GitHub → Settings → Secrets → Actions):**
+`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `MAPBIOMAS_TOKEN`
 
 ---
 
-## Fontes de Dados
+## Dados Brutos
 
-| Dataset | Fonte | Período |
-|---|---|---|
-| Alertas de Desmatamento | MapBiomas Alerta | 2022–2025 (filtro) |
-| ASVs Emitidas | SINAFLOR+ / IBAMA | Sem corte temporal fixo |
-| DERADSAs | SEMARH-PI / GCGEO | 2024–2025 (disponível como dado geoespacial) |
-| Malha Municipal | IBGE (API automática) | Referência 2024 |
+Os GeoJSONs de entrada **não são versionados** (ultrapassa limite do GitHub). Devem estar em `base de dados/`:
 
-> DERADSAs para 2022–2023 não estavam disponíveis como dado geoespacial no período de desenvolvimento.
-> A ausência não significa inexistência dos instrumentos — é uma limitação de disponibilidade do dado.
+```
+Alertas de Desmatamento(MAPBIOMAS).geojson    # MapBiomas Alerta API
+ASVs Emitidas-PI(SINAFLOR+).geojson          # SINAFLOR/IBAMA
+DERADSAs Emitidas[SEMARH-2024].geojson       # GCGEO/SEMARH-PI
+DERADSAs Emitidas[SEMARH-2025].geojson       # GCGEO/SEMARH-PI
+PRODES_Cerrado_PI.geojson                    # TerraBrasilis WFS (opcional)
+```
 
----
-
-## Tecnologias
-
-| Camada | Tecnologia |
-|---|---|
-| Pipeline de dados | Python 3.11 · GeoPandas 1.1.3 · Shapely 2.1.2 · Fiona 1.10.1 |
-| Projeção de cálculo | EPSG:5880 (SIRGAS 2000 / Brasil Policônico) |
-| Projeção de saída | EPSG:4326 (WGS84) |
-| Dashboard (protótipo) | HTML5 · CSS3 · Vanilla JavaScript |
-| Mapas | Leaflet.js 1.9.4 |
-| Gráficos | Chart.js 4.x |
-
-### Arquitetura de produção planejada
-
-React + TypeScript + MapLibre GL JS · FastAPI · PostgreSQL/PostGIS · Apache Airflow · DVC · Docker
+Download do PRODES:
+```powershell
+rodar_download_prodes.ps1
+```
 
 ---
 
-## Qualidade — Testes Automáticos
+## Banco de Dados (Supabase)
 
-O pipeline executa 8 testes a cada execução:
+Projeto: `ubcejvbnpuyouwpphryc`
 
-| Teste | Verifica |
-|-------|----------|
-| T1 | id_fragmento sem duplicatas |
-| T2 | classificacao preenchida em todos os fragmentos |
-| T3 | pct_cobertura em [0%, 100%] |
-| T4 | AUTORIZADO_PARCIALMENTE com cobertura ≤ 99% |
-| T5 | AUTORIZADO com cobertura ≥ 99% |
-| T6 | Todos os anos 2022–2025 presentes |
-| T7 | Volume mínimo por ano |
-| T8 | REGULARIZADO restrito a 2024–2025 |
-
-**Última execução**: 8/8 testes passados ✓
+Aplicar migrations (ordem obrigatória):
+```sql
+-- Supabase SQL Editor
+001_schema_inicial.sql
+002_matopiba_view.sql
+003_deradsa_management.sql
+004_prodes_rpc_fix.sql   -- corrige n_total na RPC get_resumo_prodes
+```
 
 ---
 
-## MATOPIBA
+## Responsabilidade Metodológica
 
-O recorte do MATOPIBA (Decreto Federal nº 8.447/2015) abrange **26 municípios** do sudoeste piauiense e é monitorado separadamente por sua relevância jurídica e alta incidência de desmatamento na fronteira agrícola.
-
----
-
-## Equipe
-
-| Função | Responsável |
-|---|---|
-| Desenvolvimento & Análise Geoespacial | GCGEO — Gerência do Centro de Geotecnologia Fundiária e Ambiental |
-| Órgão | SEMARH-PI — Secretaria de Meio Ambiente e Recursos Hídricos do Piauí |
+- O pipeline valida **seu próprio processamento** (T1–T9)
+- Qualidade dos dados de entrada é responsabilidade das instituições produtoras
+- Incerteza posicional MapBiomas (~±15 m) é limitação de fonte
+- **"Estimativa exploratória" != "dado para autuação"** — separação institucional obrigatória
 
 ---
 
-## Licença
-
-Uso interno — SEMARH-PI. Dados e metodologia sujeitos às políticas de dados abertos do Governo do Estado do Piauí.
-
----
-
-*Última atualização: Maio de 2026 · Pipeline v2 · 8/8 testes OK*
+*GCGEO / SEMARH-PI — Pipeline v2 — 2026*

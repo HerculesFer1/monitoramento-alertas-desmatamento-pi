@@ -66,28 +66,44 @@ python -m pipeline
 ## 3. ESTRUTURA DE ARQUIVOS
 
 ```
-9.1 Monitoramento de Alertas de Desmatamento/
+3. Monitoramento de Alerta de Desmatamento/
+│
+├── pipeline/                                ← módulo Python (python -m pipeline)
+│   ├── __main__.py, readers.py, parsers.py
+│   ├── classify.py, spatial.py, aggregate.py
+│   ├── indicators.py, quality.py, validation.py
+│   ├── constants.py + constants.json
+│   └── _upload_supabase.py
+│
+├── frontend/                                ← React 18 + TypeScript (Vite)
+│   ├── src/{pages,components,lib,store}
+│   └── public/data/                         ← fallback estático
+│
+├── infra/
+│   ├── supabase/migrations/                 ← 001–004 SQL migrations
+│   └── prefect/                             ← pipeline_flow.py + prefect.yaml
+│
+├── tests/                                   ← pytest unitários
 │
 ├── base de dados/                           ← dados brutos — NÃO modificar
-│   ├── Alertas de Desmatamento(MAPBIOMAS).geojson
-│   ├── ASVs Emitidas-PI(SINAFLOR+).geojson
-│   ├── DERADSAs Emitidas[SEMARH-2024].geojson
-│   └── DERADSAs Emitidas[SEMARH-2025].geojson
+│   ├── Alertas de Desmatamento(MAPBIOMAS).geojson  ← não versionado
+│   ├── ASVs Emitidas-PI(SINAFLOR+).geojson         ← não versionado
+│   ├── DERADSAs Emitidas[SEMARH-2024].geojson      ← não versionado
+│   └── DERADSAs Emitidas[SEMARH-2025].geojson      ← não versionado
 │
 ├── Resultado/                               ← gerado pelo pipeline
-│   ├── alertas_classificados.geojson        ← saída principal (fragmentos)
-│   ├── agregado_municipios.json             ← alimenta o dashboard
-│   ├── municipios_pi.geojson                ← download automático IBGE
-│   ├── pipeline.log                         ← auditoria da execução
-│   ├── index.html                           ← dashboard (protótipo HTML)
-│   └── Documentacao_Tecnica_Desmatamento_PI.docx
+│   ├── alertas_classificados.geojson        ← saída principal (não versionado)
+│   ├── agregado_municipios.json
+│   ├── municipios_pi.geojson                ← não versionado
+│   ├── monthly_alertas.json, resumo_estatico.json
+│   └── pipeline.log                         ← auditoria
 │
-├── preprocess.py                            ← pipeline principal v2
 ├── rodar_pipeline.ps1                       ← execução com um clique (Windows)
-├── _gerar_documentacao.py                   ← gerador do .docx técnico
+├── _baixar_prodes.py + rodar_download_prodes.ps1
+├── _gerar_documentacao.py + _gerar_nota_tecnica.py
+├── Dockerfile + docker-compose.yml + environment.yml
 ├── CLAUDE.md                                ← este arquivo
-├── README.md                                ← documentação pública
-└── PROJETO_DASHBOARD_DESMATAMENTO_PI.md     ← especificação técnica completa
+└── README.md                                ← documentação pública
 ```
 
 ---
@@ -286,46 +302,35 @@ Uruçuí, Santa Filomena, Sebastião Leal, Baixa Grande do Ribeiro, Palmeira do 
 
 ## 10. DASHBOARD — DECISÕES DE INTERFACE
 
-### Tecnologias atuais (protótipo)
-- Leaflet.js 1.9.4 — mapa
-- Chart.js 4.x — gráficos
-- HTML/CSS/JS puro — sem frameworks
-- Localização: `Resultado/index.html`
+### Tecnologias (React 18 + TypeScript)
+- **Mapa**: MapLibre GL JS + react-map-gl
+- **Gráficos**: Recharts
+- **Estilo**: Tailwind CSS
+- **Estado**: Zustand (filtros globais, aba ativa)
+- **Dados**: TanStack Query → Supabase PostgREST
 
-### Estrutura de navegação (4 abas)
-1. Visão Executiva
-2. Panorama Municipal
-3. Evolução Temporal
-4. Validação PRODES — **IMPLEMENTADO** (aguarda arquivo PRODES)
+### Estrutura de navegação (6 abas)
+1. Visão Executiva — `ExecutivaPage.tsx`
+2. Panorama Municipal — `MunicipalPage.tsx`
+3. Evolução Temporal — `TemporalPage.tsx`
+4. Validação PRODES — `ProdesPage.tsx`
+5. MATOPIBA — `MatopibaPage.tsx`
+6. Gestão de Dados — `DadosPage.tsx`
 
-### Dados JavaScript atualizados (valores do pipeline v2)
-```javascript
-const alertYr = {
-  2022:{count:3062, area:150350, cerrado:136168, caatinga:14182},
-  2023:{count:4527, area:138035, cerrado:115473, caatinga:22563},
-  2024:{count:3034, area:145146, cerrado:109146, caatinga:36001},
-  2025:{count:2676, area:152527, cerrado:112089, caatinga:40438}
-};
-const ipiYr = {2022:82.1, 2023:71.0, 2024:51.8, 2025:27.8};
-const classifYr = {
-  2022:{irregular:123394, autorizado:26956,  autorizado_p:8304,  regularizado:0},
-  2023:{irregular:97997,  autorizado:40039,  autorizado_p:32374, regularizado:0},
-  2024:{irregular:75228,  autorizado:69669,  autorizado_p:29988, regularizado:250},
-  2025:{irregular:42376,  autorizado:110065, autorizado_p:21898, regularizado:86}
-};
-const matopibaYr = {
-  2022:{mat:80259, rest:43135},
-  2023:{mat:54669, rest:43328},
-  2024:{mat:30338, rest:44890},
-  2025:{mat:14294, rest:28082}
-};
+### Estratégia de fallback (3 níveis)
+```typescript
+// 1. Supabase live (TanStack Query)
+// 2. /public/data/resumo_estatico.json (fallback estático)
+// 3. constants.ts — constantes hardcoded (última linha de defesa)
 ```
 
 ### Campo `ha_autorizado_total` no dashboard
-```javascript
-// getMunDataFiltered() usa ha_autorizado_total para somar aut + aut_parcialmente
-result[k].aut += r.ha_autorizado_total || r.ha_autorizado || 0;
-result[k].autp += r.ha_autorizado_parcialmente || 0;
+```typescript
+// calcAutTotal() em lib/constants.ts:
+export function calcAutTotal(e: { autorizado: number; autorizado_p: number }): number {
+  return e.autorizado + e.autorizado_p
+}
+// Usado em ExecutivaPage e TemporalPage para getAut() com 3-level fallback
 ```
 
 ### Sistema de cores
@@ -342,38 +347,25 @@ result[k].autp += r.ha_autorizado_parcialmente || 0;
 
 | Camada | Tecnologia | Status |
 |--------|------------|--------|
-| Frontend | React 18 + TypeScript + react-map-gl + MapLibre GL JS + Recharts + Tailwind CSS | **EM ANDAMENTO** (`frontend/`) |
-| Backend / API | Supabase PostgREST (auto-gerado) — substitui FastAPI | **EM ANDAMENTO** |
-| Banco de dados | Supabase PostgreSQL + PostGIS | **EM ANDAMENTO** (`infra/supabase/`) |
-| Upload pipeline | `pipeline/_upload_supabase.py` (psycopg2) | **CRIADO** |
-| Orquestração | Prefect Cloud — 3 deployments (mensal/anual/dry-run) | **CRIADO** (`infra/prefect/`) |
+| Frontend | React 18 + TypeScript + MapLibre GL JS + Recharts + Tailwind CSS + Zustand | **PRODUÇÃO** (`frontend/`) |
+| Backend / API | Supabase PostgREST (auto-gerado) | **PRODUÇÃO** |
+| Banco de dados | Supabase PostgreSQL + PostGIS | **PRODUÇÃO** (`infra/supabase/`) |
+| Upload pipeline | `pipeline/_upload_supabase.py` (psycopg2) | **PRODUÇÃO** |
+| Orquestração | Prefect Cloud v3 — 3 deployments (mensal/anual/dry-run) | **CRIADO** (`infra/prefect/`) |
 | CI/CD | GitHub Actions — 5 workflows (ci, deploy, alertas, asvs, prodes) | **CRIADO** (`.github/workflows/`) |
 | Deploy Frontend | Vercel — auto-deploy em push + preview em PR | **CRIADO** (`deploy-frontend.yml` + `vercel.json`) |
 | Versionamento de dados | DVC | PLANEJADO |
 | Containerização | Docker + Docker Compose | **CRIADO** (`Dockerfile`, `docker-compose.yml`) |
-| Ingestão DERADSA | Página Gestão de Dados no frontend (6ª aba) | **CRIADO** (`DadosPage.tsx`) |
+| Ingestão DERADSA | Página Gestão de Dados no frontend (6ª aba) | **PRODUÇÃO** (`DadosPage.tsx`) |
 
-### Fontes com atualização automática planejada
+### Fontes com atualização automática
 | Fonte | Método | Frequência |
 |-------|--------|-----------|
 | MapBiomas Alerta | GraphQL API v2 (`plataforma.alerta.mapbiomas.org/api/v2/graphql`) | Mensal |
 | ASVs SINAFLOR+ | WFS ArcGIS IBAMA + CKAN API | Semanal |
-| PRODES-Cerrado | WFS TerraBrasilis (já implementado) | Anual (outubro) |
+| PRODES-Cerrado | WFS TerraBrasilis (implementado) | Anual (outubro) |
 | DERADSA | Ingestão manual GCGEO | Sob demanda |
-| IBGE malha | API pública (já implementado) | Sob demanda |
-
-### Estrutura de repositório atual
-```
-├── pipeline/           ← scripts Python
-│   └── _upload_supabase.py
-├── frontend/           ← React + TypeScript (build OK, aguarda Supabase)
-│   └── src/{components,pages,lib,store}
-├── infra/
-│   ├── supabase/migrations/001_schema_inicial.sql
-│   └── prefect/pipeline_flow.py (PLANEJADO)
-├── Dockerfile + docker-compose.yml + environment.yml
-└── .env.example (template credenciais)
-```
+| IBGE malha | API pública (implementado) | Sob demanda |
 
 ---
 
@@ -400,11 +392,14 @@ result[k].autp += r.ha_autorizado_parcialmente || 0;
 | 17 | Git repo inicializado — commit inicial (106 arquivos) | **CONCLUÍDO** (2026-05-22) |
 | 18 | CI/CD: 5 GitHub Actions (ci, deploy-frontend, alertas, asvs, prodes) + vercel.json | **CONCLUÍDO** (2026-05-22) |
 | 19 | Prefect Cloud: pipeline_flow.py ampliado + prefect.yaml (3 deployments: mensal, PRODES anual, dry-run) | **CONCLUÍDO** (2026-05-22) |
-| 20 | Para publicar: criar repo GitHub → `git remote add origin <url>` → `git push -u origin master` → configurar 5 secrets | **PENDENTE** |
-| 21 | Para CI/CD ativo: configurar secrets GitHub (VERCEL_TOKEN, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY, MAPBIOMAS_TOKEN) | **PENDENTE** |
-| 22 | DVC — versionamento de dados | PLANEJADO |
-| 23 | Slide Biomas (Cerrado × Caatinga) — tab futura no frontend | PLANEJADO |
-| 24 | Integração CAR / Unidades de Conservação / TIs como camadas | PLANEJADO |
+| 20 | Varredura repositório: remover arquivos obsoletos + reescrever READMEs + atualizar CLAUDE.md | **CONCLUÍDO** (2026-05-22) |
+| 21 | Git push para GitHub (`HerculesFer1/monitoramento-alertas-desmatamento-pi`) | **CONCLUÍDO** (2026-05-22) |
+| 22 | Configurar secrets GitHub (VERCEL_TOKEN, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY, MAPBIOMAS_TOKEN) | **PENDENTE** |
+| 23 | Aplicar Migration 004 no Supabase SQL Editor (`004_prodes_rpc_fix.sql`) | **PENDENTE** |
+| 24 | Copiar dados brutos `base de dados/*.geojson` do computador MARCO | **PENDENTE** |
+| 25 | DVC — versionamento de dados | PLANEJADO |
+| 26 | Slide Biomas (Cerrado × Caatinga) — tab futura no frontend | PLANEJADO |
+| 27 | Integração CAR / Unidades de Conservação / TIs como camadas | PLANEJADO |
 
 ---
 
@@ -420,7 +415,7 @@ result[k].autp += r.ha_autorizado_parcialmente || 0;
 
 ### O que SEMPRE fazer
 - Usar `PYTHONUTF8=1` ao executar qualquer script Python no Windows
-- Confirmar que todos os 8 testes T1–T8 passam antes de qualquer uso institucional
+- Confirmar que todos os 9 testes T1–T9 passam antes de qualquer uso institucional
 - Registrar qualquer alteração metodológica no `pipeline.log`
 - Manter `serie_b = True` apenas para 2024–2025 no agregado
 - Tratar alertas sem DATADETEC como IRREGULAR diretamente
@@ -588,4 +583,4 @@ Gerados de `Resultado/alertas_classificados.geojson` em 2026-05-21. Regenerar vi
 
 ---
 
-*Última atualização: 2026-05-22 | Pipeline v2 | 9/9 testes OK | 6 abas AO VIVO | PRODES 70,9% ✓ | Git inicializado (2 commits) | CI/CD 5 workflows | Prefect 3 deployments | dados brutos em MARCO*
+*Última atualização: 2026-05-22 | Pipeline v2 | 9/9 testes OK | 6 abas AO VIVO | PRODES 70,9% ✓ | CI/CD 5 workflows | Prefect 3 deployments | repo GitHub publicado | docs atualizados | dados brutos em MARCO*
