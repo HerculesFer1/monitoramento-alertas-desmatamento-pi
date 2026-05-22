@@ -8,7 +8,6 @@ Todas as funções são puras: recebem GDF, retornam GDF enriquecido.
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 import geopandas as gpd
 import pandas as pd

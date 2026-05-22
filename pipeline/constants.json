@@ -1,6 +1,14 @@
 {
-  "anos": [2022, 2023, 2024, 2025],
-  "anos_deradsa": [2024, 2025],
+  "anos": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "anos_deradsa": [
+    2024,
+    2025
+  ],
   "matopiba_pi": [
     "Alvorada do Gurguéia",
     "Avelino Lopes",
@@ -25,8 +33,8 @@
     "Redenção do Gurguéia",
     "Santa Filomena",
     "Santa Luz",
-    "São Gonçalo do Gurguéia",
     "Sebastião Barros",
+    "São Gonçalo do Gurguéia",
     "Uruçuí"
   ],
   "vp_ptbr": {
@@ -53,6 +61,7 @@
     "IRREGULAR": "IRR"
   },
   "threshold_autorizado": 0.99,
+  "concordancia_prodes_min_pct": 0.0,
   "flags_prodes": {
     "concordante": "CONCORDANTE",
     "discordante": "DISCORDANTE",

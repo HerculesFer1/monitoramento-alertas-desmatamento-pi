@@ -68,16 +68,16 @@ except ImportError as exc:
     log.error("Dependência faltando: %s", exc)
     sys.exit(1)
 
-from .aggregate   import aggregate_municipal, aggregate_monthly, aggregate_resumo_estatico, download_municipios_ibge
-from .classify    import AlertClassifier
-from .constants   import ANOS, ANOS_DERADSA, CRS_CALC, CRS_OUT, M2_HA, export_json
-from .indicators  import apply_indicators
-from .parsers     import build_asv_base, parse_alertas, parse_asvs, parse_deradsa
-from .quality     import run_all_tests
-from .readers     import LocalGeoJSONReader
-from .spatial     import fix_geoms
-from .utils       import elapsed
-from .validation  import run_prodes_validation
+from .aggregate import aggregate_monthly, aggregate_municipal, aggregate_resumo_estatico, download_municipios_ibge  # noqa: E402, I001
+from .classify import AlertClassifier  # noqa: E402
+from .constants import ANOS, ANOS_DERADSA, CRS_CALC, CRS_OUT, M2_HA, export_json  # noqa: E402
+from .indicators import apply_indicators  # noqa: E402
+from .parsers import build_asv_base, parse_alertas, parse_asvs, parse_deradsa  # noqa: E402
+from .quality import run_all_tests  # noqa: E402
+from .readers import LocalGeoJSONReader  # noqa: E402
+from .spatial import fix_geoms  # noqa: E402
+from .utils import elapsed  # noqa: E402
+from .validation import run_prodes_validation  # noqa: E402
 
 
 # ══════════════════════════════════════════════════════════════════════════

@@ -6,7 +6,6 @@ agregado_municipios.json e a tabela Supabase de mesmo nome.
 """
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 from typing import Optional
@@ -248,7 +247,6 @@ def aggregate_resumo_estatico(gdf_out: gpd.GeoDataFrame) -> dict:
         anos_det = sorted(int(a) for a in irr_tab["ano"].dropna().unique())
         irr_anos, irr_confirmado, irr_discordante, irr_caatinga, irr_sem_prodes = [], [], [], [], []
         for a in anos_det:
-            cerr_a = pr_full[pr_full["ano"] == a] if "ano" in pr_full.columns else pr_full.iloc[0:0]
             irr_anos.append(a)
             irr_confirmado.append(round(float(
                 irr_tab[
@@ -278,11 +276,16 @@ def aggregate_resumo_estatico(gdf_out: gpd.GeoDataFrame) -> dict:
         # distCob — distribuição de cobertura PRODES por faixa (6 buckets)
         COB_LABELS = ["0%", "1–24%", "25–49%", "50–74%", "75–89%", "90–100%"]
         def _bucket(pct: float) -> int:
-            if pct <= 0:   return 0
-            if pct < 25:   return 1
-            if pct < 50:   return 2
-            if pct < 75:   return 3
-            if pct < 90:   return 4
+            if pct <= 0:
+                return 0
+            if pct < 25:
+                return 1
+            if pct < 50:
+                return 2
+            if pct < 75:
+                return 3
+            if pct < 90:
+                return 4
             return 5
         pr_val = pr_full[pr_full["flag_validacao_externa"].isin(["CONCORDANTE", "DISCORDANTE"])].copy()
         pr_val["_bucket"] = pr_val["concordancia_prodes_pct"].fillna(0).apply(_bucket)
