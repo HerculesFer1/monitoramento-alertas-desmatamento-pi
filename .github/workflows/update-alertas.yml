@@ -20,7 +20,6 @@ env:
   PYTHONUTF8: "1"
   SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
   SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-  MAPBIOMAS_TOKEN:      ${{ secrets.MAPBIOMAS_TOKEN }}
 
 jobs:
   update-alertas:
@@ -45,14 +44,21 @@ jobs:
           use-mamba: true
           miniforge-version: latest
 
-      # ── 3. Criar .env a partir dos secrets ───────────────────────────────
-      - name: Criar .env
+      # ── 3. Autenticar no MapBiomas e criar .env ──────────────────────────
+      - name: Autenticar MapBiomas + criar .env
         run: |
+          # Obtém token fresco via GraphQL (JWT expira — usar email/senha)
+          MAPBIOMAS_TOKEN=$(curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"query\":\"mutation { signIn(email: \\\"${{ secrets.MAPBIOMAS_EMAIL }}\\\" password: \\\"${{ secrets.MAPBIOMAS_PASSWORD }}\\\") { token } }\"}" \
+            "https://plataforma.alerta.mapbiomas.org/api/v2/graphql" \
+            | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['signIn']['token'])")
+          echo "MAPBIOMAS_TOKEN=$MAPBIOMAS_TOKEN" >> $GITHUB_ENV
           cat > .env <<EOF
           SUPABASE_URL=${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}
           SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
-          MAPBIOMAS_TOKEN=${{ secrets.MAPBIOMAS_TOKEN }}
+          MAPBIOMAS_TOKEN=$MAPBIOMAS_TOKEN
           EOF
 
       # ── 4. Download DERADSAs do Supabase Storage ──────────────────────────
