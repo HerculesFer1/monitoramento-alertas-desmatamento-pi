@@ -394,12 +394,15 @@ export function calcAutTotal(e: { autorizado: number; autorizado_p: number }): n
 | 19 | Prefect Cloud: pipeline_flow.py ampliado + prefect.yaml (3 deployments: mensal, PRODES anual, dry-run) | **CONCLUÍDO** (2026-05-22) |
 | 20 | Varredura repositório: remover arquivos obsoletos + reescrever READMEs + atualizar CLAUDE.md | **CONCLUÍDO** (2026-05-22) |
 | 21 | Git push para GitHub (`HerculesFer1/monitoramento-alertas-desmatamento-pi`) | **CONCLUÍDO** (2026-05-22) |
-| 22 | Configurar secrets GitHub (VERCEL_TOKEN, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY, MAPBIOMAS_TOKEN) | **PENDENTE** |
-| 23 | Aplicar Migration 004 no Supabase SQL Editor (`004_prodes_rpc_fix.sql`) | **PENDENTE** |
-| 24 | Copiar dados brutos `base de dados/*.geojson` do computador MARCO | **PENDENTE** |
-| 25 | DVC — versionamento de dados | PLANEJADO |
-| 26 | Slide Biomas (Cerrado × Caatinga) — tab futura no frontend | PLANEJADO |
-| 27 | Integração CAR / Unidades de Conservação / TIs como camadas | PLANEJADO |
+| 22 | CI/CD ativo: secrets VERCEL_TOKEN, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY, MAPBIOMAS_EMAIL, MAPBIOMAS_PASSWORD, VERCEL_ORG_ID, VERCEL_PROJECT_ID configurados | **CONCLUÍDO** (2026-05-22) |
+| 23 | Dockerfile + docker-compose.yml corrigidos: removida referência a `preprocess.py` (deletado), entrypoint → `python -m pipeline` | **CONCLUÍDO** (2026-05-22) |
+| 24 | Limpeza repositório: removidos .qmd (4), `plano de fundo.png`, `configurar_supabase.ps1` | **CONCLUÍDO** (2026-05-22) |
+| 25 | Aplicar Migration 004 no Supabase SQL Editor (`004_prodes_rpc_fix.sql`) | **PENDENTE** |
+| 26 | Adicionar secrets `SUPABASE_URL` e `SUPABASE_ANON_KEY` no GitHub (sem prefixo VITE_) — usados pelos workflows update-alertas, update-asvs, update-prodes | **PENDENTE** |
+| 27 | Copiar dados brutos `base de dados/*.geojson` do computador MARCO | **PENDENTE** |
+| 28 | DVC — versionamento de dados | PLANEJADO |
+| 29 | Slide Biomas (Cerrado × Caatinga) — tab futura no frontend | PLANEJADO |
+| 30 | Integração CAR / Unidades de Conservação / TIs como camadas | PLANEJADO |
 
 ---
 
@@ -583,4 +586,4 @@ Gerados de `Resultado/alertas_classificados.geojson` em 2026-05-21. Regenerar vi
 
 ---
 
-*Última atualização: 2026-05-22 | Pipeline v2 | 9/9 testes OK | 6 abas AO VIVO | PRODES 70,9% ✓ | CI/CD 5 workflows | Prefect 3 deployments | repo GitHub publicado | docs atualizados | dados brutos em MARCO*
+*Última atualização: 2026-05-22 | Pipeline v2 | 9/9 testes OK | 6 abas AO VIVO | PRODES 70,9% ✓ | CI/CD 5 workflows | Prefect 3 deployments | repo GitHub publicado | limpeza repo concluída | Dockerfile corrigido | dados brutos em MARCO*

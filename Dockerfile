@@ -13,9 +13,8 @@ ENV PROJ_LIB=/opt/conda/envs/desmatamento/share/proj
 
 # Copiar código do pipeline (pacote modular + scripts de suporte)
 COPY pipeline/            ./pipeline/
-COPY preprocess.py        .
 COPY _gerar_documentacao.py .
 COPY _baixar_prodes.py    .
 
-# Entrypoint: preprocess.py delega para python -m pipeline
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "desmatamento", "python", "preprocess.py"]
+# Entrypoint: pacote modular pipeline (python -m pipeline)
+ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "desmatamento", "python", "-m", "pipeline"]

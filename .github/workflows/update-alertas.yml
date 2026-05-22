@@ -54,12 +54,12 @@ jobs:
             "https://plataforma.alerta.mapbiomas.org/api/v2/graphql" \
             | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['signIn']['token'])")
           echo "MAPBIOMAS_TOKEN=$MAPBIOMAS_TOKEN" >> $GITHUB_ENV
-          cat > .env <<EOF
-          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}
-          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
-          MAPBIOMAS_TOKEN=$MAPBIOMAS_TOKEN
-          EOF
+          printf '%s\n' \
+            "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
+            "SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}" \
+            "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" \
+            "MAPBIOMAS_TOKEN=$MAPBIOMAS_TOKEN" \
+            > .env
 
       # ── 4. Download DERADSAs do Supabase Storage ──────────────────────────
       - name: Download DERADSAs (Supabase Storage)

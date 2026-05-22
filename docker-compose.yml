@@ -44,7 +44,7 @@ services:
       - resultados:/app/Resultado
     entrypoint: >
       bash -c "
-        conda run --no-capture-output -n desmatamento python preprocess.py &&
+        conda run --no-capture-output -n desmatamento python -m pipeline &&
         conda run --no-capture-output -n desmatamento python pipeline/_upload_supabase.py
       "
     profiles: [full]
