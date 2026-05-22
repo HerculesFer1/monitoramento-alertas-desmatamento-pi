@@ -1,0 +1,127 @@
+name: "Atualização Mensal — MapBiomas Alertas"
+
+# Executa todo dia 5 de cada mês às 03:00 UTC (meia-noite, horário de Brasília)
+# Também pode ser disparado manualmente com opções de filtro.
+on:
+  schedule:
+    - cron: "0 3 5 * *"
+  workflow_dispatch:
+    inputs:
+      anos:
+        description: "Anos a baixar (ex: 2024 2025) — vazio = todos"
+        required: false
+        default: ""
+      dry_run:
+        description: "Apenas baixa dados, não faz upload (true/false)"
+        required: false
+        default: "false"
+
+env:
+  PYTHONUTF8: "1"
+  SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+  MAPBIOMAS_TOKEN:      ${{ secrets.MAPBIOMAS_TOKEN }}
+
+jobs:
+  update-alertas:
+    name: "Baixar → Pipeline → Upload"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Ambiente Conda com geopandas ───────────────────────────────────
+      - name: Setup Miniconda (mamba solver)
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: "3.11"
+          channels: conda-forge,defaults
+          channel-priority: strict
+          activate-environment: desmatamento
+          environment-file: environment.yml
+          use-mamba: true
+          miniforge-version: latest
+
+      # ── 3. Criar .env a partir dos secrets ───────────────────────────────
+      - name: Criar .env
+        run: |
+          cat > .env <<EOF
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          MAPBIOMAS_TOKEN=${{ secrets.MAPBIOMAS_TOKEN }}
+          EOF
+
+      # ── 4. Download DERADSAs do Supabase Storage ──────────────────────────
+      - name: Download DERADSAs (Supabase Storage)
+        run: |
+          conda run -n desmatamento python pipeline/_baixar_deradsa_storage.py --anos 2024 2025
+        continue-on-error: true   # Pipeline continua mesmo sem DERADSAs
+
+      # ── 5. Download alertas MapBiomas ─────────────────────────────────────
+      - name: Download MapBiomas Alertas
+        run: |
+          ANOS_ARG=""
+          if [ -n "${{ github.event.inputs.anos }}" ]; then
+            ANOS_ARG="--anos ${{ github.event.inputs.anos }}"
+          fi
+          conda run -n desmatamento python pipeline/_baixar_mapbiomas.py $ANOS_ARG
+
+      # ── 6. Download ASVs SINAFLOR ─────────────────────────────────────────
+      - name: Download ASVs SINAFLOR
+        run: conda run -n desmatamento python pipeline/_baixar_asvs.py
+        continue-on-error: true   # Usa arquivo existente se WFS indisponível
+
+      # ── 7. Verificar dados de entrada ─────────────────────────────────────
+      - name: Verificar arquivos de entrada
+        run: |
+          python -c "
+          from pathlib import Path
+          arquivos = [
+            'base de dados/Alertas de Desmatamento(MAPBIOMAS).geojson',
+            'base de dados/ASVs Emitidas-PI(SINAFLOR+).geojson',
+          ]
+          ok = True
+          for f in arquivos:
+              p = Path(f)
+              if p.exists():
+                  print(f'✓ {p.name} ({p.stat().st_size/1e6:.1f} MB)')
+              else:
+                  print(f'✗ AUSENTE: {f}')
+                  ok = False
+          if not ok:
+              raise SystemExit('Arquivos obrigatórios ausentes')
+          "
+
+      # ── 8. Executar pipeline ───────────────────────────────────────────────
+      - name: Executar Pipeline v2
+        run: |
+          conda run -n desmatamento python -m pipeline
+
+      # ── 9. Upload para Supabase ────────────────────────────────────────────
+      - name: Upload para Supabase
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          conda run -n desmatamento python pipeline/_upload_supabase.py
+
+      # ── 10. Salvar artefatos da execução ──────────────────────────────────
+      - name: Upload artefatos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-output-${{ github.run_number }}
+          path: |
+            Resultado/pipeline.log
+            Resultado/agregado_municipios.json
+          retention-days: 30
+
+      # ── 11. Notificar em caso de falha ────────────────────────────────────
+      - name: Notificar falha
+        if: failure()
+        run: |
+          echo "::error::Pipeline falhou. Verifique os logs em Actions > pipeline-output-${{ github.run_number }}"
+          echo "Log das últimas 50 linhas:"
+          tail -50 Resultado/pipeline.log 2>/dev/null || echo "(log não gerado)"

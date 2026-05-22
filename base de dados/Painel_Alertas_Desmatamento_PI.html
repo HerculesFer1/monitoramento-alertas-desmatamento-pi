@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitor Florestal Piauí — Dashboard de Alertas de Desmatamento</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.umd.min.js"></script>
+<style>
+  :root {
+    --green-dark: #1B5E20; --green: #2E7D32; --green-light: #4CAF50;
+    --green-pale: #E8F5E9; --green-mid: #A5D6A7;
+    --red-dark: #B71C1C; --red: #C62828; --red-light: #EF5350;
+    --red-pale: #FFEBEE; --amber: #F57F17; --amber-pale: #FFFDE7;
+    --blue: #1565C0; --blue-pale: #E3F2FD;
+    --gray-dark: #212121; --gray: #424242; --gray-mid: #757575;
+    --gray-light: #BDBDBD; --gray-pale: #F5F5F5;
+    --white: #FFFFFF; --shadow: 0 2px 8px rgba(0,0,0,.12);
+    --radius: 8px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #F0F4F0; color: var(--gray-dark); font-size: 14px; }
+
+  /* ── Header ── */
+  .header { background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 100%); color: #fff; padding: 0; }
+  .header-inner { max-width: 1400px; margin: 0 auto; padding: 20px 24px 16px; }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: .5px; }
+  .header h1 span { font-size: 13px; font-weight: 400; display: block; opacity: .85; margin-top: 2px; }
+  .header-meta { font-size: 11px; opacity: .8; text-align: right; line-height: 1.6; }
+  .nav { display: flex; gap: 2px; padding: 0 24px; max-width: 1400px; margin: 0 auto; }
+  .nav a { color: rgba(255,255,255,.8); text-decoration: none; padding: 8px 14px; font-size: 13px; border-radius: 4px 4px 0 0; cursor: pointer; transition: all .2s; }
+  .nav a:hover, .nav a.active { background: rgba(255,255,255,.18); color: #fff; }
+  .warn-banner { background: #FF6F00; color: #fff; padding: 8px 24px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+
+  /* ── Layout ── */
+  .main { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── KPI cards ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .kpi { background: var(--white); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); border-top: 3px solid var(--green); }
+  .kpi.red { border-top-color: var(--red); }
+  .kpi.amber { border-top-color: var(--amber); }
+  .kpi.blue { border-top-color: var(--blue); }
+  .kpi-label { font-size: 11px; color: var(--gray-mid); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+  .kpi-value { font-size: 26px; font-weight: 700; line-height: 1; }
+  .kpi-value.red { color: var(--red); }
+  .kpi-value.amber { color: var(--amber); }
+  .kpi-sub { font-size: 11px; color: var(--gray-mid); margin-top: 4px; }
+
+  /* ── Charts grid ── */
+  .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
+  .charts-grid.cols3 { grid-template-columns: repeat(3, 1fr); }
+  .charts-grid.wide { grid-template-columns: 1fr; }
+  .card { background: var(--white); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .card h3 { font-size: 13px; font-weight: 600; color: var(--green-dark); margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+  .card h3 .sub { font-size: 11px; color: var(--gray-mid); font-weight: 400; margin-left: 4px; }
+  .chart-wrap { position: relative; height: 240px; }
+  .chart-wrap.tall { height: 300px; }
+  .chart-wrap.short { height: 180px; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--green-dark); color: #fff; padding: 8px 10px; text-align: left; font-size: 11px; text-transform: uppercase; }
+  td { padding: 7px 10px; border-bottom: 1px solid #eee; }
+  tr:nth-child(even) td { background: var(--gray-pale); }
+  tr:hover td { background: var(--green-pale); }
+  .bar-mini { height: 6px; background: linear-gradient(to right, var(--green), var(--green-light)); border-radius: 3px; min-width: 2px; }
+
+  /* ── Badges ── */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+  .badge-critical, .badge-CRÍTICA { background: var(--red-pale); color: var(--red-dark); }
+  .badge-high, .badge-ALTA { background: #FFF3E0; color: #E65100; }
+  .badge-medium, .badge-MÉDIA { background: #FFF9C4; color: #F57F17; }
+  .badge-low, .badge-BAIXA { background: var(--blue-pale); color: var(--blue); }
+  .ipi-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 12px; }
+  .ipi-critical { background: var(--red-pale); color: var(--red); }
+  .ipi-high { background: #FFF3E0; color: #E65100; }
+  .ipi-ok { background: var(--green-pale); color: var(--green); }
+
+  /* ── Info boxes ── */
+  .info-box { border-left: 4px solid var(--blue); background: var(--blue-pale); padding: 10px 14px; border-radius: 0 6px 6px 0; margin-bottom: 14px; font-size: 12px; color: var(--blue); }
+  .warn-box { border-left: 4px solid var(--amber); background: var(--amber-pale); padding: 10px 14px; border-radius: 0 6px 6px 0; margin-bottom: 14px; font-size: 12px; color: #6D4C00; }
+  .ok-box { border-left: 4px solid var(--green); background: var(--green-pale); padding: 10px 14px; border-radius: 0 6px 6px 0; margin-bottom: 14px; font-size: 12px; color: var(--green-dark); }
+
+  /* ── Didática ── */
+  .didatica-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .didatica-box { background: var(--white); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .compare-box { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #ddd; border-radius: var(--radius); overflow: hidden; margin: 14px 0; }
+  .compare-left { background: var(--red-pale); padding: 16px; }
+  .compare-right { background: var(--green-pale); padding: 16px; border-left: 1px solid #ddd; }
+  .compare-title { font-weight: 700; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; }
+  .compare-title.red { color: var(--red-dark); }
+  .compare-title.green { color: var(--green-dark); }
+  code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+  .donut-pct { font-size: 28px; font-weight: 700; }
+  .donut-pct.red { color: var(--red); }
+  .donut-pct.green { color: var(--green); }
+  .donut-label { font-size: 10px; color: var(--gray-mid); }
+
+  /* ── Footer ── */
+  .footer { background: var(--green-dark); color: rgba(255,255,255,.7); text-align: center; padding: 14px; font-size: 11px; margin-top: 32px; }
+
+  @media (max-width: 768px) {
+    .charts-grid, .charts-grid.cols3, .didatica-grid, .compare-box { grid-template-columns: 1fr; }
+    .kpi-value { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div>
+        <h1>🌿 Monitor Florestal Piauí
+          <span>Dashboard de Alertas de Desmatamento — 2022 a 2025</span>
+        </h1>
+      </div>
+      <div class="header-meta">
+        SEMARH-PI · CGEO · 2026<br>
+        Fonte: MAPBIOMAS Alerta · SINAFLOR+ (IBAMA) · SEMARH-PI<br>
+        Documentação Técnica v2.1 Corrigida
+      </div>
+    </div>
+  </div>
+  <nav class="nav">
+    <a class="active" onclick="showTab('visao')">📊 Visão Geral</a>
+    <a onclick="showTab('alertas')">🚨 Alertas</a>
+    <a onclick="showTab('autorizacoes')">✅ Autorizações</a>
+    <a onclick="showTab('ranking')">🏆 Rankings</a>
+    <a onclick="showTab('metodologia')">🔬 Metodologia</a>
+    <a onclick="showTab('validacao')">⚠️ Validação</a>
+  </nav>
+</div>
+<div class="warn-banner">⚠ IPI calculado como proxy bruto (área alertas / área total). Intersecção espacial proporcional requer Python + GeoPandas. Resultados servem para triagem — não para autuação.</div>
+
+<div class="main">
+
+<!-- ══════════════════════════ ABA 1: VISÃO GERAL ══════════════════════════ -->
+<section id="visao" class="section active">
+
+  <div class="kpi-grid">
+    <div class="kpi red">
+      <div class="kpi-label">Área Total Alertada</div>
+      <div class="kpi-value red">577,2k</div>
+      <div class="kpi-sub">577.230 ha · 2022–2025</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Área Total Autorizada</div>
+      <div class="kpi-value">559,4k</div>
+      <div class="kpi-sub">559.448 ha (ASV+DERADSA)</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">IPI — Proxy Bruto</div>
+      <div class="kpi-value amber">50.8%</div>
+      <div class="kpi-sub">Alertas / (Alertas+ASVs) × 100</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">Alertas MAPBIOMAS</div>
+      <div class="kpi-value red">13.299</div>
+      <div class="kpi-sub">Polígonos detectados</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Autorizações Emitidas</div>
+      <div class="kpi-value">808</div>
+      <div class="kpi-sub">716 ASVs + 92 DERADSAs</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">IDI Cerrado 2025</div>
+      <div class="kpi-value" style="color:var(--blue)">0.887%</div>
+      <div class="kpi-sub">Alertas Cerrado / Remanescente</div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="card">
+      <h3>Área Alertada vs Autorizada por Ano <span class="sub">(ha)</span></h3>
+      <div class="chart-wrap"><canvas id="barYearComp"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>IPI Proxy por Ano <span class="sub">(%)</span></h3>
+      <div class="chart-wrap"><canvas id="lineIPI"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-grid cols3">
+    <div class="card">
+      <h3>Distribuição por Bioma <span class="sub">Alertas ha</span></h3>
+      <div class="chart-wrap" style="position:relative">
+        <canvas id="doughnutBioma"></canvas>
+        <div class="donut-center">
+          <div class="donut-pct red">82%</div>
+          <div class="donut-label">Cerrado</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Alertas Mensais 2022–2025 <span class="sub">(ha)</span></h3>
+      <div class="chart-wrap"><canvas id="lineMonthly"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>IDI Cerrado vs Meta PPCerrado <span class="sub">(%)</span></h3>
+      <div class="chart-wrap"><canvas id="lineIDI"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3>Tabela Resumo por Ano</h3>
+    <table>
+      <thead><tr>
+        <th>Ano</th><th>Nº Alertas</th><th>Área Alertada</th>
+        <th>Cerrado</th><th>Caatinga</th><th>Área Autorizada</th>
+        <th>IPI Proxy</th><th>IDI Cerrado</th>
+      </tr></thead>
+      <tbody>
+  <tr>
+    <td><strong>2022</strong></td>
+    <td>3.062</td>
+    <td>148.275 ha</td>
+    <td>136.059 ha</td>
+    <td>12.217 ha</td>
+    <td>125.930 ha</td>
+    <td><span class="ipi-badge ipi-high">54.1%</span></td>
+    <td>1.015%</td>
+  </tr>
+  <tr>
+    <td><strong>2023</strong></td>
+    <td>4.527</td>
+    <td>136.010 ha</td>
+    <td>115.915 ha</td>
+    <td>20.095 ha</td>
+    <td>98.373 ha</td>
+    <td><span class="ipi-badge ipi-high">58.0%</span></td>
+    <td>0.878%</td>
+  </tr>
+  <tr>
+    <td><strong>2024</strong></td>
+    <td>3.034</td>
+    <td>142.880 ha</td>
+    <td>109.374 ha</td>
+    <td>33.506 ha</td>
+    <td>195.888 ha</td>
+    <td><span class="ipi-badge ipi-high">42.2%</span></td>
+    <td>0.836%</td>
+  </tr>
+  <tr>
+    <td><strong>2025</strong></td>
+    <td>2.676</td>
+    <td>150.065 ha</td>
+    <td>114.838 ha</td>
+    <td>35.227 ha</td>
+    <td>139.257 ha</td>
+    <td><span class="ipi-badge ipi-high">51.9%</span></td>
+    <td>0.887%</td>
+  </tr></tbody>
+    </table>
+  </div>
+
+</section>
+
+<!-- ══════════════════════════ ABA 2: ALERTAS ══════════════════════════════ -->
+<section id="alertas" class="section">
+  <div class="info-box">📡 Dados: MAPBIOMAS Alerta (DETER-CERRADO, GLAD, SAD-Caatinga, PRODES e outros) ·
+    13.299 alertas · Período 2022–2025 · CRS EPSG:4674 (SIRGAS 2000)</div>
+
+  <div class="kpi-grid">
+    <div class="kpi red">
+      <div class="kpi-label">Área Total</div>
+      <div class="kpi-value red">577.230</div>
+      <div class="kpi-sub">hectares (2022–2025)</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">Alertas Cerrado</div>
+      <div class="kpi-value red">476,2k</div>
+      <div class="kpi-sub">ha · 82.5% do total</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">Alertas Caatinga</div>
+      <div class="kpi-value red">101,0k</div>
+      <div class="kpi-sub">ha · 17.5% do total</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">Maior Município</div>
+      <div class="kpi-value amber" style="font-size:18px">Uruçuí</div>
+      <div class="kpi-sub">61.504 ha alertados</div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="card">
+      <h3>Área Alertada por Ano e Bioma <span class="sub">(ha)</span></h3>
+      <div class="chart-wrap tall"><canvas id="barAlertBiome"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Série Mensal de Alertas <span class="sub">(ha)</span></h3>
+      <div class="chart-wrap tall"><canvas id="lineMonthly2"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="card">
+      <h3>Vetor de Pressão (VPRESSAO) <span class="sub">Top ha</span></h3>
+      <div class="chart-wrap"><canvas id="barVpressao"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Nº de Alertas por Ano <span class="sub">(contagem)</span></h3>
+      <div class="chart-wrap"><canvas id="barAlertCount"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ ABA 3: AUTORIZAÇÕES ════════════════════════ -->
+<section id="autorizacoes" class="section">
+  <div class="info-box">📋 ASVs SINAFLOR+ (IBAMA): 716 autorizações 2022–2025 ·
+    532.213 ha total · DERADSAs SEMARH-PI: 92 registros · 27.235 ha</div>
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">ASVs Emitidas</div>
+      <div class="kpi-value">716</div>
+      <div class="kpi-sub">registros SINAFLOR+</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Área ASVs</div>
+      <div class="kpi-value">532,2k</div>
+      <div class="kpi-sub">532.213 ha</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">DERADSAs (2024+2025)</div>
+      <div class="kpi-value" style="color:var(--blue)">92</div>
+      <div class="kpi-sub">27.235 ha</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Total Autorizado</div>
+      <div class="kpi-value">559,4k</div>
+      <div class="kpi-sub">ha (ASV + DERADSA)</div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="card">
+      <h3>Área Autorizada por Ano e Bioma <span class="sub">(ASVs, ha)</span></h3>
+      <div class="chart-wrap tall"><canvas id="barAsvBiome"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Tipo de Atividade — ASVs <span class="sub">(ha)</span></h3>
+      <div class="chart-wrap tall"><canvas id="barTipo"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="card">
+      <h3>ASVs vs DERADSAs por Ano <span class="sub">(ha)</span></h3>
+      <div class="chart-wrap"><canvas id="barAsvDerYear"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Proporção Cerrado/Caatinga nas ASVs <span class="sub">(ha)</span></h3>
+      <div class="chart-wrap" style="position:relative">
+        <canvas id="doughnutAsvBiome"></canvas>
+        <div class="donut-center">
+          <div class="donut-pct green">76%</div>
+          <div class="donut-label">Cerrado</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ ABA 4: RANKINGS ════════════════════════════ -->
+<section id="ranking" class="section">
+  <div class="charts-grid">
+    <div class="card">
+      <h3>🚨 Top 20 Municípios — Área Alertada <span class="sub">(ha, 2022–2025)</span></h3>
+      <div class="chart-wrap tall"><canvas id="barTopMunAlert"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>✅ Top 15 Municípios — Área Autorizada <span class="sub">(ASVs, ha)</span></h3>
+      <div class="chart-wrap tall"><canvas id="barTopMunAsv"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Tabela — Ranking Municípios por Área Alertada</h3>
+    <table>
+      <thead><tr><th>#</th><th>Município</th><th>Área Alertada</th><th>Proporção</th></tr></thead>
+      <tbody>
+  <tr>
+    <td>1</td>
+    <td>Uruçuí</td>
+    <td>61.504,2 ha</td>
+    <td>
+      <div class="bar-mini" style="width:100%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Baixa Grande do Ribeiro</td>
+    <td>57.441,6 ha</td>
+    <td>
+      <div class="bar-mini" style="width:93%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Sebastião Leal</td>
+    <td>42.593,7 ha</td>
+    <td>
+      <div class="bar-mini" style="width:69%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Canto do Buriti</td>
+    <td>37.012,3 ha</td>
+    <td>
+      <div class="bar-mini" style="width:60%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>Santa Filomena</td>
+    <td>34.088,5 ha</td>
+    <td>
+      <div class="bar-mini" style="width:55%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>Currais</td>
+    <td>23.877,8 ha</td>
+    <td>
+      <div class="bar-mini" style="width:39%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>Guadalupe</td>
+    <td>22.307,4 ha</td>
+    <td>
+      <div class="bar-mini" style="width:36%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>Floriano</td>
+    <td>20.161,5 ha</td>
+    <td>
+      <div class="bar-mini" style="width:33%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>Palmeira do Piauí</td>
+    <td>18.151,2 ha</td>
+    <td>
+      <div class="bar-mini" style="width:30%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>Ribeiro Gonçalves</td>
+    <td>16.408,2 ha</td>
+    <td>
+      <div class="bar-mini" style="width:27%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>11</td>
+    <td>Bom Jesus</td>
+    <td>14.330,9 ha</td>
+    <td>
+      <div class="bar-mini" style="width:23%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>12</td>
+    <td>Jerumenha</td>
+    <td>10.077,8 ha</td>
+    <td>
+      <div class="bar-mini" style="width:16%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>13</td>
+    <td>Riacho Frio</td>
+    <td>9.538,8 ha</td>
+    <td>
+      <div class="bar-mini" style="width:16%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>14</td>
+    <td>Parnaguá</td>
+    <td>9.142,0 ha</td>
+    <td>
+      <div class="bar-mini" style="width:15%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>15</td>
+    <td>Alvorada do Gurguéia</td>
+    <td>8.684,7 ha</td>
+    <td>
+      <div class="bar-mini" style="width:14%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>16</td>
+    <td>Nazaré do Piauí</td>
+    <td>8.191,8 ha</td>
+    <td>
+      <div class="bar-mini" style="width:13%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>17</td>
+    <td>Corrente</td>
+    <td>8.023,5 ha</td>
+    <td>
+      <div class="bar-mini" style="width:13%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>18</td>
+    <td>Cristino Castro</td>
+    <td>7.616,7 ha</td>
+    <td>
+      <div class="bar-mini" style="width:12%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>19</td>
+    <td>Cristalândia do Piauí</td>
+    <td>6.919,6 ha</td>
+    <td>
+      <div class="bar-mini" style="width:11%"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>20</td>
+    <td>Piracuruca</td>
+    <td>6.656,6 ha</td>
+    <td>
+      <div class="bar-mini" style="width:11%"></div>
+    </td>
+  </tr></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════ ABA 5: METODOLOGIA ═══════════════════════════ -->
+<section id="metodologia" class="section">
+
+  <div class="didatica-grid">
+    <div class="didatica-box">
+      <h3 style="color:var(--green-dark);margin-bottom:12px">🎓 Exemplo Didático — Cálculo Proporcional de Área</h3>
+      <p style="font-size:13px;margin-bottom:12px;color:#444">
+        Quando um alerta MAPBIOMAS sobrepõe <strong>parcialmente</strong> uma Autorização Vigente (ASV),
+        a área não é classificada inteiramente como legal ou ilegal. O <code>gpd.overlay(how='intersection')</code>
+        calcula a sobreposição real:
+      </p>
+      <div class="compare-box">
+        <div class="compare-left">
+          <div class="compare-title red">❌ Método Antigo (Binário)</div>
+          <p style="font-size:12px">Critério: alerta <em>toca</em> a ASV?</p>
+          <p style="font-size:12px;margin:4px 0">Sim → 100 ha = 100% LEGAL</p>
+          <p style="font-size:12px">Não → 100 ha = 100% ILEGAL</p>
+          <p style="font-size:12px;font-weight:700;margin-top:8px;color:var(--red-dark)">Resultado: 0 ha ilegal (ERRADO)</p>
+        </div>
+        <div class="compare-right">
+          <div class="compare-title green">✔ Método Corrigido (Overlay)</div>
+          <p style="font-size:12px"><code>gpd.overlay(alertas, asvs, how='intersection')</code></p>
+          <p style="font-size:12px;margin:4px 0">Interseção real: <strong>34,6 ha</strong> (legal)</p>
+          <p style="font-size:12px">Resíduo: 100 − 34,6 = <strong>65,4 ha</strong> (ilegal)</p>
+          <p style="font-size:12px;font-weight:700;margin-top:8px;color:var(--green-dark)">IPI = 65,4 / 100 × 100 = <strong>65,4%</strong></p>
+        </div>
+      </div>
+
+      <div style="background:#f9f9f9;border-radius:6px;padding:14px;margin-top:10px">
+        <table style="width:100%;font-size:12px">
+          <thead><tr style="background:var(--green-dark)">
+            <th style="color:#fff;padding:6px 8px">Etapa</th>
+            <th style="color:#fff;padding:6px 8px">Operação</th>
+            <th style="color:#fff;padding:6px 8px">Área</th>
+            <th style="color:#fff;padding:6px 8px">Resultado</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="padding:5px 8px">1</td><td>Alerta MAPBIOMAS</td><td><strong>100,0 ha</strong></td><td>Base do cálculo</td></tr>
+            <tr style="background:#f0f0f0"><td style="padding:5px 8px">2</td><td>Autorização (ASV)</td><td>80,0 ha</td><td>Limitador geométrico</td></tr>
+            <tr><td style="padding:5px 8px">3</td><td>Intersecção (overlay)</td><td><strong style="color:var(--green)">34,6 ha</strong></td><td>✔ LEGAL</td></tr>
+            <tr style="background:#f0f0f0"><td style="padding:5px 8px">4</td><td>Diferença</td><td><strong style="color:var(--red)">65,4 ha</strong></td><td>✘ ILEGAL</td></tr>
+            <tr><td style="padding:5px 8px">5</td><td>IPI = 65,4/100×100</td><td>—</td><td><strong style="color:var(--blue)">65,4%</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="didatica-box">
+      <h3 style="color:var(--green-dark);margin-bottom:12px">📐 Premissas Metodológicas (v2.1)</h3>
+      <div class="ok-box">✔ P1 — Intersecção proporcional por <code>gpd.overlay(how='intersection')</code></div>
+      <div class="ok-box">✔ P2 — Vigência temporal verificada: <code>dt_valid_i ≤ dt_deteccao ≤ dt_valid_f</code></div>
+      <div class="ok-box">✔ P3 — Projeção EPSG:5880 (SIRGAS 2000 / Brazil Polyconic) — cobre fusos 23S e 24S</div>
+      <div class="ok-box">✔ P4 — Buffer 50m + <code>make_valid()</code> pós-buffer</div>
+      <div class="ok-box">✔ P5 — H3 via <code>geo_to_cells</code> (cobertura poligonal, não centroide)</div>
+      <div class="warn-box">⚠ Este dashboard usa IPI como <strong>proxy bruto</strong> (sem intersecção espacial). A classificação real legal/ilegal requer execução do pipeline Python/GeoPandas descrito na documentação v2.1.</div>
+      <div class="warn-box">⚠ DERADSAs 2022–2023 ausentes. Alertas desse subperíodo confrontados apenas com ASVs → falso positivo potencial ±15%.</div>
+
+      <h3 style="color:var(--green-dark);margin:14px 0 10px">📦 Fontes de Dados</h3>
+      <table style="font-size:12px">
+        <thead><tr><th>Fonte</th><th>Registros</th><th>Período</th></tr></thead>
+        <tbody>
+          <tr><td>MAPBIOMAS Alerta (GeoJSON)</td><td>13.299 alertas</td><td>2022–2025</td></tr>
+          <tr><td>SINAFLOR+ / IBAMA (XLSX)</td><td>716 ASVs</td><td>2022–2025</td></tr>
+          <tr><td>SEMARH-PI DERADSAs 2024 (XLSX)</td><td>32 registros</td><td>2024</td></tr>
+          <tr><td>SEMARH-PI DERADSAs 2025 (XLSX)</td><td>60 registros</td><td>2025</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📋 Fórmulas dos KPIs</h3>
+    <table>
+      <thead><tr><th>KPI</th><th>Fórmula</th><th>Nota</th></tr></thead>
+      <tbody>
+        <tr><td><strong>KPI 01 — Área Legal</strong></td><td>Σ area_pamgi (ASVs "Autorização Emitida") + Σ Área/ha (DERADSAs)</td><td>Sem intersecção espacial — total autorizado</td></tr>
+        <tr><td><strong>KPI 02 — Área Ilegal (proxy)</strong></td><td>Σ AREAHA alertas no período</td><td>⚠ Proxy — superestima. Usar overlay para métrica real</td></tr>
+        <tr><td><strong>KPI 04 — IPI Proxy</strong></td><td>Área_Alertas / (Área_Alertas + Área_Autorizada) × 100</td><td>⚠ Baseado em proxy bruto — não em intersecção proporcional</td></tr>
+        <tr><td><strong>KPI 05 — IDI Cerrado</strong></td><td>Área_Alertas_Cerrado_ano / Cerrado_Remanescente_início_ano × 100</td><td>Base dinâmica por ano (v2.1 corrigido)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════ ABA 6: VALIDAÇÃO ═══════════════════════════ -->
+<section id="validacao" class="section">
+  <div class="info-box">📋 Relatório de inconsistências detectadas na varredura do projeto (v2.1 vs dados reais).
+    Resultado: 5 críticas ·
+    3 altas ·
+    2 médias ·
+    1 baixas</div>
+
+  <div class="card">
+    <h3>Inconsistências Detectadas — Documentação v2.1 vs Dados Reais</h3>
+    <table>
+      <thead><tr><th>Severidade</th><th>Campo / Arquivo</th><th>Descrição</th></tr></thead>
+      <tbody>
+  <tr>
+    <td><span class="badge badge-critical">CRÍTICA</span></td>
+    <td><code>CODEALERTA vs id_alerta</code></td>
+    <td>Doc usa id_alerta — dado real usa CODEALERTA. Dashboard usa CODEALERTA.</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-critical">CRÍTICA</span></td>
+    <td><code>DATADETEC vs dt_deteccao</code></td>
+    <td>Doc usa dt_deteccao — dado real usa DATADETEC (ISO YYYY-MM-DD).</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-critical">CRÍTICA</span></td>
+    <td><code>AREAHA vs area_ha</code></td>
+    <td>Doc usa area_ha — dado real usa AREAHA. Pipeline deve mapear campo correto.</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-critical">CRÍTICA</span></td>
+    <td><code>VPRESSAO vs status</code></td>
+    <td>Doc esperava campo status (Confirmado/Em análise). Dado real tem VPRESSAO (vetor: agriculture, etc.). Sem campo de status de confirmação no dado.</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-critical">CRÍTICA</span></td>
+    <td><code>dt_valid_i/dt_valid_f (serial Excel)</code></td>
+    <td>Datas nas ASVs estão em número serial Excel (ex: 46064.125), não ISO. Conversão obrigatória: (serial-25569)*86400*1000 ms.</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-high">ALTA</span></td>
+    <td><code>Alertas de desmatamento-pi.xlsx (nome errado)</code></td>
+    <td>Arquivo nomeado como alertas contém dados de ASVs (27 colunas SINAFLOR+). Arquivo de alertas tabulares não existe em xlsx — usar GeoJSON.</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-high">ALTA</span></td>
+    <td><code>DERADSAs sem coluna Município no XLSX</code></td>
+    <td>XLSX 2024 e 2025 não possuem coluna Município (somente Id, Área/ha, Houve Auteração, Ano). Município deve ser derivado do GeoJSON via sjoin.</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-high">ALTA</span></td>
+    <td><code>FONTE em formato {DETER-CERRADO}</code></td>
+    <td>Campo FONTE dos alertas usa sintaxe de array PostgreSQL ({DETER-CERRADO,GLAD}) — não string simples como 'Sentinel-2'. Representa sistemas de detecção múltiplos.</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-medium">MÉDIA</span></td>
+    <td><code>CRS EPSG:4674 vs EPSG:4326</code></td>
+    <td>Documentação cita EPSG:4326 (WGS84). Dado real está em EPSG:4674 (SIRGAS 2000). Praticamente equivalentes no Brasil, mas código EPSG deve ser corrigido no pipeline.</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-medium">MÉDIA</span></td>
+    <td><code>Houve 'Auteração' (ortografia)</code></td>
+    <td>Campo nos XLSX de DERADSAs tem erro ortográfico: 'Houve Auteração' em vez de 'Houve Alteração'. Normalizar no pipeline.</td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-low">BAIXA</span></td>
+    <td><code>DERADSAs GeoJSON: apenas Id e Ano</code></td>
+    <td>GeoJSONs de DERADSAs possuem somente Id e Ano — sem área, sem município. Área deve ser obtida dos XLSX via merge por Id.</td>
+  </tr></tbody>
+    </table>
+  </div>
+
+  <div class="charts-grid" style="margin-top:16px">
+    <div class="card">
+      <h3>✅ Checklist de Validação Pré-Deploy</h3>
+      <table style="font-size:12px">
+        <thead><tr><th>Item</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Dados filtrados para janela 2022–2025</td><td>✅ OK</td></tr>
+          <tr><td>Alertas: 13.299 features carregadas</td><td>✅ OK</td></tr>
+          <tr><td>ASVs: 716 registros com datas convertidas de serial Excel</td><td>✅ OK</td></tr>
+          <tr><td>DERADSAs: 92 registros (32+60)</td><td>✅ OK</td></tr>
+          <tr><td>FONTE dos alertas: multi-fonte ({DETER-CERRADO,GLAD,...})</td><td>⚠ Adaptar campo FONTE no pipeline</td></tr>
+          <tr><td>Campo status (Confirmado/Em análise) ausente nos alertas</td><td>❌ Campo não existe — usar VPRESSAO</td></tr>
+          <tr><td>DERADSAs sem Município no XLSX</td><td>❌ Derivar via sjoin com GeoJSON</td></tr>
+          <tr><td>Serialização Excel nas datas ASV</td><td>✅ Corrigido no processamento</td></tr>
+          <tr><td>CRS EPSG:4674 → Pipeline usa EPSG:5880</td><td>⚠ Reprojetar no pipeline</td></tr>
+          <tr><td>IDI Cerrado com base dinâmica por ano</td><td>✅ Implementado</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>📊 Balanço de Massa (Proxy)</h3>
+      <table style="font-size:12px">
+        <thead><tr><th>Componente</th><th>Registros</th><th>Área (ha)</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Alertas MAPBIOMAS 2022–2025</strong></td><td>13.299</td><td>577.230</td></tr>
+          <tr><td>ASVs SINAFLOR+ 2022–2025</td><td>716</td><td>532.213</td></tr>
+          <tr><td>DERADSAs SEMARH-PI 2024</td><td>32</td><td>11.586</td></tr>
+          <tr><td>DERADSAs SEMARH-PI 2025</td><td>60</td><td>15.650</td></tr>
+          <tr style="background:var(--green-pale)"><td><strong>Total Autorizado</strong></td><td><strong>808</strong></td><td><strong>559.448</strong></td></tr>
+          <tr style="background:var(--amber-pale)"><td><strong>IPI Global (proxy)</strong></td><td colspan="2"><strong>50.78%</strong></td></tr>
+        </tbody>
+      </table>
+      <div class="warn-box" style="margin-top:12px">⚠ Intersecção espacial real (gpd.overlay) não executada — requer Python/GeoPandas. O IPI acima é PROXY BRUTO e pode diferir significativamente do IPI calculado por overlay proporcional.</div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /main -->
+
+<div class="footer">
+  Monitor Florestal Piauí · Gerência do Centro de Geotecnologia Ambiental e Gestão Florestal — CGEO · SEMARH-PI · 2026<br>
+  Documentação Técnica v2.1 Corrigida · Fontes: MAPBIOMAS Alerta · SINAFLOR+ (IBAMA) · SEMARH-PI
+</div>
+
+<script>
+// ─── Data ──────────────────────────────────────────────────────────────────
+const YEARS = [2022, 2023, 2024, 2025];
+const alertYr = {"2022":{"count":3062,"area":148275.0700000002,"cerrado":136058.52000000005,"caatinga":12216.549999999983},"2023":{"count":4527,"area":136010.33000000002,"cerrado":115914.94999999985,"caatinga":20095.379999999986},"2024":{"count":3034,"area":142879.7,"cerrado":109373.59000000001,"caatinga":33506.109999999986},"2025":{"count":2676,"area":150064.8999999996,"cerrado":114837.72999999978,"caatinga":35227.169999999984}};
+const asvYr   = {"2022":{"count":130,"area":125929.6834286695,"cerrado":116455.58153939756,"caatinga":9474.10188927193},"2023":{"count":169,"area":98373.40339872378,"cerrado":70121.20394786613,"caatinga":28252.19945085759},"2024":{"count":217,"area":184302.5263534633,"cerrado":145361.34723014935,"caatinga":38941.17912331399},"2025":{"count":200,"area":123607.41892867605,"cerrado":71744.12899508243,"caatinga":51863.289933593675}};
+const derYr   = {"2022":{"count":0,"area":0},"2023":{"count":0,"area":0},"2024":{"count":32,"area":11585.696},"2025":{"count":60,"area":15649.723000000004}};
+const ipiYr   = {"2022":54.07458045346094,"2023":58.02891183093536,"2024":42.176277791414485,"2025":51.86777301848089};
+const idiYr   = {"2022":1.015362089552239,"2023":0.8781435606060595,"2024":0.8361895259938839,"2025":0.8867778378378361};
+const ppcMeta = [1.015362089552239,0.9519019589552241,0.8884418283582092,0.8249816977611942];
+const monthlyKeys = ["2022-01","2022-02","2022-03","2022-04","2022-05","2022-06","2022-07","2022-08","2022-09","2022-10","2022-11","2022-12","2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"];
+const monthlyVals = [18591.819999999996,6575.42,13075.349999999999,18485.27999999999,23288.68999999997,11592.150000000005,6716.809999999999,13033.55,2669.3600000000015,11132.890000000007,10583.109999999988,12530.640000000009,14404.819999999992,14289.529999999988,8203.54,13931.190000000002,25777.610000000044,11565.810000000009,13203.829999999989,6056.740000000002,6921.220000000002,7233.429999999993,7576.939999999991,6845.669999999997,2893.9299999999994,9153.709999999992,18793.209999999992,14001.320000000002,23934.850000000006,13558.679999999995,4222.990000000001,20694.629999999994,5542.7999999999965,10514.91000000001,12531.749999999993,7036.92,14475.109999999997,18966.160000000003,27110.549999999996,18405.999999999996,27359.94000000001,9006.560000000001,5358.789999999999,8589.18999999998,3758.869999999998,7438.750000000002,4300.449999999999,5294.5300000000025];
+const top20     = [["Uruçuí",61504.150000000016],["Baixa Grande do Ribeiro",57441.640000000014],["Sebastião Leal",42593.66],["Canto do Buriti",37012.26],["Santa Filomena",34088.450000000004],["Currais",23877.83999999998],["Guadalupe",22307.359999999997],["Floriano",20161.5],["Palmeira do Piauí",18151.219999999998],["Ribeiro Gonçalves",16408.170000000006],["Bom Jesus",14330.909999999998],["Jerumenha",10077.840000000002],["Riacho Frio",9538.789999999999],["Parnaguá",9142.039999999979],["Alvorada do Gurguéia",8684.720000000003],["Nazaré do Piauí",8191.849999999999],["Corrente",8023.549999999999],["Cristino Castro",7616.690000000001],["Cristalândia do Piauí",6919.630000000001],["Piracuruca",6656.55]];
+const top15Asv  = [["BAIXA GRANDE DO RIBEIRO",109998.33477134441],["SEBASTIAO LEAL",41252.79942071202],["CANTO DO BURITI",41223.330068056406],["CURRAIS",33706.53005801355],["GUADALUPE",30673.0933469509],["URUCUI",30455.50700098811],["SAO JOSE DO PEIXE",28911.034056669218],["SANTA FILOMENA",20091.259045679864],["FLORIANO",18414.722817342405],["CRISTINO CASTRO",12805.473759091446],["NAZARE DO PIAUI",10509.893648827612],["BOM JESUS",9496.02094472408],["RIBEIRO GONCALVES",8734.8349432402],["PIMENTEIRAS",8583.342776254247],["CORRENTE",8170.978459262403]];
+const topVp     = [["agriculture",566017.9599999972],["others",6157.689999999998],["urban_expansion",2325.9599999999996],["renewable_energy_project",1927.1099999999994],["roads",569.5699999999999],["aquaculture",150.02],["mining",60.86000000000001],["natural_cause",12.84]];
+const byTipo    = {"Uso Alternativo do Solo":495579.10772872803,"Autorização de Supressão de Vegetação - ASV":25958.047600571463,"PMFS/POA":10675.876780233297};
+const totCerradoAlert = 476185;
+const totCaatingaAlert = 101045;
+const totalAsvArea = 532213;
+const asvCerrado = 403682;
+const asvCaatinga = 128531;
+
+// ─── Palette ───────────────────────────────────────────────────────────────
+const C = {
+  cerrado: '#E65100', cerradoPale: 'rgba(230,81,0,.2)',
+  caatinga: '#1565C0', caatingaPale: 'rgba(21,101,192,.2)',
+  alert: '#C62828', alertPale: 'rgba(198,40,40,.2)',
+  auth: '#2E7D32', authPale: 'rgba(46,125,50,.2)',
+  ipi: '#F57F17', idi: '#6A1B9A', ppc: '#1565C0',
+  asv: '#2E7D32', der: '#0097A7',
+};
+Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+Chart.defaults.plugins.tooltip.cornerRadius = 6;
+
+// ─── Nav ───────────────────────────────────────────────────────────────────
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─── Charts ────────────────────────────────────────────────────────────────
+// Shared options
+const grid = { color: '#eee', lineWidth: 0.5 };
+const tickOpt = { color: '#666' };
+function yHa(stacked) {
+  return {
+    stacked: !!stacked,
+    grid,
+    ticks: { ...tickOpt, callback: v => (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) }
+  };
+}
+
+// 1. Bar Year Comparison
+new Chart('barYearComp', {
+  type: 'bar',
+  data: {
+    labels: YEARS,
+    datasets: [
+      { label: 'Alertas (ha)', data: YEARS.map(y => alertYr[y].area.toFixed(0)), backgroundColor: C.alertPale, borderColor: C.alert, borderWidth: 1.5 },
+      { label: 'Autorizado (ha)', data: YEARS.map(y => (asvYr[y].area + derYr[y].area).toFixed(0)), backgroundColor: C.authPale, borderColor: C.auth, borderWidth: 1.5 },
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid }, y: yHa() } }
+});
+
+// 2. Line IPI
+new Chart('lineIPI', {
+  type: 'line',
+  data: {
+    labels: YEARS,
+    datasets: [
+      { label: 'IPI Proxy (%)', data: YEARS.map(y => ipiYr[y].toFixed(1)), borderColor: C.ipi, backgroundColor: 'rgba(245,127,23,.1)', fill: true, tension: 0.4, pointRadius: 5, borderWidth: 2 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: {
+      x: { grid },
+      y: { grid, min: 0, max: 100, ticks: { ...tickOpt, callback: v => v + '%' } }
+    },
+    plugins: {
+      annotation: { annotations: {
+        l40: { type: 'line', yMin: 40, yMax: 40, borderColor: '#F9A825', borderWidth: 1.5, borderDash: [4,4], label: { content: 'Atenção 40%', display: true, backgroundColor: 'transparent', color: '#F9A825', font: { size: 10 } } },
+        l60: { type: 'line', yMin: 60, yMax: 60, borderColor: '#E65100', borderWidth: 1.5, borderDash: [4,4], label: { content: 'Crítico 60%', display: true, backgroundColor: 'transparent', color: '#E65100', font: { size: 10 } } }
+      }}
+    }
+  }
+});
+
+// 3. Donut Bioma Alertas
+new Chart('doughnutBioma', {
+  type: 'doughnut',
+  data: {
+    labels: ['Cerrado', 'Caatinga'],
+    datasets: [{ data: [totCerradoAlert, totCaatingaAlert], backgroundColor: [C.cerrado, C.caatinga], borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom' } } }
+});
+
+// 4. Monthly alerts
+const monthLabels = monthlyKeys.map(k => { const [y,m] = k.split('-'); return m + '/' + y.slice(2); });
+new Chart('lineMonthly', {
+  type: 'line',
+  data: {
+    labels: monthLabels,
+    datasets: [{ label: 'Área alertada (ha)', data: monthlyVals, borderColor: C.alert, backgroundColor: C.alertPale, fill: true, tension: 0.3, pointRadius: 2, borderWidth: 1.5 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid, ticks: { ...tickOpt, maxRotation: 45, maxTicksLimit: 12 } }, y: yHa() } }
+});
+
+// 5. IDI Cerrado
+new Chart('lineIDI', {
+  type: 'line',
+  data: {
+    labels: YEARS,
+    datasets: [
+      { label: 'IDI Cerrado PI (%)', data: YEARS.map(y => idiYr[y].toFixed(4)), borderColor: C.idi, backgroundColor: 'rgba(106,27,154,.1)', fill: true, tension: 0.4, pointRadius: 5, borderWidth: 2 },
+      { label: 'Meta PPCerrado', data: ppcMeta.map(v => v.toFixed(4)), borderColor: C.ppc, borderDash: [6,4], borderWidth: 1.5, pointRadius: 3, fill: false },
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid }, y: { grid, ticks: { ...tickOpt, callback: v => v + '%' } } } }
+});
+
+// 6. Bar Alert Biome (Aba Alertas)
+new Chart('barAlertBiome', {
+  type: 'bar',
+  data: {
+    labels: YEARS,
+    datasets: [
+      { label: 'Cerrado (ha)', data: YEARS.map(y => alertYr[y].cerrado.toFixed(0)), backgroundColor: C.cerrado, borderRadius: 3 },
+      { label: 'Caatinga (ha)', data: YEARS.map(y => alertYr[y].caatinga.toFixed(0)), backgroundColor: C.caatinga, borderRadius: 3 },
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, grid }, y: { ...yHa(true) } } }
+});
+
+// 7. Monthly series copy for aba alertas
+new Chart('lineMonthly2', {
+  type: 'line',
+  data: {
+    labels: monthLabels,
+    datasets: [{ label: 'Área alertada (ha)', data: monthlyVals, borderColor: C.alert, backgroundColor: C.alertPale, fill: true, tension: 0.3, pointRadius: 2, borderWidth: 1.5 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid, ticks: { ...tickOpt, maxRotation: 45, maxTicksLimit: 12 } }, y: yHa() } }
+});
+
+// 8. VPRESSAO
+new Chart('barVpressao', {
+  type: 'bar',
+  data: {
+    labels: topVp.map(v => v[0]),
+    datasets: [{ label: 'Área (ha)', data: topVp.map(v => v[1].toFixed(0)), backgroundColor: '#FF7043', borderRadius: 4 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: yHa(), y: { grid } } }
+});
+
+// 9. Alert count by year
+new Chart('barAlertCount', {
+  type: 'bar',
+  data: {
+    labels: YEARS,
+    datasets: [{ label: 'Nº Alertas', data: YEARS.map(y => alertYr[y].count), backgroundColor: C.alertPale, borderColor: C.alert, borderWidth: 1.5, borderRadius: 4 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid }, y: { grid, ticks: tickOpt } } }
+});
+
+// 10. ASV Biome by Year
+new Chart('barAsvBiome', {
+  type: 'bar',
+  data: {
+    labels: YEARS,
+    datasets: [
+      { label: 'Cerrado (ha)', data: YEARS.map(y => asvYr[y].cerrado.toFixed(0)), backgroundColor: '#A5D6A7', borderRadius: 3 },
+      { label: 'Caatinga (ha)', data: YEARS.map(y => asvYr[y].caatinga.toFixed(0)), backgroundColor: '#81D4FA', borderRadius: 3 },
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, grid }, y: { ...yHa(true) } } }
+});
+
+// 11. Tipo atividade
+const tipoLabels = Object.keys(byTipo).map(k => k.replace('Autorização de Supressão de Vegetação - ','').replace('Uso Alternativo do Solo','Uso Alt. Solo'));
+new Chart('barTipo', {
+  type: 'bar',
+  data: {
+    labels: tipoLabels,
+    datasets: [{ label: 'Área (ha)', data: Object.values(byTipo).map(v => v.toFixed(0)), backgroundColor: ['#4CAF50','#81C784','#C8E6C9'], borderRadius: 4 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: yHa(), y: { grid } } }
+});
+
+// 12. ASV vs DERADSA by year
+new Chart('barAsvDerYear', {
+  type: 'bar',
+  data: {
+    labels: YEARS,
+    datasets: [
+      { label: 'ASVs (ha)', data: YEARS.map(y => asvYr[y].area.toFixed(0)), backgroundColor: C.asv, borderRadius: 3 },
+      { label: 'DERADSAs (ha)', data: YEARS.map(y => derYr[y].area.toFixed(0)), backgroundColor: C.der, borderRadius: 3 },
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, grid }, y: { ...yHa(true) } } }
+});
+
+// 13. Donut ASV biome
+new Chart('doughnutAsvBiome', {
+  type: 'doughnut',
+  data: {
+    labels: ['Cerrado', 'Caatinga'],
+    datasets: [{ data: [asvCerrado, asvCaatinga], backgroundColor: [C.cerrado, C.caatinga], borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom' } } }
+});
+
+// 14. Top 20 Mun Alert
+new Chart('barTopMunAlert', {
+  type: 'bar',
+  data: {
+    labels: top20.map(m => m[0]),
+    datasets: [{ label: 'Área Alertada (ha)', data: top20.map(m => m[1].toFixed(0)), backgroundColor: '#EF5350', borderRadius: 3 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: yHa(), y: { grid, ticks: { ...tickOpt, font: { size: 11 } } } } }
+});
+
+// 15. Top 15 Mun ASV
+new Chart('barTopMunAsv', {
+  type: 'bar',
+  data: {
+    labels: top15Asv.map(m => m[0]),
+    datasets: [{ label: 'Área Autorizada (ha)', data: top15Asv.map(m => m[1].toFixed(0)), backgroundColor: '#4CAF50', borderRadius: 3 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: yHa(), y: { grid, ticks: { ...tickOpt, font: { size: 11 } } } } }
+});
+</script>
+</body>
+</html>

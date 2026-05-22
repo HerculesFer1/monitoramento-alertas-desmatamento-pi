@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=Resultado/index.html">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Desmatamento Piauí | GCGEO-SEMARH</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #0F172A;
+      color: #F1F5F9;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+    }
+    .loader {
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+    }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 3px solid rgba(255,255,255,.1);
+      border-top-color: #10B981;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h1 { font-size: 18px; font-weight: 600; color: #F1F5F9; }
+    p { font-size: 13px; color: #64748B; }
+    a { color: #10B981; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="loader">
+    <div class="spinner"></div>
+    <div>
+      <h1>🌿 Dashboard Desmatamento Piauí</h1>
+      <p>Redirecionando… <a href="Resultado/index.html">Clique aqui se não for redirecionado</a></p>
+    </div>
+  </div>
+</body>
+</html>

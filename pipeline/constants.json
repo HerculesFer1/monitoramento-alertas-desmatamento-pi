@@ -1,0 +1,63 @@
+{
+  "anos": [2022, 2023, 2024, 2025],
+  "anos_deradsa": [2024, 2025],
+  "matopiba_pi": [
+    "Alvorada do Gurguéia",
+    "Avelino Lopes",
+    "Baixa Grande do Ribeiro",
+    "Bom Jesus",
+    "Caracol",
+    "Colônia do Gurguéia",
+    "Corrente",
+    "Cristino Castro",
+    "Curimatá",
+    "Currais",
+    "Eliseu Martins",
+    "Gilbués",
+    "Guadalupe",
+    "Jurema",
+    "Landri Sales",
+    "Manoel Emídio",
+    "Monte Alegre do Piauí",
+    "Monteiro do Piauí",
+    "Palmeira do Piauí",
+    "Parnaguá",
+    "Redenção do Gurguéia",
+    "Santa Filomena",
+    "Santa Luz",
+    "São Gonçalo do Gurguéia",
+    "Sebastião Barros",
+    "Uruçuí"
+  ],
+  "vp_ptbr": {
+    "agriculture": "Agricultura",
+    "others": "Outros",
+    "urban_expansion": "Expansão Urbana",
+    "renewable_energy_project": "Projeto de Energia Renovável",
+    "roads": "Abertura de Estradas",
+    "aquaculture": "Aquicultura",
+    "mining": "Mineração",
+    "natural_cause": "Causa Natural",
+    "ilegal_mining": "Mineração Ilegal"
+  },
+  "classes": [
+    "AUTORIZADO",
+    "AUTORIZADO_PARCIALMENTE",
+    "REGULARIZADO",
+    "IRREGULAR"
+  ],
+  "sufixo_classe": {
+    "AUTORIZADO": "AUT",
+    "AUTORIZADO_PARCIALMENTE": "AUTP",
+    "REGULARIZADO": "REG",
+    "IRREGULAR": "IRR"
+  },
+  "threshold_autorizado": 0.99,
+  "flags_prodes": {
+    "concordante": "CONCORDANTE",
+    "discordante": "DISCORDANTE",
+    "sem_prodes": "SEM_PRODES_NO_CICLO",
+    "dados_pendentes": "DADOS_PENDENTES",
+    "nao_disponivel_caa": "NAO_DISPONIVEL_CAATINGA"
+  }
+}

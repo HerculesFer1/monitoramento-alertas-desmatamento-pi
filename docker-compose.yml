@@ -1,0 +1,68 @@
+services:
+
+  # ── Pipeline: processa GeoJSONs e gera alertas_classificados + agregado ──
+  pipeline:
+    build: .
+    env_file:
+      - .env                          # SUPABASE_URL, SUPABASE_SERVICE_KEY (ver .env.example)
+    environment:
+      PYTHONUTF8: "1"
+      GDAL_DATA: /opt/conda/envs/desmatamento/share/gdal
+      PROJ_LIB:  /opt/conda/envs/desmatamento/share/proj
+    volumes:
+      - dados_brutos:/app/base de dados:ro   # dados de entrada (somente leitura)
+      - resultados:/app/Resultado            # saídas do pipeline
+    profiles: [pipeline]
+
+  # ── Upload: envia resultados do pipeline para o Supabase ─────────────────
+  upload:
+    build: .
+    env_file:
+      - .env
+    environment:
+      PYTHONUTF8: "1"
+    volumes:
+      - resultados:/app/Resultado:ro         # lê os resultados gerados pelo pipeline
+    entrypoint: ["conda", "run", "--no-capture-output", "-n", "desmatamento",
+                 "python", "pipeline/_upload_supabase.py"]
+    depends_on:
+      pipeline:
+        condition: service_completed_successfully
+    profiles: [upload]
+
+  # ── Pipeline + Upload em sequência (uso mais comum) ───────────────────────
+  pipeline-e-upload:
+    build: .
+    env_file:
+      - .env
+    environment:
+      PYTHONUTF8: "1"
+      GDAL_DATA: /opt/conda/envs/desmatamento/share/gdal
+      PROJ_LIB:  /opt/conda/envs/desmatamento/share/proj
+    volumes:
+      - dados_brutos:/app/base de dados:ro
+      - resultados:/app/Resultado
+    entrypoint: >
+      bash -c "
+        conda run --no-capture-output -n desmatamento python preprocess.py &&
+        conda run --no-capture-output -n desmatamento python pipeline/_upload_supabase.py
+      "
+    profiles: [full]
+
+# ── Volumes nomeados ──────────────────────────────────────────────────────
+# Para usar bind mounts locais (desenvolvimento), substitua os volumes
+# nomeados por bind mounts abaixo:
+#   dados_brutos: { driver: local, driver_opts: { type: none, device: ./base de dados, o: bind } }
+volumes:
+  dados_brutos:
+    driver: local
+    driver_opts:
+      type:   none
+      device: ${PWD}/base de dados
+      o:      bind
+  resultados:
+    driver: local
+    driver_opts:
+      type:   none
+      device: ${PWD}/Resultado
+      o:      bind

@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório Metodológico — Desmatamento Piauí 2022–2025 | GCGEO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:  #166534;
+  --green2: #15803d;
+  --green3: #4ade80;
+  --amber:  #92400e;
+  --amber2: #d97706;
+  --red:    #991b1b;
+  --red2:   #ef4444;
+  --blue:   #1e3a5f;
+  --ink:    #111827;
+  --ink2:   #374151;
+  --muted:  #6b7280;
+  --line:   #e5e7eb;
+  --paper:  #fafaf8;
+  --white:  #ffffff;
+  --card:   #ffffff;
+  --mono:   'DM Mono', monospace;
+  --serif:  'DM Serif Display', serif;
+  --sans:   'DM Sans', sans-serif;
+  --r: 12px;
+  --sh: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+  --sh2: 0 4px 24px rgba(0,0,0,.1), 0 1px 4px rgba(0,0,0,.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+/* ── PROGRESS BAR ── */
+#progress {
+  position: fixed; top: 0; left: 0; height: 3px;
+  background: linear-gradient(90deg, var(--green2), var(--green3));
+  z-index: 9999; transition: width .1s linear;
+  width: 0%;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 3px; left: 0; right: 0; z-index: 1000;
+  display: flex; align-items: center; gap: 0;
+  padding: 0 32px; height: 56px;
+  background: rgba(250,250,248,.88);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--line);
+}
+.nav-brand {
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  color: var(--green2); letter-spacing: .5px;
+  background: rgba(22,101,52,.08); padding: 4px 10px; border-radius: 6px;
+  margin-right: 20px; flex-shrink: 0;
+}
+.nav-links { display: flex; gap: 2px; overflow-x: auto; flex: 1; }
+.nav-links::-webkit-scrollbar { height: 0; }
+.nav-a {
+  padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;
+  color: var(--muted); text-decoration: none; white-space: nowrap;
+  transition: all .18s; border: 1px solid transparent;
+}
+.nav-a:hover { background: var(--line); color: var(--ink); }
+.nav-a.active { background: var(--ink); color: var(--white); }
+
+/* ── HERO ── */
+.hero {
+  padding: 120px 48px 80px;
+  max-width: 960px; margin: 0 auto;
+  border-bottom: 1px solid var(--line);
+}
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  color: var(--green2); background: rgba(22,101,52,.08);
+  padding: 5px 12px; border-radius: 999px; margin-bottom: 24px;
+  letter-spacing: .3px;
+}
+.hero-tag::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green2); animation: blink 2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.hero h1 {
+  font-family: var(--serif); font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 400; line-height: 1.15; color: var(--ink);
+  margin-bottom: 20px; max-width: 720px;
+}
+.hero h1 em { font-style: italic; color: var(--green2); }
+.hero-sub {
+  font-size: 17px; color: var(--ink2); max-width: 600px;
+  line-height: 1.7; margin-bottom: 36px;
+}
+.hero-meta {
+  display: flex; flex-wrap: wrap; gap: 24px; align-items: center;
+  padding-top: 28px; border-top: 1px solid var(--line);
+}
+.hero-meta-item { display: flex; flex-direction: column; gap: 2px; }
+.hero-meta-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.hero-meta-value { font-family: var(--mono); font-size: 13px; color: var(--ink); font-weight: 500; }
+
+/* ── MAIN LAYOUT ── */
+.main { max-width: 960px; margin: 0 auto; padding: 0 48px 120px; }
+
+/* ── SECTION ── */
+.section {
+  padding: 72px 0 0;
+  opacity: 0; transform: translateY(20px);
+  transition: opacity .5s ease, transform .5s ease;
+}
+.section.visible { opacity: 1; transform: translateY(0); }
+
+.section-header { margin-bottom: 36px; }
+.section-num {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  font-weight: 500; margin-bottom: 8px; display: block;
+}
+.section h2 {
+  font-family: var(--serif); font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 400; color: var(--ink); line-height: 1.2; margin-bottom: 12px;
+}
+.section-lead {
+  font-size: 16px; color: var(--ink2); max-width: 680px; line-height: 1.75;
+}
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px; background: var(--line);
+  margin: 0; border: none;
+}
+
+/* ── PROSE ── */
+.prose { font-size: 15px; color: var(--ink2); line-height: 1.8; }
+.prose p { margin-bottom: 16px; }
+.prose p:last-child { margin-bottom: 0; }
+.prose strong { color: var(--ink); font-weight: 600; }
+.prose code {
+  font-family: var(--mono); font-size: 12px;
+  background: rgba(0,0,0,.06); padding: 1px 6px; border-radius: 4px;
+  color: var(--green);
+}
+
+/* ── CARDS GRID ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+
+.card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 20px; box-shadow: var(--sh);
+}
+
+/* ── KPI CARDS ── */
+.kpi-card { padding: 20px 24px; }
+.kpi-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+.kpi-value { font-family: var(--mono); font-size: 2rem; font-weight: 500; line-height: 1; color: var(--ink); }
+.kpi-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+.kpi-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  font-size: 10px; font-weight: 600; margin-top: 8px;
+}
+.badge-red { background: rgba(153,27,27,.08); color: var(--red); }
+.badge-green { background: rgba(22,101,52,.08); color: var(--green2); }
+.badge-amber { background: rgba(146,64,14,.08); color: var(--amber); }
+.badge-blue { background: rgba(30,58,95,.08); color: var(--blue); }
+
+/* ── SOURCE CARDS ── */
+.source-card {
+  border-left: 3px solid var(--line); padding: 14px 16px;
+  background: var(--card); border-radius: 0 var(--r) var(--r) 0;
+  box-shadow: var(--sh);
+}
+.source-card.green { border-color: var(--green2); }
+.source-card.amber { border-color: var(--amber2); }
+.source-card.red   { border-color: var(--red2); }
+.source-card.blue  { border-color: #3b82f6; }
+.source-name { font-weight: 600; font-size: 13px; color: var(--ink); margin-bottom: 3px; }
+.source-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.source-tag {
+  display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 4px;
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  background: var(--line); color: var(--muted);
+}
+
+/* ── PIPELINE ── */
+.pipeline {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--line); border-radius: var(--r);
+  overflow: hidden; background: var(--card); box-shadow: var(--sh);
+}
+.pipe-step {
+  display: grid; grid-template-columns: 48px 1fr;
+  border-bottom: 1px solid var(--line); transition: background .18s;
+  cursor: default;
+}
+.pipe-step:last-child { border-bottom: none; }
+.pipe-step:hover { background: rgba(0,0,0,.015); }
+.pipe-num {
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 20px 0 0; font-family: var(--mono); font-size: 11px;
+  font-weight: 500; color: var(--muted);
+}
+.pipe-body { padding: 18px 20px 18px 0; }
+.pipe-title { font-weight: 600; font-size: 14px; color: var(--ink); margin-bottom: 4px; }
+.pipe-desc { font-size: 13px; color: var(--ink2); line-height: 1.6; }
+.pipe-formula {
+  margin-top: 10px; padding: 8px 12px; border-radius: 6px;
+  background: rgba(0,0,0,.04); font-family: var(--mono); font-size: 12px;
+  color: var(--green); border-left: 2px solid var(--green2);
+}
+.pipe-warn {
+  margin-top: 8px; padding: 7px 12px; border-radius: 6px;
+  background: rgba(146,64,14,.06); border-left: 2px solid var(--amber2);
+  font-size: 12px; color: var(--amber); line-height: 1.5;
+}
+
+/* ── CLASSIFICATION LEGEND ── */
+.classif-block {
+  border-radius: var(--r); border: 1px solid var(--line);
+  overflow: hidden; box-shadow: var(--sh); background: var(--card);
+}
+.classif-row {
+  display: grid; grid-template-columns: 6px 1fr auto;
+  align-items: stretch; border-bottom: 1px solid var(--line);
+}
+.classif-row:last-child { border-bottom: none; }
+.classif-stripe { width: 6px; }
+.classif-stripe.green { background: var(--green2); }
+.classif-stripe.amber { background: var(--amber2); }
+.classif-stripe.red   { background: var(--red2); }
+.classif-content { padding: 16px 20px; }
+.classif-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.classif-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.classif-pct {
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 20px; font-family: var(--mono); font-size: 1.3rem;
+  font-weight: 500; border-left: 1px solid var(--line); min-width: 80px;
+  background: rgba(0,0,0,.015);
+}
+.classif-pct.green { color: var(--green2); }
+.classif-pct.amber { color: var(--amber2); }
+.classif-pct.red   { color: var(--red2); }
+
+/* ── INTERACTIVE ── */
+.interactive-box {
+  border: 1px solid var(--line); border-radius: var(--r);
+  overflow: hidden; box-shadow: var(--sh);
+}
+.interactive-header {
+  padding: 14px 20px; background: var(--ink);
+  display: flex; align-items: center; gap: 10px;
+}
+.interactive-header-title { font-family: var(--mono); font-size: 11px; font-weight: 500; color: rgba(255,255,255,.7); }
+.interactive-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green3); animation: blink 2s infinite; }
+.interactive-body { padding: 24px; background: var(--card); }
+
+.slider-group { margin-bottom: 20px; }
+.slider-label { font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 8px; display: flex; justify-content: space-between; }
+.slider-val { font-family: var(--mono); font-size: 12px; color: var(--green2); font-weight: 500; }
+input[type=range] {
+  -webkit-appearance: none; width: 100%; height: 4px;
+  border-radius: 4px; background: var(--line); outline: none; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--ink); cursor: pointer; border: 2px solid var(--white);
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+input[type=range]::-webkit-slider-thumb:hover { background: var(--green2); }
+
+.result-display {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 8px; padding: 20px; margin-top: 20px;
+}
+.result-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.result-row:last-child { border-bottom: none; padding-bottom: 0; }
+.result-key { font-size: 13px; color: var(--muted); }
+.result-v { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+.result-v.red { color: var(--red2); }
+.result-v.green { color: var(--green2); }
+.result-v.amber { color: var(--amber2); }
+
+/* IPI meter */
+.ipi-meter-wrap { margin-top: 16px; }
+.ipi-meter-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.ipi-meter-track { height: 12px; background: var(--line); border-radius: 6px; overflow: hidden; position: relative; }
+.ipi-meter-fill { height: 100%; border-radius: 6px; transition: width .3s ease, background .3s ease; }
+.ipi-thresholds { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
+
+/* Classifier */
+.classifier-step {
+  padding: 16px; border-radius: 8px; background: rgba(0,0,0,.02);
+  border: 1px solid var(--line); margin-bottom: 12px;
+}
+.classifier-q { font-weight: 600; font-size: 14px; margin-bottom: 10px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.clf-btn {
+  padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 500;
+  border: 1px solid var(--line); background: var(--white);
+  cursor: pointer; transition: all .18s; font-family: var(--sans);
+}
+.clf-btn:hover { border-color: var(--ink); color: var(--ink); }
+.clf-btn.selected-yes { background: var(--ink); color: white; border-color: var(--ink); }
+.clf-btn.selected-no  { background: #f3f4f6; color: var(--muted); border-color: var(--line); }
+.clf-result {
+  padding: 16px 20px; border-radius: 8px; margin-top: 4px;
+  display: none; font-weight: 600; font-size: 15px;
+  align-items: center; gap: 10px;
+}
+.clf-result.visible { display: flex; }
+.clf-result.green { background: rgba(22,101,52,.08); color: var(--green2); border: 1px solid rgba(22,101,52,.2); }
+.clf-result.amber { background: rgba(146,64,14,.08); color: var(--amber); border: 1px solid rgba(146,64,14,.2); }
+.clf-result.red   { background: rgba(153,27,27,.08); color: var(--red); border: 1px solid rgba(153,27,27,.2); }
+.clf-result-sub { font-size: 12px; font-weight: 400; margin-top: 2px; opacity: .8; }
+
+/* ── YEAR TABLE ── */
+.year-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.year-table th {
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px;
+  color: var(--muted); padding: 10px 12px; border-bottom: 2px solid var(--line);
+  text-align: left; font-family: var(--sans); background: rgba(0,0,0,.015);
+}
+.year-table td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.year-table tr:last-child td { border-bottom: none; }
+.year-table tr:hover td { background: rgba(0,0,0,.01); }
+.mono { font-family: var(--mono); font-size: 12px; }
+.chip {
+  display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+}
+.chip-red   { background: rgba(153,27,27,.08); color: var(--red); }
+.chip-green { background: rgba(22,101,52,.08); color: var(--green2); }
+.chip-amber { background: rgba(146,64,14,.08); color: var(--amber); }
+.chip-gray  { background: var(--line); color: var(--muted); }
+
+/* ── BAR MINI ── */
+.bar-group { display: flex; flex-direction: column; gap: 10px; }
+.bar-item { }
+.bar-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+.bar-name { color: var(--ink2); font-weight: 500; }
+.bar-pct-lbl { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.bar-track { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+
+/* ── CANVAS CHART ── */
+.chart-box { padding: 20px 24px; }
+.chart-title-sm { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 16px; }
+canvas { display: block; }
+
+/* ── CALLOUT ── */
+.callout {
+  padding: 16px 20px; border-radius: var(--r); margin: 20px 0;
+  border: 1px solid; display: flex; gap: 12px;
+}
+.callout.info    { background: rgba(30,58,95,.04); border-color: rgba(30,58,95,.15); }
+.callout.warn    { background: rgba(146,64,14,.05); border-color: rgba(146,64,14,.2); }
+.callout.danger  { background: rgba(153,27,27,.05); border-color: rgba(153,27,27,.15); }
+.callout.success { background: rgba(22,101,52,.05); border-color: rgba(22,101,52,.15); }
+.callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.callout-body { font-size: 13px; line-height: 1.65; }
+.callout-body strong { font-weight: 600; display: block; margin-bottom: 3px; }
+.callout.info    .callout-body  { color: var(--blue); }
+.callout.warn    .callout-body  { color: var(--amber); }
+.callout.danger  .callout-body  { color: var(--red); }
+.callout.success .callout-body  { color: var(--green); }
+
+/* ── TIMELINE ── */
+.timeline { position: relative; padding-left: 28px; }
+.timeline::before {
+  content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+  width: 1px; background: var(--line);
+}
+.tl-item { position: relative; padding-bottom: 28px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+  position: absolute; left: -24px; top: 4px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--ink); border: 2px solid var(--white);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.tl-dot.green { background: var(--green2); box-shadow: 0 0 0 2px var(--green2); }
+.tl-dot.amber { background: var(--amber2); box-shadow: 0 0 0 2px var(--amber2); }
+.tl-dot.red   { background: var(--red2);   box-shadow: 0 0 0 2px var(--red2); }
+.tl-year { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.tl-title { font-weight: 600; font-size: 14px; color: var(--ink); margin-bottom: 4px; }
+.tl-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+/* ── MATOPIBA MAP ── */
+.matopiba-visual {
+  background: linear-gradient(135deg, #f0fdf4, #fefce8);
+  border: 1px solid var(--line); border-radius: var(--r);
+  padding: 24px; text-align: center;
+}
+.mat-stat-row { display: flex; justify-content: center; gap: 40px; margin-top: 16px; }
+.mat-stat { text-align: center; }
+.mat-stat-v { font-family: var(--mono); font-size: 1.8rem; font-weight: 500; color: var(--ink); }
+.mat-stat-l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-top: 3px; }
+
+/* ── LIMITATION CARDS ── */
+.limit-card {
+  display: grid; grid-template-columns: 36px 1fr; gap: 0;
+  border: 1px solid var(--line); border-radius: var(--r);
+  overflow: hidden; background: var(--card); box-shadow: var(--sh);
+}
+.limit-side { background: var(--ink); display: flex; align-items: flex-start; justify-content: center; padding: 16px 0; font-size: 13px; }
+.limit-body { padding: 14px 16px; }
+.limit-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; color: var(--ink); }
+.limit-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+/* ── NEXT STEPS ── */
+.nextstep-card {
+  display: flex; gap: 14px; padding: 16px 20px;
+  border: 1px solid var(--line); border-radius: var(--r);
+  background: var(--card); box-shadow: var(--sh);
+}
+.nextstep-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.nextstep-title { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+.nextstep-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--ink); color: rgba(255,255,255,.6);
+  padding: 40px 48px; font-size: 12px; line-height: 1.8;
+  border-top: 1px solid rgba(255,255,255,.05);
+}
+.footer-inner { max-width: 960px; margin: 0 auto; }
+.footer-brand { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--white); margin-bottom: 8px; }
+.footer-warn {
+  margin-top: 16px; padding: 10px 14px; border-radius: 6px;
+  background: rgba(146,64,14,.15); border: 1px solid rgba(146,64,14,.3);
+  color: #fbbf24; font-size: 12px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .hero { padding: 90px 20px 60px; }
+  .main { padding: 0 20px 80px; }
+  nav { padding: 0 16px; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero > * { animation: fadeUp .6s ease forwards; }
+.hero > *:nth-child(1) { animation-delay: .05s; }
+.hero > *:nth-child(2) { animation-delay: .15s; }
+.hero > *:nth-child(3) { animation-delay: .25s; }
+.hero > *:nth-child(4) { animation-delay: .35s; }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">GCGEO</div>
+  <div class="nav-links">
+    <a class="nav-a" href="#s-contexto">Contexto</a>
+    <a class="nav-a" href="#s-fontes">Fontes</a>
+    <a class="nav-a" href="#s-pipeline">Pipeline</a>
+    <a class="nav-a" href="#s-classificacao">Classificação</a>
+    <a class="nav-a" href="#s-resultados">Resultados</a>
+    <a class="nav-a" href="#s-municipal">Municipal</a>
+    <a class="nav-a" href="#s-temporal">Temporal</a>
+    <a class="nav-a" href="#s-pressao">Pressão</a>
+    <a class="nav-a" href="#s-limitacoes">Limitações</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">Relatório Metodológico · Análise Geoespacial</div>
+  <h1>Monitoramento do <em>Desmatamento</em> no Piauí 2022–2025</h1>
+  <p class="hero-sub">
+    Este relatório documenta a metodologia aplicada na análise de alertas de supressão de vegetação no estado do Piauí, 
+    abrangendo o período de 2022 a 2025. Explica o passo a passo analítico, o fundamento de cada indicador 
+    e os resultados obtidos para uso institucional.
+  </p>
+  <div class="hero-meta">
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Órgão</span>
+      <span class="hero-meta-value">GCGEO — Gerência de Geotecnologia</span>
+    </div>
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Período</span>
+      <span class="hero-meta-value">2022 · 2023 · 2024 · 2025</span>
+    </div>
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Alertas Analisados</span>
+      <span class="hero-meta-value">13.299 eventos</span>
+    </div>
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Área Total</span>
+      <span class="hero-meta-value">577.230 ha</span>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ══ 1. CONTEXTO ══ -->
+  <section class="section" id="s-contexto">
+    <div class="section-header">
+      <span class="section-num">01 / Contexto e Objetivo</span>
+      <h2>Por que este monitoramento existe?</h2>
+      <p class="section-lead">
+        O Piauí concentra extensas áreas de Cerrado e Caatinga sob crescente pressão agropecuária, 
+        especialmente na faixa do MATOPIBA. A ausência de um painel integrado que correlacione alertas 
+        de desmatamento com autorizações legais dificulta a triagem de irregularidades pela gestão pública.
+      </p>
+    </div>
+
+    <div class="prose">
+      <p>
+        O objetivo central desta análise é <strong>classificar cada hectare de vegetação suprimida</strong> 
+        como autorizado, regularizado ou irregular — cruzando dados de detecção remota com os registros 
+        de licenciamento ambiental do SINAFLOR+/IBAMA e SEMARH-PI. O resultado orienta a priorização 
+        de fiscalização sem substituir o processo administrativo ou judicial.
+      </p>
+      <p>
+        Este relatório é destinado a gestores, técnicos e assessores jurídicos que precisam compreender 
+        não apenas os números finais, mas <strong>como eles foram produzidos e quais são seus limites de confiabilidade</strong>.
+      </p>
+    </div>
+
+    <div class="callout info" style="margin-top: 24px;">
+      <div class="callout-icon">ℹ</div>
+      <div class="callout-body">
+        <strong>Escopo de aplicação</strong>
+        Os resultados desta análise servem para triagem exploratória e priorização de campo. 
+        Não substituem intersecção espacial vetorial precisa — análise que sobrepõe geometricamente os polígonos de alerta sobre os polígonos de autorização, hectare a hectare — 
+        necessária para fins de autuação ou processo administrativo.
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" style="margin-top: 72px;">
+
+  <!-- ══ 2. FONTES ══ -->
+  <section class="section" id="s-fontes">
+    <div class="section-header">
+      <span class="section-num">02 / Fontes de Dados</span>
+      <h2>De onde vêm os dados?</h2>
+      <p class="section-lead">
+        Quatro bases independentes foram integradas. Cada uma cobre um aspecto diferente da cadeia 
+        de licenciamento e detecção, com coberturas temporais distintas — o que impõe limitações específicas à análise.
+      </p>
+    </div>
+
+    <div class="grid-2" style="gap: 12px;">
+      <div class="source-card green">
+        <div class="source-name">MapBiomas Alerta</div>
+        <div class="source-desc">Plataforma de detecção automática de supressão de vegetação por imagens de satélite. Gera os polígonos de alerta com data, área e localização georreferenciada de cada evento detectado.</div>
+        <span class="source-tag">Alertas · Área · Bioma · Data</span>
+      </div>
+      <div class="source-card blue">
+        <div class="source-name">SINAFLOR+ / IBAMA</div>
+        <div class="source-desc">Sistema federal de controle de autorizações de supressão de vegetação (ASV). Registra as licenças federais emitidas, com status, área autorizada e período de validade.</div>
+        <span class="source-tag">ASV Federal · Status · Área autorizada</span>
+      </div>
+      <div class="source-card amber">
+        <div class="source-name">SEMARH-PI</div>
+        <div class="source-desc">Secretaria estadual responsável pelas Declarações de Regularidade Ambiental de Supressão de Vegetação (DERADSA). Dados disponíveis apenas para 2024 e 2025.</div>
+        <span class="source-tag">DERADSA · 2024 e 2025 apenas</span>
+      </div>
+      <div class="source-card" style="border-color: var(--muted)">
+        <div class="source-name">IBGE — Malha Municipal</div>
+        <div class="source-desc">Delimitações oficiais dos municípios do Piauí (código IBGE 22). Utilizadas para agregação espacial dos alertas por município e cruzamento com o recorte MATOPIBA.</div>
+        <span class="source-tag">Resolução 5 · PI (22)</span>
+      </div>
+    </div>
+
+    <div class="callout warn" style="margin-top: 20px;">
+      <div class="callout-icon">⚠</div>
+      <div class="callout-body">
+        <strong>Lacuna crítica: DERADSAs 2022 e 2023</strong>
+        Os registros SEMARH-PI para os anos de 2022 e 2023 não estavam disponíveis no período de análise. 
+        A coluna "Regularizado" para esses anos foi zerada. A classificação de fragmentos potencialmente 
+        regularizados nesse período recai por padrão sobre a categoria "Irregular", podendo superestimar a irregularidade real.
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" style="margin-top: 72px;">
+
+  <!-- ══ 3. PIPELINE ══ -->
+  <section class="section" id="s-pipeline">
+    <div class="section-header">
+      <span class="section-num">03 / Pipeline de Análise</span>
+      <h2>Como os dados são processados?</h2>
+      <p class="section-lead">
+        O processo analítico segue cinco etapas sequenciais, desde a detecção do alerta até a 
+        atribuição da classificação final. Cada etapa é descrita abaixo com seu propósito e formulação.
+      </p>
+    </div>
+
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-num">01</div>
+        <div class="pipe-body">
+          <div class="pipe-title">Ingestão dos alertas MapBiomas</div>
+          <div class="pipe-desc">
+            Cada alerta detectado no Piauí é carregado com seus atributos: polígono vetorial, 
+            área em hectares, data de detecção, bioma (Cerrado ou Caatinga) e município. 
+            São 13.299 eventos no período 2022–2025, totalizando 577.230 ha alertados.
+          </div>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">02</div>
+        <div class="pipe-body">
+          <div class="pipe-title">Cruzamento com ASVs federais (SINAFLOR+)</div>
+          <div class="pipe-desc">
+            Cada fragmento de alerta é confrontado com as Autorizações de Supressão de Vegetação 
+            ativas e válidas na data do alerta, no mesmo bioma e município. Na metodologia ideal, 
+            essa operação é uma <strong>intersecção geométrica vetorial</strong> — o polígono do alerta 
+            é recortado contra o polígono da ASV para medir a sobreposição exata.
+          </div>
+          <div class="pipe-formula">Área Autorizada = sobreposição geométrica exata entre o polígono do alerta e o polígono da ASV correspondente, medida em hectares</div>
+          <div class="pipe-warn">
+            Na versão atual, a sobreposição é estimada proporcionalmente 
+            via razão de áreas, sem intersecção vetorial real.
+          </div>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">03</div>
+        <div class="pipe-body">
+          <div class="pipe-title">Cruzamento com DERADSAs estaduais (SEMARH-PI)</div>
+          <div class="pipe-desc">
+            Os fragmentos não cobertos por ASV são testados contra as Declarações de Regularidade 
+            da SEMARH-PI. Um fragmento é classificado como "Regularizado" se existe DERADSA 
+            correspondente com validade e abrangência compatíveis. Apenas 2024 e 2025 têm dados disponíveis.
+          </div>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">04</div>
+        <div class="pipe-body">
+          <div class="pipe-title">Cálculo do IPI — Índice de Pressão de Ilegalidade</div>
+          <div class="pipe-desc">
+            O IPI quantifica a proporção da área alertada que não possui cobertura de autorização. 
+            É o principal indicador de pressão irregular por ano e bioma. Valores acima de 50% 
+            indicam que a maioria das supressões ocorreu sem amparo legal identificado.
+          </div>
+          <div class="pipe-formula">
+            IPI (%) = Área Alertada / (Área Alertada + Área ASV) × 100
+          </div>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">05</div>
+        <div class="pipe-body">
+          <div class="pipe-title">Classificação final e agregação por município e bioma</div>
+          <div class="pipe-desc">
+            Cada fragmento recebe sua classe final: <strong style="color:var(--green2)">Autorizado</strong>, 
+            <strong style="color:var(--amber2)">Regularizado</strong> ou 
+            <strong style="color:var(--red2)">Irregular</strong>. Os resultados são então 
+            agregados por município, bioma, vetor de pressão e ano para produção dos indicadores 
+            do painel e deste relatório.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" style="margin-top: 72px;">
+
+  <!-- ══ 4. CLASSIFICAÇÃO ══ -->
+  <section class="section" id="s-classificacao">
+    <div class="section-header">
+      <span class="section-num">04 / Sistema de Classificação</span>
+      <h2>O que significa cada categoria?</h2>
+      <p class="section-lead">
+        A classificação é binária em cascata: primeiro verifica cobertura por ASV, depois por DERADSA. 
+        O que restar é considerado irregular. Abaixo estão as três categorias com seus critérios exatos.
+      </p>
+    </div>
+
+    <div class="classif-block" style="margin-bottom: 24px;">
+      <div class="classif-row">
+        <div class="classif-stripe green"></div>
+        <div class="classif-content">
+          <div class="classif-title" style="color:var(--green2)">✔ Supressão Autorizada (ASV)</div>
+          <div class="classif-body">
+            Área de alerta sobreposta a uma Autorização de Supressão de Vegetação emitida pelo SINAFLOR+/IBAMA, 
+            com status ativo e válido na data de detecção do alerta, no mesmo bioma e município. 
+            Representa supressão dentro do marco legal federal.
+          </div>
+        </div>
+        <div class="classif-pct green">~44%</div>
+      </div>
+      <div class="classif-row">
+        <div class="classif-stripe amber"></div>
+        <div class="classif-content">
+          <div class="classif-title" style="color:var(--amber2)">◑ Supressão Regularizada (DERADSA)</div>
+          <div class="classif-body">
+            Área de alerta sobreposta a uma Declaração de Regularidade Ambiental de Supressão de Vegetação 
+            emitida pela SEMARH-PI. Indica regularização estadual posterior à supressão. 
+            Disponível somente para 2024 e 2025. Não implica que a supressão estava previamente autorizada.
+          </div>
+        </div>
+        <div class="classif-pct amber">~5%</div>
+      </div>
+      <div class="classif-row">
+        <div class="classif-stripe red"></div>
+        <div class="classif-content">
+          <div class="classif-title" style="color:var(--red2)">✘ Irregular / Não Autorizado</div>
+          <div class="classif-body">
+            Fragmento de alerta sem cobertura por ASV ou DERADSA válidas. Inclui supressões sem qualquer 
+            instrumento legal identificado e — por limitação de dados — supressões eventualmente 
+            regularizadas em 2022/2023 cujas DERADSAs não estão disponíveis.
+          </div>
+        </div>
+        <div class="classif-pct red">~51%</div>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE: Classificador -->
+    <div class="interactive-box">
+      <div class="interactive-header">
+        <div class="interactive-dot"></div>
+        <div class="interactive-header-title">SIMULADOR — Classificação de Fragmento</div>
+      </div>
+      <div class="interactive-body">
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">
+          Responda as perguntas abaixo para ver como um fragmento de alerta seria classificado pelo pipeline.
+        </p>
+        <div class="classifier-step" id="clf-q1">
+          <div class="classifier-q">1. Existe ASV federal ativa (SINAFLOR+) válida na data e bioma do alerta?</div>
+          <div class="btn-row">
+            <button class="clf-btn" onclick="clfAnswer(1,'sim')">✓ Sim, existe ASV</button>
+            <button class="clf-btn" onclick="clfAnswer(1,'nao')">✗ Não existe ASV</button>
+          </div>
+        </div>
+        <div class="classifier-step" id="clf-q2" style="display:none;">
+          <div class="classifier-q">2. Existe DERADSA estadual (SEMARH-PI) correspondente?</div>
+          <div class="btn-row">
+            <button class="clf-btn" onclick="clfAnswer(2,'sim')">✓ Sim, há DERADSA</button>
+            <button class="clf-btn" onclick="clfAnswer(2,'nao')">✗ Não há DERADSA</button>
+          </div>
+        </div>
+        <div class="clf-result" id="clf-result-aut" class="clf-result green">
+          <div>
+            <div>✔ Supressão <strong>AUTORIZADA</strong></div>
+            <div class="clf-result-sub">ASV válida identificada. Fragmento dentro do marco legal federal.</div>
+          </div>
+        </div>
+        <div class="clf-result" id="clf-result-reg" class="clf-result amber">
+          <div>
+            <div>◑ Supressão <strong>REGULARIZADA</strong></div>
+            <div class="clf-result-sub">Sem ASV, mas DERADSA estadual identificada. Verificar se há anterioridade de autorização.</div>
+          </div>
+        </div>
+        <div class="clf-result" id="clf-result-irr" class="clf-result red">
+          <div>
+            <div>✘ Supressão <strong>IRREGULAR</strong></div>
+            <div class="clf-result-sub">Nenhum instrumento legal identificado. Prioridade para triagem de fiscalização.</div>
+          </div>
+        </div>
+        <button onclick="clfReset()" id="clf-reset" style="display:none; margin-top:14px; padding:7px 16px; border-radius:6px; font-size:12px; font-weight:600; border:1px solid var(--line); background:var(--paper); cursor:pointer; font-family:var(--sans); color:var(--muted);">↺ Reiniciar simulação</button>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE: Calculadora IPI -->
+    <div class="interactive-box" style="margin-top: 20px;">
+      <div class="interactive-header">
+        <div class="interactive-dot"></div>
+        <div class="interactive-header-title">CALCULADORA — Índice de Pressão de Ilegalidade (IPI)</div>
+      </div>
+      <div class="interactive-body">
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">
+          O IPI é o indicador principal da análise. Ajuste os valores abaixo para entender como ele é calculado 
+          e o que cada faixa representa operacionalmente.
+        </p>
+        <div class="slider-group">
+          <div class="slider-label">
+            Área Alertada (ha)
+            <span class="slider-val" id="lbl-alerta">148.275 ha</span>
+          </div>
+          <input type="range" min="1000" max="200000" step="500" value="148275" id="sl-alerta" oninput="calcIPI()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            Área com ASV válida (ha)
+            <span class="slider-val" id="lbl-asv">125.929 ha</span>
+          </div>
+          <input type="range" min="0" max="200000" step="500" value="125929" id="sl-asv" oninput="calcIPI()">
+        </div>
+        <div class="result-display" id="ipi-result">
+          <div class="result-row">
+            <span class="result-key">Área Alertada</span>
+            <span class="result-v" id="rv-alerta">148.275 ha</span>
+          </div>
+          <div class="result-row">
+            <span class="result-key">Área com ASV (coberta)</span>
+            <span class="result-v green" id="rv-asv">125.929 ha</span>
+          </div>
+          <div class="result-row">
+            <span class="result-key">IPI Calculado</span>
+            <span class="result-v red" id="rv-ipi" style="font-size:1.2rem">—</span>
+          </div>
+          <div class="ipi-meter-wrap">
+            <div class="ipi-meter-label">
+              <span>0%</span><span id="ipi-interp" style="font-weight:600;">—</span><span>100%</span>
+            </div>
+            <div class="ipi-meter-track">
+              <div class="ipi-meter-fill" id="ipi-bar" style="width:0%;background:var(--green2)"></div>
+            </div>
+            <div class="ipi-thresholds">
+              <span>Baixo</span><span>40%</span><span>60%</span><span>Alto</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;">
+          <div style="padding:12px;border-radius:8px;background:rgba(22,101,52,.06);border:1px solid rgba(22,101,52,.15);text-align:center;">
+            <div style="font-family:var(--mono);font-size:1.1rem;font-weight:500;color:var(--green2);">IPI &lt; 40%</div>
+            <div style="font-size:11px;color:var(--green);margin-top:4px;">Pressão Baixa<br>Maioria autorizada</div>
+          </div>
+          <div style="padding:12px;border-radius:8px;background:rgba(146,64,14,.06);border:1px solid rgba(146,64,14,.15);text-align:center;">
+            <div style="font-family:var(--mono);font-size:1.1rem;font-weight:500;color:var(--amber);">40–60%</div>
+            <div style="font-size:11px;color:var(--amber);margin-top:4px;">Pressão Moderada<br>Atenção recomendada</div>
+          </div>
+          <div style="padding:12px;border-radius:8px;background:rgba(153,27,27,.06);border:1px solid rgba(153,27,27,.15);text-align:center;">
+            <div style="font-family:var(--mono);font-size:1.1rem;font-weight:500;color:var(--red);">IPI &gt; 60%</div>
+            <div style="font-size:11px;color:var(--red);margin-top:4px;">Pressão Alta<br>Prioridade de fiscalização</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" style="margin-top: 72px;">
+
+  <!-- ══ 5. RESULTADOS AGREGADOS ══ -->
+  <section class="section" id="s-resultados">
+    <div class="section-header">
+      <span class="section-num">05 / Resultados Agregados 2022–2025</span>
+      <h2>O que os dados revelam no conjunto?</h2>
+      <p class="section-lead">
+        Os quatro anos analisados cobrem 577.230 ha alertados em 13.299 eventos. 
+        Os KPIs abaixo traduzem os resultados agregados da classificação, com 
+        explicação do significado de cada métrica.
+      </p>
+    </div>
+
+    <div class="grid-4" style="margin-bottom: 20px;">
+      <div class="card kpi-card">
+        <div class="kpi-label">Área Total Alertada</div>
+        <div class="kpi-value">577k</div>
+        <div class="kpi-sub">hectares · 4 anos</div>
+        <div class="kpi-badge badge-blue">≈ 4,1× Teresina</div>
+      </div>
+      <div class="card kpi-card">
+        <div class="kpi-label">Irregular (estimado)</div>
+        <div class="kpi-value">297k</div>
+        <div class="kpi-sub">ha sem cobertura legal</div>
+        <div class="kpi-badge badge-red">~51,4% do total</div>
+      </div>
+      <div class="card kpi-card">
+        <div class="kpi-label">Autorizado (ASV)</div>
+        <div class="kpi-value">252k</div>
+        <div class="kpi-sub">ha com ASV válida</div>
+        <div class="kpi-badge badge-green">~43,7% do total</div>
+      </div>
+      <div class="card kpi-card">
+        <div class="kpi-label">Regularizado (DERADSA)</div>
+        <div class="kpi-value">27k</div>
+        <div class="kpi-sub">ha 2024–2025 apenas</div>
+        <div class="kpi-badge badge-amber">~4,7% do total</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 16px; padding: 0; overflow: hidden;">
+      <div class="chart-box">
+        <div class="chart-title-sm">Composição Anual da Classificação (ha)</div>
+        <div style="position:relative;height:240px;width:100%;"><canvas id="c-composicao"></canvas></div>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>
+        Os KPIs de área total e classificação são o resultado direto do pipeline de cruzamento descrito na seção anterior. 
+        O valor de <strong>577.230 ha</strong> corresponde à soma de todos os alertas MapBiomas válidos 
+        detectados dentro dos limites do Piauí entre 2022 e 2025.
+      </p>
+      <p>
+        A métrica <strong>"4,1× Teresina"</strong> usa a área do município de Teresina (139.200 ha) como 
+        referência dimensional — recurso de comunicação para contextualizar a escala do fenômeno para 
+        públicos não especializados em hectares.
+      </p>
+      <p>
+        Os percentuais de classificação (~51% irregular, ~44% autorizado, ~5% regularizado) 
+        são <strong>valores estimados por proporção</strong> baseados no IPI. A incerteza é maior nos anos 2022–2023 
+        pela ausência de DERADSAs, conforme detalhado na seção de Limitações.
+      </p>
+    </div>
+
+    <!-- IPI por ano -->
+    <div class="card" style="margin-top: 20px;">
+      <div style="padding: 4px 4px 16px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .8px;">IPI por Ano — Índice de Pressão de Ilegalidade</div>
+      <div class="bar-group" id="ipi-bars-ano"></div>
+    </div>
+  </section>
+
+  <hr class="divider" style="margin-top: 72px;">
+
+  <!-- ══ 6. MUNICIPAL ══ -->
+  <section class="section" id="s-municipal">
+    <div class="section-header">
+      <span class="section-num">06 / Análise Municipal</span>
+      <h2>Como os alertas se distribuem por município?</h2>
+      <p class="section-lead">
+        A agregação municipal permite identificar os hotspots de pressão sobre a vegetação. 
+        O ranking é ordenado por área total alertada acumulada no período, independente da classificação.
+      </p>
+    </div>
+
+    <div class="prose" style="margin-bottom: 24px;">
+      <p>
+        Para cada município, a área total alertada é dividida pelas classificações proporcionalmente 
+        usando o IPI daquele ano. Essa abordagem é uma aproximação: na metodologia ideal, 
+        cada polígono de alerta seria interseccionado individualmente com os polígonos de ASV 
+        e DERADSA do mesmo município.
+      </p>
+      <p>
+        O <strong>Ranking Top 20</strong> apresenta os municípios com maior área alertada acumulada. 
+        A coluna "Irregular (estimado)" estima a área sem cobertura legal, usando 51,5% como proporção 
+        média do IPI agregado do período — valor derivado da média ponderada dos IPIs anuais.
+      </p>
+    </div>
+
+    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 20px;">
+      <div style="overflow-x:auto;">
+        <table class="year-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Município</th>
+              <th>Bioma</th>
+              <th>MATOPIBA</th>
+              <th>Área Alertada (ha)</th>
+              <th>Irregular Estimado (ha)</th>
+              <th>% do Total PI</th>
+            </tr>
+          </thead>
+          <tbody id="mun-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ</div>
+      <div class="callout-body">
+        <strong>Por que ranquear por área alertada e não por área irregular?</strong>
+        O ranking por área alertada é metodologicamente mais robusto porque não depende da estimativa proporcional. 
+        O dado de área alertada vem diretamente dos polígonos MapBiomas, sem manipulação estatística. 
+        A coluna "Irregular Estimado" complementa com o valor calculado, mas não determina o ordenamento.
+      </div>
+    </div>
+
+    <!-- MATOPIBA -->
+    <div class="card matopiba-visual" style="margin-top: 20px;">
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--amber); margin-bottom: 8px;">Recorte MATOPIBA</div>
+      <p style="font-size: 13px; color: var(--ink2); max-width: 580px; margin: 0 auto 16px; line-height: 1.65;">
+        O MATOPIBA é a fronteira agrícola que abrange municípios do Maranhão, Tocantins, Piauí e Bahia. 
+        No Piauí, 26 municípios integram esse recorte, todos no Cerrado. São responsáveis por 
+        aproximadamente <strong>65% da área alertada no Cerrado piauiense</strong>, refletindo a 
+        pressão agropecuária concentrada nessa faixa.
+      </p>
+      <div class="mat-stat-row">
+        <div class="mat-stat">
+          <div class="mat-stat-v">26</div>
+          <div class="mat-stat-l">Municípios PI no MATOPIBA</div>
+        </div>
+        <div class="mat-stat">
+          <div class="mat-stat-v">~65%</div>
+          <div class="mat-stat-l">dos alertas do Cerrado PI</div>
+        </div>
+        <div class="mat-stat">
+          <div class="mat-stat-v">~55%</div>
+          <div class="mat-stat-l">do irregular total do estado</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" style="margin-top: 72px;">
+
+  <!-- ══ 7. TEMPORAL ══ -->
+  <section class="section" id="s-temporal">
+    <div class="section-header">
+      <span class="section-num">07 / Evolução Temporal</span>
+      <h2>Como a pressão variou ao longo dos anos?</h2>
+      <p class="section-lead">
+        A análise temporal revela padrões de sazonalidade, anos de pico e tendências de longo prazo. 
+        Cada indicador é explicado abaixo com seu método de cálculo.
+      </p>
+    </div>
+
+    <!-- Tabela anual -->
+    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 24px;">
+      <div style="overflow-x:auto;">
+        <table class="year-table">
+          <thead>
+            <tr>
+              <th>Ano</th>
+              <th>Alertas</th>
+              <th>Área Total (ha)</th>
+              <th>Cerrado (ha)</th>
+              <th>Caatinga (ha)</th>
+              <th>ASV (ha)</th>
+              <th>DERADSA</th>
+              <th>IPI (%)</th>
+              <th>IDI</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>2022</strong></td>
+              <td class="mono">3.062</td>
+              <td class="mono">148.275</td>
+              <td class="mono">136.059</td>
+              <td class="mono">12.217</td>
+              <td class="mono">125.930</td>
+              <td><span class="chip chip-gray">—</span></td>
+              <td><span class="chip chip-amber">54,07%</span></td>
+              <td class="mono">1,015</td>
+            </tr>
+            <tr>
+              <td><strong>2023</strong></td>
+              <td class="mono">4.527</td>
+              <td class="mono">136.010</td>
+              <td class="mono">115.915</td>
+              <td class="mono">20.095</td>
+              <td class="mono">98.373</td>
+              <td><span class="chip chip-gray">—</span></td>
+              <td><span class="chip chip-red">58,03%</span></td>
+              <td class="mono">0,878</td>
+            </tr>
+            <tr>
+              <td><strong>2024</strong></td>
+              <td class="mono">3.034</td>
+              <td class="mono">142.880</td>
+              <td class="mono">109.374</td>
+              <td class="mono">33.506</td>
+              <td class="mono">184.303</td>
+              <td><span class="chip chip-amber">11.586 ha</span></td>
+              <td><span class="chip chip-green">42,18%</span></td>
+              <td class="mono">0,836</td>
+            </tr>
+            <tr>
+              <td><strong>2025</strong></td>
+              <td class="mono">2.676</td>
+              <td class="mono">150.065</td>
+              <td class="mono">114.838</td>
+              <td class="mono">35.227</td>
+              <td class="mono">123.607</td>
+              <td><span class="chip chip-amber">15.650 ha</span></td>
+              <td><span class="chip chip-amber">51,87%</span></td>
+              <td class="mono">0,887</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid-2" style="gap: 16px; margin-bottom: 20px;">
+      <div class="card">
+        <div class="chart-title-sm">Área Alertada por Bioma (ha)</div>
+        <div style="position:relative;height:200px;width:100%;"><canvas id="c-bioma"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="chart-title-sm">Área Alertada por Mês — 2022 a 2025 (ha)</div>
+        <div style="position:relative;height:200px;width:100%;"><canvas id="c-mensal"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Explicação indicadores -->
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot red"></div>
+        <div class="tl-year">2023 — Pico do IPI</div>
+        <div class="tl-title">Ano de maior pressão irregular: IPI = 58,03%</div>
+        <div class="tl-desc">
+          2023 registrou o maior número de alertas do período (4.527) e o menor volume de ASVs proporcionais (98.373 ha), 
+          resultando no IPI mais elevado. Coincide com expansão agrícola acelerada no MATOPIBA e aumento da pressão sobre o Cerrado.
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot green"></div>
+        <div class="tl-year">2024 — Melhor desempenho</div>
+        <div class="tl-title">IPI cai para 42,18% — maior volume de ASVs emitidas</div>
+        <div class="tl-desc">
+          2024 apresentou o maior volume de ASVs do período (184.303 ha), superando inclusive a área alertada. 
+          Isso pode refletir antecipação de licenciamentos ou regularização retroativa. 
+          É também o primeiro ano com dados DERADSA disponíveis (11.586 ha, 32 declarações).
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot amber"></div>
+        <div class="tl-year">2022 → 2025 — Tendência geral</div>
+        <div class="tl-title">Redução de 2,8% na área irregular estimada</div>
+        <div class="tl-desc">
+          A tendência agregada entre 2022 e 2025 mostra leve redução. Entretanto, a área alertada bruta 
+          em 2025 (150.065 ha) é ligeiramente superior a 2022 (148.275 ha), indicando que o número de 
+          eventos de supressão não recuou — apenas a proporção com cobertura legal melhorou marginalmente.
+        </div>
+      </div>
+    </div>
+
+    <div class="callout warn" style="margin-top: 28px;">
+      <div class="callout-icon">⚠</div>
+      <div class="callout-body">
+        <strong>IDI — Índice de Densidade de Ilegalidade (interpretação)</strong>
+        O IDI é calculado como razão entre área irregular estimada e número de alertas. 
+        Valores acima de 1,0 indicam que em média cada alerta representa mais de 1 ha irregular — 
+        fragmentos grandes predominam. A queda de 1,015 (2022) para 0,836 (2024) sugere 
+        que os alertas recentes têm fragmentos menores ou maior proporção autorizada.
+      </div>
+    </div>
+
+    <div class="prose" style="margin-top: 20px;">
+      <p>
+        <strong>Sazonalidade:</strong> O heatmap mensal revela que os meses de maior supressão concentram-se 
+        entre março e junho — período de seca intermediária no Cerrado piauiense, 
+        favorável à operação de máquinas e transporte. Agosto e setembro também apresentam picos, 
+        coincidindo com o auge da estiagem. A leitura do heatmap deve considerar que a detecção 
+        pelo satélite pode ter defasagem de aproximadamente 45 dias em relação ao evento real.
+      </p>
+    </div>
+  </section>
+
+  <hr class="divider" style="margin-top: 72px;">
+
+  <!-- ══ 8. PRESSÃO ══ -->
+  <section class="section" id="s-pressao">
+    <div class="section-header">
+      <span class="section-num">08 / Vetores de Pressão</span>
+      <h2>O que causa o desmatamento?</h2>
+      <p class="section-lead">
+        Cada alerta MapBiomas é atribuído a um vetor de pressão — a atividade humana ou natural 
+        responsável pela supressão. A identificação usa classificação automatizada de uso do solo 
+        combinada com contexto espacial.
+      </p>
+    </div>
+
+    <div class="bar-group" id="vp-bars" style="margin-bottom: 24px;"></div>
+
+    <div class="prose">
+      <p>
+        <strong>Agricultura</strong> é responsável por 566.018 ha dos 577.230 ha alertados — 
+        uma concentração de <strong>98,1%</strong> da pressão. Esse resultado não é surpreendente 
+        dado o contexto do MATOPIBA, mas tem implicações metodológicas: a maioria das ASVs emitidas 
+        também é para fins agropecuários, tornando o cruzamento mais direto do que em cenários 
+        com múltiplos vetores competindo.
+      </p>
+      <p>
+        Os demais vetores — expansão urbana (2.326 ha), energia renovável (1.927 ha), estradas (570 ha) — 
+        são marginais em área mas relevantes em outra dimensão: 
+        <strong>tendem a ocorrer em áreas sem ASV correspondente</strong>, pois o licenciamento 
+        de infraestrutura segue fluxos diferentes do licenciamento agropecuário do SINAFLOR+.
+      </p>
+    </div>
+
+    <div class="callout info" style="margin-top: 20px;">
+      <div class="callout-icon">ℹ</div>
+      <div class="callout-body">
+        <strong>Como o vetor de pressão é identificado?</strong>
+        O MapBiomas Alerta atribui o vetor de pressão combinando: (1) a classificação do uso do solo 
+        no entorno do alerta nos anos anteriores, (2) o destino do uso após a supressão, 
+        e (3) regras de contexto espacial (proximidade a rodovias, áreas urbanas, projetos eólicos cadastrados). 
+        Para o Piauí, a predominância do vetor "Agricultura" reflete a dinâmica de conversão do Cerrado 
+        para pastagem e soja no sudoeste do estado.
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" style="margin-top: 72px;">
+
+  <!-- ══ 9. LIMITAÇÕES ══ -->
+  <section class="section" id="s-limitacoes">
+    <div class="section-header">
+      <span class="section-num">09 / Limitações e Próximos Passos</span>
+      <h2>O que esta análise não consegue garantir?</h2>
+      <p class="section-lead">
+        Toda análise geoespacial tem limites de confiabilidade que precisam ser explicitados para 
+        uso institucional correto. As limitações abaixo não invalidam os resultados — 
+        mas delimitam o grau de confiança de cada afirmação.
+      </p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px;">
+      <div class="limit-card">
+        <div class="limit-side">⊘</div>
+        <div class="limit-body">
+          <div class="limit-title">Classificação por estimativa proporcional, não por sobreposição geométrica direta</div>
+          <div class="limit-desc">
+            A classificação usa o IPI — razão entre a área total alertada e a área total autorizada no mesmo ano e bioma — como estimativa de cobertura legal, sem comparar individualmente cada polígono de alerta com os polígonos de ASV e DERADSA. Isso introduz imprecisão: um alerta pode ser computado como autorizado mesmo que, geograficamente, a autorização não coincida com sua localização exata.
+          </div>
+        </div>
+      </div>
+      <div class="limit-card">
+        <div class="limit-side">⊘</div>
+        <div class="limit-body">
+          <div class="limit-title">DERADSAs ausentes para 2022 e 2023</div>
+          <div class="limit-desc">
+            Os dados SEMARH-PI de declarações de regularidade só estavam disponíveis para 2024 e 2025. 
+            Supressões regularizadas naqueles anos são contabilizadas como "Irregular", 
+            possivelmente superestimando a irregularidade real nesse período em até 10–15%.
+          </div>
+        </div>
+      </div>
+      <div class="limit-card">
+        <div class="limit-side">⊘</div>
+        <div class="limit-body">
+          <div class="limit-title">Defasagem de detecção (~45 dias)</div>
+          <div class="limit-desc">
+            A data de detecção pelo MapBiomas pode ser 30 a 60 dias posterior à data real do evento. 
+            ASVs validadas pela data de detecção podem estar vencidas na data real do evento, 
+            ou vice-versa. Essa defasagem afeta principalmente a precisão temporal da classificação.
+          </div>
+        </div>
+      </div>
+      <div class="limit-card">
+        <div class="limit-side">⊘</div>
+        <div class="limit-body">
+          <div class="limit-title">Estimativa MATOPIBA por proporção fixa</div>
+          <div class="limit-desc">
+            A contribuição do MATOPIBA é estimada como 65% da área alertada do Cerrado (fator fixo). 
+            Essa proporção é derivada de análises anteriores do recorte e não de intersecção 
+            espacial com o shapefile oficial do MATOPIBA por ano.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Próximos Passos -->
+    <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 16px;">Próximos Passos Recomendados</div>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div class="nextstep-card">
+        <div class="nextstep-icon">🔬</div>
+        <div>
+          <div class="nextstep-title">Implementar intersecção espacial real (GeoPandas)</div>
+          <div class="nextstep-desc">Realizar a sobreposição geométrica direta entre os polígonos de alerta e os polígonos de ASV e DERADSA, medindo a área de coincidência exata em hectares para cada fragmento. Isso substituirá a estimativa proporcional atual e fornecerá classificação com precisão geométrica certificável.</div>
+        </div>
+      </div>
+      <div class="nextstep-card">
+        <div class="nextstep-icon">📋</div>
+        <div>
+          <div class="nextstep-title">Solicitar DERADSAs retroativas 2022–2023 à SEMARH-PI</div>
+          <div class="nextstep-desc">Reprocessar a classificação desses anos com os registros estaduais completos reduziria a superestimação de irregularidade naquele período.</div>
+        </div>
+      </div>
+      <div class="nextstep-card">
+        <div class="nextstep-icon">🗺</div>
+        <div>
+          <div class="nextstep-title">Incorporar shapefile oficial do MATOPIBA (MI/MAPA)</div>
+          <div class="nextstep-desc">Substituir a proporção fixa de 65% por intersecção espacial com o polígono oficial, permitindo cálculo preciso por ano e por município.</div>
+        </div>
+      </div>
+      <div class="nextstep-card">
+        <div class="nextstep-icon">⏱</div>
+        <div>
+          <div class="nextstep-title">Corrigir defasagem temporal com data real do evento</div>
+          <div class="nextstep-desc">Utilizar a data confirmada do evento (não da detecção) para cruzamento com ASVs, aumentando a precisão da classificação temporal.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout danger" style="margin-top: 24px;">
+      <div class="callout-icon">⛔</div>
+      <div class="callout-body">
+        <strong>Uso inadequado dos resultados</strong>
+        Os valores deste relatório não devem ser usados como base única para autuação, processo administrativo 
+        ou decisão judicial. Servem para triagem, priorização de vistoria de campo e análise exploratória. 
+        Qualquer uso legal requer confirmação via intersecção espacial certificada e dados oficiais atualizados.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">GCGEO — Gerência do Centro de Geotecnologia Fundiária e Ambiental</div>
+    <div>
+      Fontes: MapBiomas Alerta · SINAFLOR+/IBAMA · SEMARH-PI · IBGE Malha Municipal (API v3) · Período: 2022–2025<br>
+      Metodologia: Índice de Pressão de Ilegalidade (IPI) — classificação por estimativa proporcional, sem sobreposição geométrica individual por polígono<br>
+      Relatório Metodológico produzido para uso institucional interno — não substitui análise técnica certificada
+    </div>
+    <div class="footer-warn">
+      ⚠ DERADSAs indisponíveis para 2022 e 2023. Classificações baseadas em estimativa proporcional pelo IPI. Resultados para triagem exploratória — não para autuação.
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+// ── DATA ──
+const alertYr = {
+  2022:{count:3062,area:148275.07,cerrado:136058.52,caatinga:12216.55},
+  2023:{count:4527,area:136010.33,cerrado:115914.95,caatinga:20095.38},
+  2024:{count:3034,area:142879.70,cerrado:109373.59,caatinga:33506.11},
+  2025:{count:2676,area:150064.90,cerrado:114837.73,caatinga:35227.17}
+};
+const asvYr = {
+  2022:{area:125929.68}, 2023:{area:98373.40},
+  2024:{area:184302.53}, 2025:{area:123607.42}
+};
+const derYr = {
+  2022:{area:0}, 2023:{area:0},
+  2024:{area:11585.70}, 2025:{area:15649.72}
+};
+const classifYr = {
+  2022:{irregular:80120,autorizado:68155,regularizado:0},
+  2023:{irregular:78927,autorizado:57083,regularizado:0},
+  2024:{irregular:60266,autorizado:71028,regularizado:11586},
+  2025:{irregular:77848,autorizado:56567,regularizado:15650}
+};
+const ipiYr = {2022:54.07,2023:58.03,2024:42.18,2025:51.87};
+
+const top20 = [
+  ["Uruçuí",61504.15,"Cerrado",true],
+  ["Baixa Grande do Ribeiro",57441.64,"Cerrado",true],
+  ["Sebastião Leal",42593.66,"Cerrado",false],
+  ["Canto do Buriti",37012.26,"Cerrado",false],
+  ["Santa Filomena",34088.45,"Cerrado",true],
+  ["Currais",23877.84,"Cerrado",true],
+  ["Guadalupe",22307.36,"Cerrado",true],
+  ["Floriano",20161.50,"Cerrado",false],
+  ["Palmeira do Piauí",18151.22,"Cerrado",true],
+  ["Ribeiro Gonçalves",16408.17,"Cerrado",false],
+  ["Bom Jesus",14330.91,"Cerrado",true],
+  ["Jerumenha",10077.84,"Caatinga",false],
+  ["Riacho Frio",9538.79,"Caatinga",false],
+  ["Parnaguá",9142.04,"Caatinga",true],
+  ["Alvorada do Gurguéia",8684.72,"Cerrado",true],
+  ["Nazaré do Piauí",8191.85,"Caatinga",false],
+  ["Corrente",8023.55,"Cerrado",true],
+  ["Cristino Castro",7616.69,"Cerrado",true],
+  ["Cristalândia do Piauí",6919.63,"Caatinga",false],
+  ["Piracuruca",6656.55,"Caatinga",false]
+];
+
+const topVP = [
+  ["Agricultura",566017.96],["Outros",6157.69],["Expansão Urbana",2325.96],
+  ["Energia Renovável",1927.11],["Estradas",569.57],["Aquicultura",150.02],
+  ["Mineração",60.86],["Causa Natural",12.84]
+];
+
+const totalArea = 577230;
+const monthlyVals = [18591.82,6575.42,13075.35,18485.28,23288.69,11592.15,6716.81,13033.55,2669.36,11132.89,10583.11,12530.64,14404.82,14289.53,8203.54,13931.19,25777.61,11565.81,13203.83,6056.74,6921.22,7233.43,7576.94,6845.67,2893.93,9153.71,18793.21,14001.32,23934.85,13558.68,4222.99,20694.63,5542.80,10514.91,12531.75,7036.92,14475.11,18966.16,27110.55,18406.00,27359.94,9006.56,5358.79,8589.19,3758.87,7438.75,4300.45,5294.53];
+
+function fmtN(v){ return Math.round(v).toLocaleString('pt-BR'); }
+
+// ── PROGRESS ──
+window.addEventListener('scroll', ()=>{
+  const el = document.documentElement;
+  const pct = (el.scrollTop/(el.scrollHeight-el.clientHeight))*100;
+  document.getElementById('progress').style.width = Math.min(pct,100)+'%';
+});
+
+// ── INTERSECTION OBSERVER ──
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:0.08});
+document.querySelectorAll('.section').forEach(s=>io.observe(s));
+
+// ── NAV ACTIVE ──
+const navLinks = document.querySelectorAll('.nav-a');
+const sections = document.querySelectorAll('.section[id]');
+const ioNav = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      navLinks.forEach(a=>a.classList.remove('active'));
+      const link = document.querySelector(`.nav-a[href="#${e.target.id}"]`);
+      if(link){ link.classList.add('active'); link.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'}); }
+    }
+  });
+},{threshold:0.3});
+sections.forEach(s=>ioNav.observe(s));
+
+// ── MUNICIPALITY TABLE ──
+(function(){
+  const tbody = document.getElementById('mun-tbody');
+  top20.forEach(([name, area, biome, matopiba], i) => {
+    const irrProxy = Math.round(area * 0.515);
+    const pct = (area/totalArea*100).toFixed(2);
+    const biomeClass = biome === 'Cerrado' ? 'chip-red' : 'chip-blue';
+    const biomeColor = biome === 'Cerrado' ? 'background:rgba(230,81,0,.08);color:#c2410c;' : 'background:rgba(37,99,235,.08);color:#1d4ed8;';
+    tbody.innerHTML += `<tr>
+      <td><span class="mono" style="color:var(--muted)${i<3?';color:var(--amber2);font-weight:700':''}">${i+1}</span></td>
+      <td><strong>${name}</strong></td>
+      <td><span class="chip" style="${biomeColor}">${biome}</span></td>
+      <td>${matopiba ? '<span class="chip chip-amber">MATOPIBA</span>' : '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+      <td class="mono">${fmtN(area)}</td>
+      <td class="mono" style="color:var(--red2)">${fmtN(irrProxy)}</td>
+      <td class="mono">${pct}%</td>
+    </tr>`;
+  });
+})();
+
+// ── IPI BARS ──
+(function(){
+  const container = document.getElementById('ipi-bars-ano');
+  const max = Math.max(...Object.values(ipiYr));
+  Object.entries(ipiYr).forEach(([year, ipi])=>{
+    const color = ipi > 55 ? 'var(--red2)' : ipi > 45 ? 'var(--amber2)' : 'var(--green2)';
+    container.innerHTML += `<div class="bar-item">
+      <div class="bar-header">
+        <span class="bar-name">${year}</span>
+        <span class="bar-pct-lbl">${ipi.toFixed(2)}%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(ipi/max*100).toFixed(1)}%;background:${color}"></div></div>
+    </div>`;
+  });
+})();
+
+// ── VP BARS ──
+(function(){
+  const container = document.getElementById('vp-bars');
+  const max = topVP[0][1];
+  const colors = ['var(--red2)','var(--ink2)','var(--amber2)','var(--green2)','#3b82f6','#8b5cf6','#ec4899','var(--muted)'];
+  topVP.forEach(([name, area], i)=>{
+    const pct = (area/totalArea*100).toFixed(1);
+    container.innerHTML += `<div class="bar-item">
+      <div class="bar-header">
+        <span class="bar-name">${name}</span>
+        <span class="bar-pct-lbl">${pct}% · ${fmtN(area)} ha</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(area/max*100).toFixed(1)}%;background:${colors[i]}"></div></div>
+    </div>`;
+  });
+})();
+
+// ── CHARTS ──
+Chart.defaults.font.family = 'DM Sans, sans-serif';
+Chart.defaults.color = '#6b7280';
+
+// Composição anual
+new Chart(document.getElementById('c-composicao'),{
+  type:'bar',
+  data:{
+    labels:['2022','2023','2024','2025'],
+    datasets:[
+      {label:'Autorizado',data:[2022,2023,2024,2025].map(y=>classifYr[y].autorizado),backgroundColor:'rgba(22,101,52,.75)',borderRadius:4,stack:'s'},
+      {label:'Regularizado',data:[2022,2023,2024,2025].map(y=>classifYr[y].regularizado),backgroundColor:'rgba(217,119,6,.75)',borderRadius:4,stack:'s'},
+      {label:'Irregular',data:[2022,2023,2024,2025].map(y=>classifYr[y].irregular),backgroundColor:'rgba(239,68,68,.75)',borderRadius:4,stack:'s'},
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'top',labels:{boxWidth:10,font:{size:11}}},tooltip:{mode:'index'}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:11}}},
+      y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{callback:v=>(v/1000)+'k',font:{size:10}}}
+    }
+  }
+});
+
+// Bioma chart
+new Chart(document.getElementById('c-bioma'),{
+  type:'bar',
+  data:{
+    labels:['2022','2023','2024','2025'],
+    datasets:[
+      {label:'Cerrado',data:[136058,115915,109374,114838],backgroundColor:'rgba(217,119,6,.75)',borderRadius:4},
+      {label:'Caatinga',data:[12217,20095,33506,35227],backgroundColor:'rgba(37,99,235,.65)',borderRadius:4},
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'top',labels:{boxWidth:10,font:{size:11}}}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:11}}},
+      y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{callback:v=>(v/1000)+'k',font:{size:10}}}
+    }
+  }
+});
+
+// Mensal chart
+const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const years = [2022,2023,2024,2025];
+const colors4 = ['rgba(239,68,68,.75)','rgba(217,119,6,.75)','rgba(22,101,52,.75)','rgba(99,102,241,.75)'];
+new Chart(document.getElementById('c-mensal'),{
+  type:'line',
+  data:{
+    labels: months,
+    datasets: years.map((y,i)=>({
+      label:String(y),
+      data: monthlyVals.slice(i*12,(i+1)*12),
+      borderColor: colors4[i], backgroundColor: colors4[i].replace('.75','.1'),
+      tension:.4, borderWidth:2, pointRadius:2, fill:false
+    }))
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'top',labels:{boxWidth:10,font:{size:11}}}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{callback:v=>(v/1000).toFixed(0)+'k',font:{size:10}}}
+    }
+  }
+});
+
+// ── CLASSIFIER ──
+let clfState = {q1: null, q2: null};
+function clfAnswer(q, ans){
+  const btns = document.querySelectorAll(`#clf-q${q} .clf-btn`);
+  btns.forEach(b=>{ b.className='clf-btn'; });
+  btns.forEach(b=>{ if(b.textContent.includes('Sim')===( ans==='sim')) b.classList.add('selected-yes'); else b.classList.add('selected-no'); });
+  clfState['q'+q] = ans;
+
+  document.querySelectorAll('.clf-result').forEach(r=>{ r.classList.remove('visible'); });
+
+  if(q===1 && ans==='sim'){
+    const r = document.getElementById('clf-result-aut');
+    r.className = 'clf-result green visible';
+    document.getElementById('clf-reset').style.display='inline-block';
+    document.getElementById('clf-q2').style.display='none';
+  } else if(q===1 && ans==='nao'){
+    document.getElementById('clf-q2').style.display='block';
+  } else if(q===2 && ans==='sim'){
+    const r = document.getElementById('clf-result-reg');
+    r.className = 'clf-result amber visible';
+    document.getElementById('clf-reset').style.display='inline-block';
+  } else if(q===2 && ans==='nao'){
+    const r = document.getElementById('clf-result-irr');
+    r.className = 'clf-result red visible';
+    document.getElementById('clf-reset').style.display='inline-block';
+  }
+}
+function clfReset(){
+  clfState = {q1:null,q2:null};
+  document.getElementById('clf-q1').querySelectorAll('.clf-btn').forEach(b=>b.className='clf-btn');
+  document.getElementById('clf-q2').querySelectorAll('.clf-btn').forEach(b=>b.className='clf-btn');
+  document.getElementById('clf-q2').style.display='none';
+  document.querySelectorAll('.clf-result').forEach(r=>r.classList.remove('visible'));
+  document.getElementById('clf-reset').style.display='none';
+}
+
+// ── IPI CALC ──
+function calcIPI(){
+  const alerta = parseFloat(document.getElementById('sl-alerta').value);
+  const asv    = parseFloat(document.getElementById('sl-asv').value);
+  const ipi    = alerta / (alerta + asv) * 100;
+  const ipiC   = Math.min(ipi,100);
+
+  document.getElementById('lbl-alerta').textContent = fmtN(alerta)+' ha';
+  document.getElementById('lbl-asv').textContent    = fmtN(asv)+' ha';
+  document.getElementById('rv-alerta').textContent  = fmtN(alerta)+' ha';
+  document.getElementById('rv-asv').textContent     = fmtN(asv)+' ha';
+  document.getElementById('rv-ipi').textContent     = ipiC.toFixed(2)+'%';
+
+  const bar = document.getElementById('ipi-bar');
+  bar.style.width = ipiC.toFixed(1)+'%';
+
+  let color, interp;
+  if(ipiC < 40){
+    color='var(--green2)'; interp='Pressão Baixa';
+    document.getElementById('rv-ipi').className='result-v green';
+  } else if(ipiC < 60){
+    color='var(--amber2)'; interp='Pressão Moderada';
+    document.getElementById('rv-ipi').className='result-v amber';
+  } else {
+    color='var(--red2)'; interp='Pressão Alta';
+    document.getElementById('rv-ipi').className='result-v red';
+  }
+  bar.style.background = color;
+  document.getElementById('ipi-interp').textContent = `${ipiC.toFixed(1)}% — ${interp}`;
+  document.getElementById('ipi-interp').style.color = color;
+}
+calcIPI();
+
+// ── ANIMATE BARS ON SCROLL ──
+const ioBar = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.bar-fill').forEach(b=>{
+        const w = b.style.width;
+        b.style.width='0%';
+        setTimeout(()=>{ b.style.width=w; },50);
+      });
+      ioBar.unobserve(e.target);
+    }
+  });
+},{threshold:0.1});
+document.querySelectorAll('#ipi-bars-ano, #vp-bars').forEach(el=>ioBar.observe(el));
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+# Ferramentas e caches
+.claude/
+__pycache__/
+*.pyc
+
+# Credenciais — NUNCA commitar
+.env
+*.env
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Logs e arquivos de erro gerados pelo pipeline
+Resultado/pipeline.log
+Resultado/pipeline.err
+Resultado/pipeline.log.err
+
+# Arquivo de estado do workflow GitHub Actions (ASV hash)
+Resultado/.last_asv_hash
+
+# GeoJSONs brutos (ultrapassam limite do GitHub — manter localmente)
+base de dados/*.geojson
+
+# GeoJSONs gerados pelo pipeline (grandes)
+Resultado/alertas_classificados.geojson
+Resultado/municipios_pi.geojson
+
+# Documentos Word gerados automaticamente (regeneráveis)
+Resultado/*.docx
+
+# Arquivos temporários do Windows
+Thumbs.db
+desktop.ini
+*.tmp
+
+# Conda / ambientes virtuais
+.conda/
+*.egg-info/

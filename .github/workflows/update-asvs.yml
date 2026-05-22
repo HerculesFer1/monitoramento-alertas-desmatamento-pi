@@ -1,0 +1,130 @@
+name: "Atualização Semanal — ASVs SINAFLOR"
+
+# Executa toda segunda-feira às 03:00 UTC
+# ASVs são emitidas continuamente — atualização semanal garante cobertura.
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Apenas baixa dados, não executa pipeline (true/false)"
+        required: false
+        default: "false"
+
+env:
+  PYTHONUTF8: "1"
+  SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+jobs:
+  update-asvs:
+    name: "Baixar ASVs → Pipeline → Upload"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: "3.11"
+          channels: conda-forge,defaults
+          channel-priority: strict
+          activate-environment: desmatamento
+          environment-file: environment.yml
+          use-mamba: true
+          miniforge-version: latest
+
+      - name: Criar .env
+        run: |
+          cat > .env <<EOF
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          MAPBIOMAS_TOKEN=${{ secrets.MAPBIOMAS_TOKEN }}
+          EOF
+
+      - name: Download ASVs SINAFLOR
+        run: conda run -n desmatamento python pipeline/_baixar_asvs.py
+
+      - name: Verificar arquivo ASV
+        run: |
+          python -c "
+          from pathlib import Path
+          p = Path('base de dados/ASVs Emitidas-PI(SINAFLOR+).geojson')
+          if not p.exists():
+              raise SystemExit('ASVs não baixadas')
+          import json
+          data = json.loads(p.read_text(encoding='utf-8'))
+          n = len(data.get('features', []))
+          print(f'✓ {n} ASVs carregadas')
+          if n == 0:
+              raise SystemExit('Nenhuma ASV retornada — verificar WFS IBAMA')
+          "
+
+      # Só re-executa o pipeline completo se os dados mudaram
+      # (verifica hash do arquivo de ASVs)
+      - name: Verificar se ASVs mudaram
+        id: check-change
+        run: |
+          if [ -f "Resultado/.last_asv_hash" ]; then
+            OLD=$(cat Resultado/.last_asv_hash)
+            NEW=$(md5sum "base de dados/ASVs Emitidas-PI(SINAFLOR+).geojson" | cut -d' ' -f1)
+            if [ "$OLD" = "$NEW" ]; then
+              echo "changed=false" >> $GITHUB_OUTPUT
+              echo "ASVs sem mudança desde último download — pipeline não será re-executado"
+            else
+              echo "changed=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download DERADSAs (Supabase Storage)
+        if: steps.check-change.outputs.changed == 'true'
+        run: conda run -n desmatamento python pipeline/_baixar_deradsa_storage.py
+        continue-on-error: true
+
+      - name: Download MapBiomas Alertas (reutilizar existente)
+        if: steps.check-change.outputs.changed == 'true'
+        run: |
+          # Verifica se existe arquivo local recente (< 7 dias)
+          python -c "
+          from pathlib import Path
+          import time
+          p = Path('base de dados/Alertas de Desmatamento(MAPBIOMAS).geojson')
+          if p.exists():
+              age_days = (time.time() - p.stat().st_mtime) / 86400
+              print(f'Alertas existentes: {age_days:.1f} dias de idade')
+              if age_days < 7:
+                  print('Reutilizando arquivo existente (< 7 dias)')
+              else:
+                  print('Arquivo antigo (> 7 dias) — executar update-alertas.yml')
+          else:
+              raise SystemExit('ERRO: Alertas MapBiomas não encontrados. Execute update-alertas.yml primeiro.')
+          "
+
+      - name: Executar Pipeline v2
+        if: ${{ steps.check-change.outputs.changed == 'true' && github.event.inputs.dry_run != 'true' }}
+        run: conda run -n desmatamento python -m pipeline
+
+      - name: Upload para Supabase
+        if: ${{ steps.check-change.outputs.changed == 'true' && github.event.inputs.dry_run != 'true' }}
+        run: conda run -n desmatamento python pipeline/_upload_supabase.py
+
+      - name: Salvar hash das ASVs
+        if: steps.check-change.outputs.changed == 'true'
+        run: |
+          mkdir -p Resultado
+          md5sum "base de dados/ASVs Emitidas-PI(SINAFLOR+).geojson" | cut -d' ' -f1 > Resultado/.last_asv_hash
+
+      - name: Upload artefatos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asv-update-${{ github.run_number }}
+          path: Resultado/pipeline.log
+          retention-days: 14

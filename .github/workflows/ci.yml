@@ -1,0 +1,169 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  # ── 1. Build do frontend React/TypeScript ─────────────────────────────────
+  frontend-build:
+    name: Frontend — TypeScript build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build de produção (tsc + vite)
+        run: npm run build
+
+  # ── 2. Lint do pipeline Python ────────────────────────────────────────────
+  python-lint:
+    name: Python — ruff lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar ruff
+        run: pip install ruff
+
+      - name: Lint pipeline/
+        run: ruff check pipeline/ --select E,F,W,I --ignore E501
+
+      - name: Verificar imports circulares
+        run: |
+          python -c "
+          import ast, pathlib, sys
+          pkg = pathlib.Path('pipeline')
+          files = list(pkg.glob('*.py'))
+          print(f'Verificando {len(files)} módulos...')
+          for f in files:
+              try:
+                  ast.parse(f.read_text(encoding='utf-8'))
+              except SyntaxError as e:
+                  print(f'ERRO de sintaxe em {f}: {e}')
+                  sys.exit(1)
+          print('Sintaxe OK em todos os módulos')
+          "
+
+  # ── 3. Testes unitários Python ───────────────────────────────────────────
+  python-tests:
+    name: Python — pytest
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: pip install pytest geopandas shapely pandas numpy requests
+
+      - name: Executar testes unitários
+        run: pytest tests/ -v --tb=short
+
+  # ── 4. Validação dos arquivos SQL de migration ────────────────────────────
+  sql-check:
+    name: SQL — verificar migrations
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar existência das migrations
+        run: |
+          for f in \
+            infra/supabase/migrations/001_schema_inicial.sql \
+            infra/supabase/migrations/002_matopiba_view.sql \
+            infra/supabase/migrations/003_deradsa_management.sql \
+            infra/supabase/migrations/004_prodes_rpc_fix.sql; do
+            if [ ! -f "$f" ]; then
+              echo "ERRO: Migration ausente: $f"
+              exit 1
+            fi
+            echo "OK: $f"
+          done
+
+      - name: Verificar que migrations não estão vazias
+        run: |
+          for f in infra/supabase/migrations/*.sql; do
+            lines=$(wc -l < "$f")
+            if [ "$lines" -lt 5 ]; then
+              echo "ERRO: Migration suspeita (< 5 linhas): $f"
+              exit 1
+            fi
+            echo "OK: $f ($lines linhas)"
+          done
+
+  # ── 4. Verificar que constants.json está sincronizado ────────────────────
+  constants-sync:
+    name: Pipeline — constants.json sincronizado
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências mínimas
+        run: pip install python-dotenv
+
+      - name: Verificar que constants.json existe e é válido JSON
+        run: |
+          python -c "
+          import json, pathlib, sys
+          p = pathlib.Path('pipeline/constants.json')
+          if not p.exists():
+              print('ERRO: pipeline/constants.json ausente')
+              sys.exit(1)
+          try:
+              data = json.loads(p.read_text(encoding='utf-8'))
+              required = ['anos', 'matopiba_pi', 'vp_ptbr', 'classes', 'threshold_autorizado']
+              for k in required:
+                  if k not in data:
+                      print(f'ERRO: chave ausente em constants.json: {k}')
+                      sys.exit(1)
+              print(f'OK: constants.json válido — {len(data)} chaves, {len(data[\"matopiba_pi\"])} municípios MATOPIBA')
+          except json.JSONDecodeError as e:
+              print(f'ERRO: constants.json inválido: {e}')
+              sys.exit(1)
+          "
+
+      - name: Verificar que constants.json está em sincronia com constants.py
+        run: |
+          python -c "
+          import hashlib, json, pathlib, sys
+          committed = pathlib.Path('pipeline/constants.json').read_bytes()
+          # Regera o arquivo
+          sys.path.insert(0, '.')
+          from pipeline.constants import export_json
+          export_json()
+          regenerated = pathlib.Path('pipeline/constants.json').read_bytes()
+          if hashlib.sha256(committed) != hashlib.sha256(regenerated):
+              print('ERRO: pipeline/constants.json desatualizado — execute python -m pipeline.constants e faça commit do resultado')
+              sys.exit(1)
+          print('OK: constants.json em sincronia com constants.py')
+          "
