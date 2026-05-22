@@ -4,12 +4,12 @@ name: "Deploy Frontend — Vercel"
 # PRs geram preview deployment; push para main faz deploy de produção.
 on:
   push:
-    branches: [main]
+    branches: [master, main]
     paths:
       - "frontend/**"
       - ".github/workflows/deploy-frontend.yml"
   pull_request:
-    branches: [main]
+    branches: [master, main]
     paths:
       - "frontend/**"
 
