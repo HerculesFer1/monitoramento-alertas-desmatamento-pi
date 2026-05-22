@@ -1,0 +1,89 @@
+# prefect.yaml — Manifesto de Deployment para Prefect Cloud
+# Projeto: Monitoramento de Alertas de Desmatamento PI · GCGEO / SEMARH-PI
+#
+# Uso:
+#   # Autenticar no Prefect Cloud:
+#   prefect cloud login
+#
+#   # Deploy de todos os deployments:
+#   prefect --no-prompt deploy --all
+#
+#   # Verificar deployments criados:
+#   prefect deployment ls
+#
+# Requisitos:
+#   pip install "prefect>=3.0" "prefect-shell>=0.2"
+#   Worker pool criado no Prefect Cloud UI (tipo: Process)
+#   Secrets configurados no Prefect Cloud:
+#     SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY, MAPBIOMAS_TOKEN
+
+name: pipeline-desmatamento-pi
+prefect-version: "3.*"
+
+# ── Pool de workers ────────────────────────────────────────────────────────
+# Criar no Prefect Cloud UI: Work Pools > New Work Pool > Process
+# O worker roda na máquina com o ambiente conda "geo" configurado.
+work_pool:
+  name: gcgeo-worker-pool
+  work_queue_name: default
+  job_variables:
+    env:
+      PYTHONUTF8: "1"
+
+# ── Deployments ────────────────────────────────────────────────────────────
+deployments:
+
+  # 1. Pipeline mensal — MapBiomas + ASVs → processa → upload
+  - name: desmatamento-pi-mensal
+    flow: infra/prefect/pipeline_flow.py:pipeline_flow
+    description: >
+      Execução mensal completa: download alertas MapBiomas + ASVs SINAFLOR
+      → pipeline v2 (11 etapas) → upload Supabase.
+    tags: [mensal, producao]
+    schedules:
+      # Todo dia 5 de cada mês às 03:00 UTC (meia-noite de Brasília)
+      - cron: "0 3 5 * *"
+        timezone: America/Fortaleza
+        active: true
+    parameters:
+      fazer_upload: true
+      incluir_prodes: false     # PRODES atualizado apenas em outubro
+      incluir_alertas: true
+      force_prodes: false
+    # Variáveis de ambiente injetadas do Prefect Cloud Secrets
+    pull:
+      - prefect.deployments.steps.git_clone:
+          repository: "{{ prefect.blocks.github/desmatamento-pi }}"
+          branch: main
+          credentials: "{{ prefect.blocks.github-credentials/gcgeo-token }}"
+
+  # 2. Pipeline anual PRODES — todo dia 1º de outubro (INPE publica em outubro)
+  - name: desmatamento-pi-prodes-anual
+    flow: infra/prefect/pipeline_flow.py:pipeline_flow
+    description: >
+      Atualização anual com PRODES Cerrado INPE: baixa dados via WFS TerraBrasilis,
+      re-executa pipeline com validação cruzada PRODES → upload Supabase.
+    tags: [anual, prodes, producao]
+    schedules:
+      - cron: "0 3 1 10 *"
+        timezone: America/Fortaleza
+        active: true
+    parameters:
+      fazer_upload: true
+      incluir_prodes: true      # Forçar download PRODES
+      incluir_alertas: true
+      force_prodes: true        # Substituir PRODES do ano anterior
+
+  # 3. Dry-run manual — para teste sem upload (trigger via UI)
+  - name: desmatamento-pi-dry-run
+    flow: infra/prefect/pipeline_flow.py:pipeline_flow
+    description: >
+      Execução de teste: processa dados locais sem download de APIs externas
+      e sem upload ao Supabase. Útil para validar pipeline após alterações.
+    tags: [teste, dry-run]
+    schedules: []               # Sem schedule — trigger manual
+    parameters:
+      fazer_upload: false
+      incluir_prodes: false
+      incluir_alertas: false
+      force_prodes: false
