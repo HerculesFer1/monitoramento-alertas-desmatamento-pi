@@ -54,16 +54,21 @@ jobs:
           VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      # ── 5. Deploy para Vercel ────────────────────────────────────────────────
+      # ── 5. Deploy para Vercel (npx vercel@latest — CLI sempre atualizado) ──────
       - name: Deploy para Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token:      ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id:     ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: frontend
-          # push para main → produção; PRs → preview automático
-          vercel-args: ${{ github.ref == 'refs/heads/main' && '--prod' || '' }}
+        id: deploy
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            DEPLOY_URL=$(npx vercel@latest --token=${{ secrets.VERCEL_TOKEN }} --prod --yes 2>&1 | tail -1)
+          else
+            DEPLOY_URL=$(npx vercel@latest --token=${{ secrets.VERCEL_TOKEN }} --yes 2>&1 | tail -1)
+          fi
+          echo "preview-url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "Deploy concluido: $DEPLOY_URL"
+        working-directory: frontend
+        env:
+          VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       # ── 6. Comentar URL no PR ────────────────────────────────────────────────
       - name: Comentar URL do preview no PR
@@ -77,6 +82,6 @@ jobs:
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: `🚀 **Preview do dashboard disponível:**\n${url}\n\n*Deploy automático via Vercel — GCGEO/SEMARH-PI*`,
+                body: 'Deploy do dashboard disponível: ' + url + '\n\nDeploy automatico via Vercel — GCGEO/SEMARH-PI',
               });
             }
