@@ -1,0 +1,20 @@
+# Normalizar line endings para LF em todos os arquivos de texto
+# Evita falhas no CI (comparação sha256 de constants.json)
+
+* text=auto eol=lf
+
+# Binários — sem conversão
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.svg binary
+*.docx binary
+*.xlsx binary
+*.zip binary
+*.gz binary

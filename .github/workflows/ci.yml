@@ -21,7 +21,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
@@ -155,15 +155,15 @@ jobs:
       - name: Verificar que constants.json está em sincronia com constants.py
         run: |
           python -c "
-          import hashlib, json, pathlib, sys
-          committed = pathlib.Path('pipeline/constants.json').read_bytes()
-          # Regera o arquivo
+          import json, pathlib, sys
+          committed = json.loads(pathlib.Path('pipeline/constants.json').read_text(encoding='utf-8'))
           sys.path.insert(0, '.')
-          from pipeline.constants import export_json
-          export_json()
-          regenerated = pathlib.Path('pipeline/constants.json').read_bytes()
-          if hashlib.sha256(committed) != hashlib.sha256(regenerated):
-              print('ERRO: pipeline/constants.json desatualizado — execute python -m pipeline.constants e faça commit do resultado')
+          from pipeline.constants import as_json_payload
+          regenerated = as_json_payload()
+          if committed != regenerated:
+              print('ERRO: pipeline/constants.json desatualizado — execute python -m pipeline.constants e faca commit do resultado')
+              diffs = [k for k in set(list(committed)+list(regenerated)) if committed.get(k) != regenerated.get(k)]
+              print('Chaves divergentes:', diffs)
               sys.exit(1)
           print('OK: constants.json em sincronia com constants.py')
           "
