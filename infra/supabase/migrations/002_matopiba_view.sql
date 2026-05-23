@@ -1,6 +1,6 @@
 -- ============================================================
 -- Migration 002: Módulo MATOPIBA + índices de performance
--- GCGEO/SEMARH-PI — Pipeline v2
+-- CGEO/SEMARH-PI — Pipeline v2
 -- ============================================================
 
 -- ── Índice composto (soluciona ARQ-6) ────────────────────────────────────

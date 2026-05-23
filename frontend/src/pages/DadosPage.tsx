@@ -2,7 +2,7 @@
  * DadosPage — Gestão de Dados e Status do Pipeline
  *
  * Exibe: status da última execução do pipeline, cobertura de DERADSAs no
- * sistema, fontes de dados e guia de atualização para operadores do GCGEO.
+ * sistema, fontes de dados e guia de atualização para operadores do CGEO.
  */
 import { useMemo } from 'react'
 import { useExecucoes, useAgregado, useResumoEstatico } from '../lib/hooks'
@@ -136,7 +136,7 @@ export function DadosPage() {
             Gestão de Dados &amp; Status do Pipeline
           </div>
           <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>
-            Monitoramento da integridade do sistema · GCGEO / SEMARH-PI
+            Monitoramento da integridade do sistema · CGEO / SEMARH-PI
           </div>
         </div>
         <StatusBadge live={hasLive} />
@@ -302,12 +302,12 @@ export function DadosPage() {
                 {
                   fonte: 'DERADSA SEMARH-PI 2024', tipo: 'GeoJSON (polígonos)',
                   ultima: 'Série B', status: 'ok',
-                  metodo: 'Ingestão manual GCGEO',
+                  metodo: 'Ingestão manual CGEO',
                 },
                 {
                   fonte: 'DERADSA SEMARH-PI 2025', tipo: 'GeoJSON (polígonos)',
                   ultima: 'Série B', status: 'ok',
-                  metodo: 'Ingestão manual GCGEO',
+                  metodo: 'Ingestão manual CGEO',
                 },
                 {
                   fonte: 'PRODES-Cerrado INPE', tipo: 'GeoJSON (TerraBrasilis WFS)',
@@ -322,7 +322,7 @@ export function DadosPage() {
                 {
                   fonte: 'DERADSA SEMARH-PI 2026', tipo: 'GeoJSON (polígonos)',
                   ultima: '—', status: 'pending',
-                  metodo: 'Aguardando ingestão GCGEO',
+                  metodo: 'Aguardando ingestão CGEO',
                 },
               ] as { fonte: string; tipo: string; ultima: string; status: string; metodo: string }[]).map(r => (
                 <tr key={r.fonte}>

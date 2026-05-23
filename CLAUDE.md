@@ -1,6 +1,6 @@
 # CLAUDE.md — Memória do Projeto
 ## Monitoramento de Alertas de Desmatamento — Piauí 2022–2025
-### GCGEO / SEMARH-PI | Pipeline v2
+### CGEO / SEMARH-PI | Pipeline v2
 
 > Este arquivo sintetiza **todas as decisões técnicas acordadas** no projeto.
 > Leia antes de qualquer intervenção no código ou na metodologia.
@@ -12,7 +12,7 @@
 | Campo | Valor |
 |-------|-------|
 | Nome | Dashboard de Monitoramento de Alertas de Desmatamento PI |
-| Órgão | GCGEO — Gerência do Centro de Geotecnologia Fundiária e Ambiental / SEMARH-PI |
+| Órgão | CGEO — Centro de Geotecnologia Fundiária e Ambiental / SEMARH-PI |
 | Período | 2022–2025 |
 | Versão pipeline | v2 |
 | Público alvo | Geotecnólogos, gestores ambientais e pesquisadores — NÃO desenvolvedores |
@@ -364,7 +364,7 @@ export function calcAutTotal(e: { autorizado: number; autorizado_p: number }): n
 | MapBiomas Alerta | GraphQL API v2 (`plataforma.alerta.mapbiomas.org/api/v2/graphql`) | Mensal |
 | ASVs SINAFLOR+ | WFS ArcGIS IBAMA + CKAN API | Semanal |
 | PRODES-Cerrado | WFS TerraBrasilis (implementado) | Anual (outubro) |
-| DERADSA | Ingestão manual GCGEO | Sob demanda |
+| DERADSA | Ingestão manual CGEO | Sob demanda |
 | IBGE malha | API pública (implementado) | Sob demanda |
 
 ---
@@ -377,7 +377,7 @@ export function calcAutTotal(e: { autorizado: number; autorizado_p: number }): n
 | 2 | T9 reconciliação de área adicionado ao pipeline (9/9 testes) | **CONCLUÍDO** |
 | 3 | _gerar_documentacao.py — Escopo 3 PRODES adicionado ao .docx | **CONCLUÍDO** |
 | 4 | Docker: Dockerfile + docker-compose.yml + environment.yml criados | **CONCLUÍDO** |
-| 5 | Nota Técnica NT-GCGEO-001/2026 gerada (_gerar_nota_tecnica.py → .docx) | **CONCLUÍDO** |
+| 5 | Nota Técnica NT-CGEO-001/2026 gerada (_gerar_nota_tecnica.py → .docx) | **CONCLUÍDO** |
 | 6 | Supabase: schema SQL criado (`infra/supabase/migrations/001_schema_inicial.sql`) | **CONCLUÍDO** |
 | 7 | Frontend React scaffold: Vite + TS + MapLibre + Recharts + Tailwind (build OK) | **CONCLUÍDO** |
 | 8 | `pipeline/_upload_supabase.py` criado (psycopg2 + upsert) | **CONCLUÍDO** |
@@ -558,8 +558,8 @@ Os GeoJSONs originais estão no **computador MARCO** (não neste PC). Quando dis
 base de dados/
   Alertas de Desmatamento(MAPBIOMAS).geojson   ← MapBiomas API
   ASVs Emitidas-PI(SINAFLOR+).geojson          ← SINAFLOR/IBAMA
-  DERADSAs Emitidas[SEMARH-2024].geojson       ← GCGEO/SEMARH-PI
-  DERADSAs Emitidas[SEMARH-2025].geojson       ← GCGEO/SEMARH-PI
+  DERADSAs Emitidas[SEMARH-2024].geojson       ← CGEO/SEMARH-PI
+  DERADSAs Emitidas[SEMARH-2025].geojson       ← CGEO/SEMARH-PI
   PRODES_Cerrado_PI.geojson                    ← TerraBrasilis WFS (opcional)
 ```
 Sem esses arquivos o pipeline não pode ser re-executado. Os **outputs em `Resultado/`** estão corretos da última execução.

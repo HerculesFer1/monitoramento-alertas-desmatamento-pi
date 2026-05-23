@@ -1,5 +1,5 @@
 # prefect.yaml — Manifesto de Deployment para Prefect Cloud
-# Projeto: Monitoramento de Alertas de Desmatamento PI · GCGEO / SEMARH-PI
+# Projeto: Monitoramento de Alertas de Desmatamento PI · CGEO / SEMARH-PI
 #
 # Uso:
 #   # Autenticar no Prefect Cloud:
@@ -24,7 +24,7 @@ prefect-version: "3.*"
 # Criar no Prefect Cloud UI: Work Pools > New Work Pool > Process
 # O worker roda na máquina com o ambiente conda "geo" configurado.
 work_pool:
-  name: gcgeo-worker-pool
+  name: cgeo-worker-pool
   work_queue_name: default
   job_variables:
     env:
@@ -55,7 +55,7 @@ deployments:
       - prefect.deployments.steps.git_clone:
           repository: "{{ prefect.blocks.github/desmatamento-pi }}"
           branch: main
-          credentials: "{{ prefect.blocks.github-credentials/gcgeo-token }}"
+          credentials: "{{ prefect.blocks.github-credentials/cgeo-token }}"
 
   # 2. Pipeline anual PRODES — todo dia 1º de outubro (INPE publica em outubro)
   - name: desmatamento-pi-prodes-anual

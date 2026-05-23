@@ -5,7 +5,7 @@ pipeline/_baixar_deradsa_storage.py — Download de DERADSAs do Supabase Storage
 
 Em modo CI (GitHub Actions), os arquivos GeoJSON de DERADSA são baixados do
 Supabase Storage em vez dos arquivos locais. Os arquivos são disponibilizados
-pelo GCGEO/SEMARH via interface de upload no frontend.
+pelo CGEO/SEMARH via interface de upload no frontend.
 
 Uso:
     python pipeline/_baixar_deradsa_storage.py

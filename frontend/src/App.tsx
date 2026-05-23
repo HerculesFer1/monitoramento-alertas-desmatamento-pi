@@ -68,7 +68,7 @@ export default function App() {
               Monitoramento de Alertas de{' '}
               <span style={{ color: 'var(--mat)' }}>Desmatamento</span>
             </div>
-            <div style={{ fontSize: 10, color: 'var(--t3)' }}>GCGEO / SEMARH-PI · 2022–2025</div>
+            <div style={{ fontSize: 10, color: 'var(--t3)' }}>CGEO / SEMARH-PI · 2022–2025</div>
           </div>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 5,

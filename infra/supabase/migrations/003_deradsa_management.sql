@@ -1,6 +1,6 @@
 -- ============================================================
 -- Migration 003: Gestão de DERADSAs
--- GCGEO/SEMARH-PI — Pipeline v2
+-- CGEO/SEMARH-PI — Pipeline v2
 --
 -- Criada para suportar o canal de atualização manual de
 -- DERADSAs via frontend e download automatizado em CI.
@@ -9,7 +9,7 @@
 -- ============================================================
 
 -- ── Tabela de rastreamento de uploads ────────────────────────────────────
--- Registro de cada lote de DERADSAs enviado pelo GCGEO.
+-- Registro de cada lote de DERADSAs enviado pelo CGEO.
 -- Auditoria: quem enviou, quando, qual arquivo, quantos registros.
 CREATE TABLE IF NOT EXISTS deradsa_uploads (
   id           SERIAL PRIMARY KEY,
@@ -183,4 +183,4 @@ COMMENT ON TABLE deradsa IS
 
 COMMENT ON TABLE deradsa_uploads IS
   'Auditoria de uploads de DERADSAs via frontend. '
-  'Cada upload corresponde a um arquivo GeoJSON enviado pelo GCGEO.';
+  'Cada upload corresponde a um arquivo GeoJSON enviado pelo CGEO.';

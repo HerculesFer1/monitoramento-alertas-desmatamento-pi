@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 _baixar_prodes.py — Download automatizado PRODES-Cerrado recortado para o Piauí
-GCGEO — Gerência do Centro de Geotecnologia Fundiária e Ambiental / SEMARH-PI
+CGEO — Centro de Geotecnologia Fundiária e Ambiental / SEMARH-PI
 
 Fonte: TerraBrasilis / INPE
 WFS endpoint verificado ativo: https://terrabrasilis.dpi.inpe.br/geoserver/prodes-cerrado-nb/ows

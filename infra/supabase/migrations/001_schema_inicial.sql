@@ -1,5 +1,5 @@
 -- ============================================================
--- NT-GCGEO-001/2026 — Monitoramento Desmatamento PI
+-- NT-CGEO-001/2026 — Monitoramento Desmatamento PI
 -- Migration 001: Schema inicial
 -- Executar no SQL Editor do Supabase
 -- ============================================================
@@ -246,7 +246,7 @@ CREATE POLICY "leitura_publica_execucoes"
 
 -- Comentário final
 COMMENT ON TABLE alertas_classificados IS
-  'Fragmentos classificados do pipeline desmatamento PI v2 — GCGEO/SEMARH-PI';
+  'Fragmentos classificados do pipeline desmatamento PI v2 — CGEO/SEMARH-PI';
 COMMENT ON TABLE agregado_municipios IS
   'Agregado por município×ano — alimenta dashboard e relatórios';
 COMMENT ON TABLE execucoes_pipeline IS

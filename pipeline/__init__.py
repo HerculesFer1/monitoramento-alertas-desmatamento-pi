@@ -1,6 +1,6 @@
 """
 pipeline — Módulos do pipeline de desmatamento PI
-GCGEO / SEMARH-PI · v2
+CGEO / SEMARH-PI · v2
 
 Grafo de dependências (sem ciclos):
   constants / utils

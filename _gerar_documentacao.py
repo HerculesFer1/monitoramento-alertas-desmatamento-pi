@@ -3,7 +3,7 @@
 """
 Gerador da documentação técnica do projeto
 Dashboard de Monitoramento de Alertas de Desmatamento — Piauí 2022–2025
-GCGEO / SEMARH-PI
+CGEO / SEMARH-PI
 """
 
 from docx import Document
@@ -158,7 +158,7 @@ doc.add_paragraph()
 
 p = doc.add_paragraph()
 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-run = p.add_run("GCGEO — Gerência do Centro de Geotecnologia Fundiária e Ambiental\nSEMARH-PI — Secretaria de Meio Ambiente e Recursos Hídricos do Piauí")
+run = p.add_run("CGEO — Gerência do Centro de Geotecnologia Fundiária e Ambiental\nSEMARH-PI — Secretaria de Meio Ambiente e Recursos Hídricos do Piauí")
 run.font.size = Pt(11)
 run.font.color.rgb = CINZA_MED
 
@@ -920,7 +920,7 @@ p = doc.add_paragraph()
 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 run = p.add_run(
     f"Documentação gerada automaticamente em {date.today().strftime('%d/%m/%Y')}  ·  "
-    "Pipeline v2  ·  GCGEO / SEMARH-PI"
+    "Pipeline v2  ·  CGEO / SEMARH-PI"
 )
 run.font.size = Pt(8)
 run.font.color.rgb = CINZA_MED

@@ -1,6 +1,6 @@
 # Dashboard de Monitoramento de Alertas de Desmatamento — Piauí
 
-**Órgão:** GCGEO — Gerência do Centro de Geotecnologia Fundiária e Ambiental / SEMARH-PI  
+**Órgão:** CGEO — Centro de Geotecnologia Fundiária e Ambiental / SEMARH-PI  
 **Período:** 2022–2025 | **Pipeline:** v2 | **Status:** Produção
 
 [![CI](https://github.com/HerculesFer1/monitoramento-alertas-desmatamento-pi/actions/workflows/ci.yml/badge.svg)](https://github.com/HerculesFer1/monitoramento-alertas-desmatamento-pi/actions/workflows/ci.yml)
@@ -173,7 +173,7 @@ docker compose --profile full up          # pipeline + upload Supabase
 │
 ├── _baixar_prodes.py           # Download PRODES via WFS TerraBrasilis
 ├── _gerar_documentacao.py      # Gera documentacao tecnica (.docx)
-├── _gerar_nota_tecnica.py      # Gera NT-GCGEO-001/2026 (.docx)
+├── _gerar_nota_tecnica.py      # Gera NT-CGEO-001/2026 (.docx)
 ├── rodar_pipeline.ps1          # Execucao com um clique (Windows)
 ├── rodar_download_prodes.ps1   # Download PRODES com um clique
 ├── Dockerfile                  # Container para execucao isolada
@@ -237,8 +237,8 @@ Os GeoJSONs de entrada **nao sao versionados** (excede limite do GitHub). Devem 
 ```
 Alertas de Desmatamento(MAPBIOMAS).geojson    # MapBiomas Alerta API
 ASVs Emitidas-PI(SINAFLOR+).geojson          # SINAFLOR/IBAMA WFS
-DERADSAs Emitidas[SEMARH-2024].geojson       # GCGEO/SEMARH-PI
-DERADSAs Emitidas[SEMARH-2025].geojson       # GCGEO/SEMARH-PI
+DERADSAs Emitidas[SEMARH-2024].geojson       # CGEO/SEMARH-PI
+DERADSAs Emitidas[SEMARH-2025].geojson       # CGEO/SEMARH-PI
 PRODES_Cerrado_PI.geojson                    # TerraBrasilis WFS (opcional)
 ```
 
@@ -273,4 +273,4 @@ Migrations aplicadas (ordem obrigatoria via SQL Editor):
 
 ---
 
-*GCGEO / SEMARH-PI — Pipeline v2 — 2026*
+*CGEO / SEMARH-PI — Pipeline v2 — 2026*

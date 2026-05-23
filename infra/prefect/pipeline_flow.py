@@ -380,7 +380,7 @@ async def gerar_relatorio(
 {resumo_log or "_Log resumido não disponível_"}
 
 ---
-*Projeto: GCGEO / SEMARH-PI · Pipeline v2 · Metodologia: ASV > DERADSA · Limiar 99%*
+*Projeto: CGEO / SEMARH-PI · Pipeline v2 · Metodologia: ASV > DERADSA · Limiar 99%*
 """
     await create_markdown_artifact(
         key="pipeline-resumo",

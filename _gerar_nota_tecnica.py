@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Gerador da Nota Técnica institucional
-NT-GCGEO-001/2026 — GCGEO / SEMARH-PI
+NT-CGEO-001/2026 — CGEO / SEMARH-PI
 Monitoramento de Alertas de Desmatamento — Piauí 2022–2025
 """
 
@@ -156,7 +156,7 @@ run.font.color.rgb = AZUL_ESC
 
 p = doc.add_paragraph()
 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-run = p.add_run("GERÊNCIA DO CENTRO DE GEOTECNOLOGIA FUNDIÁRIA E AMBIENTAL — GCGEO")
+run = p.add_run("GERÊNCIA DO CENTRO DE GEOTECNOLOGIA FUNDIÁRIA E AMBIENTAL — CGEO")
 run.bold = True
 run.font.size = Pt(10)
 run.font.color.rgb = CINZA_MED
@@ -168,10 +168,10 @@ doc.add_paragraph()
 t_id = doc.add_table(rows=4, cols=2)
 t_id.style = 'Table Grid'
 campos = [
-    ("Nº do Documento",  "NT-GCGEO-001/2026"),
+    ("Nº do Documento",  "NT-CGEO-001/2026"),
     ("Tipo",             "Nota Técnica — Documentação Metodológica"),
     ("Data",             f"{date.today().strftime('%d de %B de %Y').replace('January','janeiro').replace('February','fevereiro').replace('March','março').replace('April','abril').replace('May','maio').replace('June','junho').replace('July','julho').replace('August','agosto').replace('September','setembro').replace('October','outubro').replace('November','novembro').replace('December','dezembro')}"),
-    ("Elaboração",       "Equipe GCGEO / SEMARH-PI"),
+    ("Elaboração",       "Equipe CGEO / SEMARH-PI"),
 ]
 for i, (label, valor) in enumerate(campos):
     row = t_id.rows[i]
@@ -199,7 +199,7 @@ run.font.color.rgb = AZUL_ESC
 run2 = p.add_run(
     "Documentação da metodologia de classificação e monitoramento de alertas de desmatamento "
     "no estado do Piauí, período 2022–2025, com validação cruzada pelo PRODES-Cerrado (INPE). "
-    "Pipeline geoespacial automatizado produzido pela GCGEO / SEMARH-PI.")
+    "Pipeline geoespacial automatizado produzido pela CGEO / SEMARH-PI.")
 run2.font.size = Pt(10)
 run2.font.italic = True
 
@@ -210,7 +210,7 @@ doc.add_paragraph()
 # ══════════════════════════════════════════════════════════════════════════
 h1(doc, "1. INTRODUÇÃO")
 para(doc,
-    "A Gerência do Centro de Geotecnologia Fundiária e Ambiental (GCGEO) da Secretaria de Meio "
+    "A Gerência do Centro de Geotecnologia Fundiária e Ambiental (CGEO) da Secretaria de Meio "
     "Ambiente e Recursos Hídricos do Piauí (SEMARH-PI) desenvolve, desde 2022, um sistema de "
     "monitoramento automatizado dos alertas de desmatamento no território piauiense, com base "
     "nos alertas emitidos pelo sistema MapBiomas Alerta.")
@@ -279,9 +279,9 @@ table(doc,
     ["Base de dados", "Fonte", "Período", "Registros"],
     [
         ["Alertas MapBiomas Alerta",        "MapBiomas / SEEG",    "2022–2025", "13.299 alertas filtrados"],
-        ["ASVs emitidas — PI",              "SINAFLOR+ / IBAMA",   "2022–2025", "Arquivo GCGEO"],
-        ["DERADSAs — SEMARH-PI 2024",       "GCGEO / SEMARH-PI",   "2024",      "Arquivo geoespacial GCGEO"],
-        ["DERADSAs — SEMARH-PI 2025",       "GCGEO / SEMARH-PI",   "2025",      "Arquivo geoespacial GCGEO"],
+        ["ASVs emitidas — PI",              "SINAFLOR+ / IBAMA",   "2022–2025", "Arquivo CGEO"],
+        ["DERADSAs — SEMARH-PI 2024",       "CGEO / SEMARH-PI",   "2024",      "Arquivo geoespacial CGEO"],
+        ["DERADSAs — SEMARH-PI 2025",       "CGEO / SEMARH-PI",   "2025",      "Arquivo geoespacial CGEO"],
         ["PRODES-Cerrado",                  "INPE / TerraBrasilis", "2022–2025", "WFS — bbox Piauí"],
         ["Malha municipal — PI",            "IBGE API v3",         "2024",      "224 municípios"],
     ],
@@ -483,7 +483,7 @@ table(doc,
          "Metodologia do produtor (MapBiomas)",
          "Pode afetar classificação em alertas de área muito pequena (< 1 ha). Declarada pelo produtor."],
         ["DERADSAs geoespaciais disponíveis apenas a partir de 2024",
-         "Disponibilização institucional do dado (GCGEO/SEMARH-PI)",
+         "Disponibilização institucional do dado (CGEO/SEMARH-PI)",
          "Alertas de 2022–2023 não podem ser classificados como REGULARIZADO, mesmo que DERADSA exista em papel."],
         ["Caatinga sem produto de validação cruzada externo",
          "Ecossistema científico atual (sem PRODES-Caatinga)",
@@ -539,7 +539,7 @@ bullet(doc,
     "e escalabilidade do produto.")
 bullet(doc,
     "Desenvolver nota técnica específica para cada ciclo anual (2026 em diante) como produto "
-    "de reporte regular da GCGEO.")
+    "de reporte regular da CGEO.")
 
 doc.add_paragraph()
 
@@ -555,7 +555,7 @@ para(doc,
     "notificação, embargo ou qualquer ato administrativo sancionatório, que requerem "
     "vistoria de campo e procedimento legal próprio.", bold=True, color=VERMELHO)
 para(doc,
-    "A GCGEO / SEMARH-PI não se responsabiliza pela qualidade e completude dos dados "
+    "A CGEO / SEMARH-PI não se responsabiliza pela qualidade e completude dos dados "
     "primários produzidos por terceiros (MapBiomas, IBAMA, INPE). "
     "O pipeline valida exclusivamente a consistência do seu próprio processamento.")
 
@@ -601,15 +601,15 @@ doc.add_paragraph()
 p = doc.add_paragraph()
 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 run = p.add_run(
-    f"NT-GCGEO-001/2026  ·  Gerado automaticamente em {date.today().strftime('%d/%m/%Y')}  ·  "
-    "Pipeline v2 — 9/9 testes OK  ·  GCGEO / SEMARH-PI"
+    f"NT-CGEO-001/2026  ·  Gerado automaticamente em {date.today().strftime('%d/%m/%Y')}  ·  "
+    "Pipeline v2 — 9/9 testes OK  ·  CGEO / SEMARH-PI"
 )
 run.font.size = Pt(8)
 run.font.color.rgb = CINZA_MED
 run.font.italic = True
 
 # ── Salvar ────────────────────────────────────────────────────────────────
-output = OUT / "NT-GCGEO-001-2026_Desmatamento_PI.docx"
+output = OUT / "NT-CGEO-001-2026_Desmatamento_PI.docx"
 doc.save(str(output))
 print(f"Nota Técnica gerada: {output}")
 print(f"Tamanho: {output.stat().st_size / 1024:.0f} KB")

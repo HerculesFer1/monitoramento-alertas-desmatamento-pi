@@ -26,7 +26,7 @@ M2_HA:                Final[int]   = 10_000
 # 0.0 → qualquer sobreposição espacial (inclusive sliver de limite de polígono).
 # Alternativas: 1.0 (≥ 1%) para excluir artefatos de borda; 5.0 (≥ 5%) conservador.
 # ATENÇÃO: alterar este valor invalida os percentuais de concordância já publicados
-# (NT-GCGEO-001/2026) e requer nova execução do pipeline.
+# (NT-CGEO-001/2026) e requer nova execução do pipeline.
 CONCORDANCIA_PRODES_MIN_PCT: Final[float] = 0.0
 
 # ── Séries temporais ──────────────────────────────────────────────────────
