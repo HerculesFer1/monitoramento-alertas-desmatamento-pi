@@ -88,8 +88,8 @@ export function ProdesPage() {
 
   // CP4 — percentuais da distribuição de cobertura (calculados dinamicamente)
   const totalDistCob = peData.distCob.n.reduce((s: number, v: number) => s + v, 0)
-  const cp4Pct0 = totalDistCob > 0 ? (peData.distCob.n[0] / totalDistCob * 100).toFixed(1) : '29.3'
-  const cp4Pct5 = totalDistCob > 0 ? (peData.distCob.n[5] / totalDistCob * 100).toFixed(1) : '19.7'
+  const cp4Pct0 = totalDistCob > 0 ? (peData.distCob.n[0] / totalDistCob * 100).toFixed(1) : '0'
+  const cp4Pct5 = totalDistCob > 0 ? (peData.distCob.n[5] / totalDistCob * 100).toFixed(1) : '0'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
