@@ -35,14 +35,19 @@ CREATE TABLE IF NOT EXISTS deradsa (
   geom            GEOMETRY(GEOMETRY, 4326),
   upload_id       INTEGER REFERENCES deradsa_uploads(id) ON DELETE SET NULL,
   inserido_em     TIMESTAMPTZ DEFAULT NOW(),
-  -- Constraint de unicidade: mesmo id + ano não duplica
-  UNIQUE (id_deradsa, ano)
+  -- sem UNIQUE inline: id_deradsa pode ser NULL (ver índice parcial abaixo)
 );
 
 -- Índices
 CREATE INDEX IF NOT EXISTS deradsa_ano_idx  ON deradsa (ano);
 CREATE INDEX IF NOT EXISTS deradsa_mun_idx  ON deradsa (municipio);
 CREATE INDEX IF NOT EXISTS deradsa_geom_idx ON deradsa USING GIST(geom);
+
+-- Unicidade parcial: NULL = sem ID no arquivo fonte (não é duplicata)
+-- UNIQUE inline quebraria registros sem id_deradsa (NULL ≠ NULL no PostgreSQL)
+CREATE UNIQUE INDEX IF NOT EXISTS deradsa_id_deradsa_ano_uniq
+  ON deradsa (id_deradsa, ano)
+  WHERE id_deradsa IS NOT NULL;
 
 -- ── RLS — DERADSA ─────────────────────────────────────────────────────────
 ALTER TABLE deradsa          ENABLE ROW LEVEL SECURITY;
@@ -132,6 +137,7 @@ CREATE OR REPLACE FUNCTION upsert_deradsa_lote(
 RETURNS INTEGER
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_catalog  -- previne search_path injection
 AS $$
 DECLARE
   v_upload_id INTEGER;
@@ -172,9 +178,16 @@ BEGIN
 END;
 $$;
 
+-- Restringe execução: anon não pode inserir DERADSAs diretamente.
+-- service_role (pipeline CI) tem EXECUTE implicitamente no Supabase.
+-- authenticated = analistas do CGEO autenticados via Supabase Auth.
+REVOKE EXECUTE ON FUNCTION upsert_deradsa_lote(SMALLINT, TEXT, TEXT, JSON) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION upsert_deradsa_lote(SMALLINT, TEXT, TEXT, JSON) TO authenticated;
+
 COMMENT ON FUNCTION upsert_deradsa_lote IS
   'Insere/atualiza lote de DERADSAs com trilha de auditoria. '
-  'Retorna o número de registros processados.';
+  'Retorna o número de registros processados. '
+  'Acesso restrito: authenticated + service_role (anon revogado).';
 
 -- ── Comentários nas tabelas ───────────────────────────────────────────────
 COMMENT ON TABLE deradsa IS

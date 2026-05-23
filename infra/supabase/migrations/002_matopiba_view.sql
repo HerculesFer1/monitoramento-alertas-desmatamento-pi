@@ -190,6 +190,7 @@ CREATE OR REPLACE FUNCTION refresh_matopiba()
 RETURNS VOID
 LANGUAGE SQL
 SECURITY DEFINER
+SET search_path = public, pg_catalog  -- previne search_path injection em funções SECURITY DEFINER
 AS $$
   REFRESH MATERIALIZED VIEW CONCURRENTLY matopiba_municipios;
 $$;
