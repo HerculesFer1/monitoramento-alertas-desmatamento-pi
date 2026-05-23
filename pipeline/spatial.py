@@ -110,8 +110,13 @@ def safe_difference(
 ) -> Optional[Geometry]:
     """Subtrai geom_b de geom_a com tratamento de erro.
 
-    Em caso de falha, retorna geom_a intacto (comportamento conservador:
-    área não subtraída é preferível a área perdida silenciosamente).
+    Retorna None se o resultado for menor que MIN_AREA_M2 (resíduo desprezível)
+    ou se a operação falhar.
+
+    Em caso de falha NÃO retorna geom_a — isso violaria a precedência ASV > DERADSA:
+    se a diferença falha no path AUTORIZADO_PARCIALMENTE, retornar a área total faria
+    o DERADSA processar área já coberta por ASV. O caller trata None como
+    'residual não classificável' (fragmento perdido, não reclassificado).
     """
     try:
         result = geom_a.difference(geom_b)
@@ -120,5 +125,5 @@ def safe_difference(
         result = extract_polygons(result)
         return result if (result and result.area >= MIN_AREA_M2) else None
     except Exception as exc:
-        log.warning("[difference/%s] %s — área não subtraída (fallback)", label, exc)
-        return geom_a
+        log.error("[difference/%s] %s — retornando None (residual não classificável)", label, exc)
+        return None

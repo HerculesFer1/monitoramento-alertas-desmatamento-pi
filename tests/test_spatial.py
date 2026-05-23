@@ -132,3 +132,14 @@ def test_safe_difference_total_removes_all():
     result = safe_difference(a, b)
     # resultado é vazio → None
     assert result is None
+
+def test_safe_difference_exception_returns_none(monkeypatch):
+    """Em falha geométrica retorna None — não retorna geom_a (violaria precedência ASV > DERADSA)."""
+    from shapely.geometry import Polygon as _Poly
+
+    def _failing(self, other, **kwargs):
+        raise RuntimeError("simulated topology error")
+
+    monkeypatch.setattr(_Poly, "difference", _failing)
+    result = safe_difference(sq(0, 0, 1, 1), sq(5, 5, 6, 6))
+    assert result is None
