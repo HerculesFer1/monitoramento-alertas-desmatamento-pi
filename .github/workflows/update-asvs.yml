@@ -12,10 +12,13 @@ on:
         required: false
         default: "false"
 
+concurrency:
+  group: update-asvs
+  cancel-in-progress: false
+
 env:
   PYTHONUTF8: "1"
-  SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
-  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
 
 jobs:
   update-asvs:
@@ -45,6 +48,7 @@ jobs:
             "SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}" \
             "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" \
             > .env
+          chmod 600 .env
 
       - name: Download ASVs SINAFLOR
         run: conda run -n desmatamento python pipeline/_baixar_asvs.py

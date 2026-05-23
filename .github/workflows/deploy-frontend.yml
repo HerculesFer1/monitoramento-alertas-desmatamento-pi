@@ -59,14 +59,15 @@ jobs:
         id: deploy
         run: |
           if [ "${{ github.ref }}" = "refs/heads/master" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            DEPLOY_URL=$(npx vercel@latest --token=${{ secrets.VERCEL_TOKEN }} --prod --yes 2>&1 | tail -1)
+            DEPLOY_URL=$(npx vercel@latest --token=$VERCEL_TOKEN --prod --yes 2>&1 | tail -1)
           else
-            DEPLOY_URL=$(npx vercel@latest --token=${{ secrets.VERCEL_TOKEN }} --yes 2>&1 | tail -1)
+            DEPLOY_URL=$(npx vercel@latest --token=$VERCEL_TOKEN --yes 2>&1 | tail -1)
           fi
           echo "preview-url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           echo "Deploy concluido: $DEPLOY_URL"
         working-directory: frontend
         env:
+          VERCEL_TOKEN:      ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 

@@ -16,10 +16,13 @@ on:
         required: false
         default: ""
 
+concurrency:
+  group: update-prodes
+  cancel-in-progress: false
+
 env:
   PYTHONUTF8: "1"
-  SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
-  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
 
 jobs:
   update-prodes:
@@ -49,6 +52,7 @@ jobs:
             "SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}" \
             "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" \
             > .env
+          chmod 600 .env
 
       # ── Download PRODES via WFS TerraBrasilis ──────────────────────────────
       # Endpoint verificado ativo em 2026-05-19
