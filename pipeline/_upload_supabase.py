@@ -17,7 +17,7 @@ import logging
 import math
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import geopandas as gpd
@@ -27,7 +27,6 @@ from supabase import create_client
 
 # ── Configuração ──────────────────────────────────────────────────────────
 ROOT   = Path(__file__).parent.parent
-load_dotenv(ROOT / ".env")
 
 RESULT = ROOT / "Resultado"
 GEO_IN = RESULT / "alertas_classificados.geojson"
@@ -100,7 +99,9 @@ def _upsert_with_retry(sb, table: str, batch: list, conflict_col: str) -> None:
 def upload_alertas(sb):
     log.info("Lendo %s ...", GEO_IN.name)
     gdf = gpd.read_file(GEO_IN)
-    if gdf.crs.to_epsg() != 4326:
+    if gdf.crs is None:
+        log.warning("GeoDataFrame sem CRS — assumindo EPSG:4326")
+    elif gdf.crs.to_epsg() != 4326:
         gdf = gdf.to_crs(epsg=4326)
     log.info("  %d fragmentos carregados", len(gdf))
 
@@ -199,7 +200,10 @@ def upload_agregado(sb):
     for r in data:
         anos = r.get("anos_com_alerta_irregular")
         if isinstance(anos, list):
-            anos = [int(a) for a in anos]
+            try:
+                anos = [int(a) for a in anos]
+            except (ValueError, TypeError):
+                anos = None
         else:
             anos = None
 
@@ -259,20 +263,23 @@ def refresh_matopiba(sb) -> None:
 
 
 # ── Registro de auditoria ─────────────────────────────────────────────────
-def registrar_execucao(sb, n_alertas, n_mun):
+def registrar_execucao(sb, n_alertas, n_mun, testes_ok: int = 9, testes_total: int = 9):
+    ts = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
     sb.table("execucoes_pipeline").insert({
         "versao":       "v2",
-        "testes_ok":    9,
-        "testes_total": 9,
+        "testes_ok":    testes_ok,
+        "testes_total": testes_total,
         "n_alertas":    n_alertas,
         "n_municipios": n_mun,
-        "log_resumo":   f"Upload automático em {datetime.now().strftime('%d/%m/%Y %H:%M')}",
+        "log_resumo":   f"Upload automático em {ts}",
     }).execute()
     log.info("  ✓ execucoes_pipeline: execução registrada")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────
 def main():
+    load_dotenv(ROOT / ".env")
+
     log.info("=" * 60)
     log.info("UPLOAD SUPABASE — Desmatamento PI v2")
     log.info("=" * 60)
