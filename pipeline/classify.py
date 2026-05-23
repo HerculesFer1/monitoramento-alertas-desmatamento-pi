@@ -197,6 +197,8 @@ class AlertClassifier:
         alert_area = al_row.get("_area_m2_orig")
         if alert_area is None or alert_area <= 0:
             alert_area = alert_geom.area
+        if alert_area <= 0:
+            return []  # geometria degenerada (linha/ponto) — evita divisão por zero
 
         codeal   = al_row.get("CODEALERTA", f"AL_{id(al_row)}")
         base_row = al_row.to_dict()

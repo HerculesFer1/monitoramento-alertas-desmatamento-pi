@@ -44,12 +44,11 @@ jobs:
 
       - name: Criar .env
         run: |
-          cat > .env <<EOF
-          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}
-          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
-          MAPBIOMAS_TOKEN=${{ secrets.MAPBIOMAS_TOKEN }}
-          EOF
+          printf '%s\n' \
+            "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
+            "SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}" \
+            "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" \
+            > .env
 
       # ── Download PRODES via WFS TerraBrasilis ──────────────────────────────
       # Endpoint verificado ativo em 2026-05-19
