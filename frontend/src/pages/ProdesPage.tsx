@@ -124,7 +124,9 @@ export function ProdesPage() {
           </div>
           <div className="kpi-card">
             <div className="kpi-label">Tendência</div>
-            <div className="kpi-value" style={{ color: 'var(--aut)' }}>+{tendencia}pp</div>
+            <div className="kpi-value" style={{ color: tendencia >= 0 ? 'var(--aut)' : 'var(--irr)' }}>
+              {tendencia >= 0 ? '+' : ''}{tendencia}pp
+            </div>
             <div className="kpi-sub">ciclo 2022 → 2025</div>
             <span className="kpi-badge" style={{ background: 'var(--aut-bg)', color: 'var(--aut)', marginTop: 4 }}>
               {getPct(2022)}% → {getPct(2025)}%
