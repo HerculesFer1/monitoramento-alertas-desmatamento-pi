@@ -397,7 +397,7 @@ export function calcAutTotal(e: { autorizado: number; autorizado_p: number }): n
 | 22 | CI/CD ativo: secrets VERCEL_TOKEN, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY, MAPBIOMAS_EMAIL, MAPBIOMAS_PASSWORD, VERCEL_ORG_ID, VERCEL_PROJECT_ID configurados | **CONCLUÍDO** (2026-05-22) |
 | 23 | Dockerfile + docker-compose.yml corrigidos: removida referência a `preprocess.py` (deletado), entrypoint → `python -m pipeline` | **CONCLUÍDO** (2026-05-22) |
 | 24 | Limpeza repositório: removidos .qmd (4), `plano de fundo.png`, `configurar_supabase.ps1` | **CONCLUÍDO** (2026-05-22) |
-| 25 | Aplicar Migration 004 no Supabase SQL Editor (`004_prodes_rpc_fix.sql`) | **PENDENTE** |
+| 25 | Aplicar Migration 004 no Supabase SQL Editor (`004_prodes_rpc_fix.sql`) | **CONCLUÍDO** (2026-05-22) |
 | 26 | Adicionar secrets `SUPABASE_URL` e `SUPABASE_ANON_KEY` no GitHub (sem prefixo VITE_) — usados pelos workflows update-alertas, update-asvs, update-prodes | **PENDENTE** |
 | 27 | Copiar dados brutos `base de dados/*.geojson` do computador MARCO | **PENDENTE** |
 | 28 | DVC — versionamento de dados | PLANEJADO |
@@ -575,15 +575,8 @@ Gerados de `Resultado/alertas_classificados.geojson` em 2026-05-21. Regenerar vi
 ### Supabase (projeto ubcejvbnpuyouwpphryc)
 - 13.638 fragmentos em `alertas_classificados` ✓
 - 812 registros em `agregado_municipios` ✓
-- RPC `get_resumo_prodes` com DISTINCT ON aplicado (Migration 004 pendente para n_total fix)
-- Frontend contorna o bug via `n_concordantes + n_discordantes` → exibe 70,9% correto
-
-### Bug PRODES (resolvido no frontend)
-**Causa**: `get_resumo_prodes` retorna ciclo 2026 com `n_total=747` (`SEM_PRODES_NO_CICLO`), inflando denominador.
-**Fix frontend** (`ProdesPage.tsx`): `sum(r.n_concordantes + r.n_discordantes)` em vez de `sum(r.n_total)`.
-**Fix SQL** (`004_prodes_rpc_fix.sql`): alterar `COUNT(*) AS n_total` para contar apenas CONCORDANTE+DISCORDANTE.
-**Para aplicar**: Supabase SQL Editor → `infra/supabase/migrations/004_prodes_rpc_fix.sql`.
+- RPC `get_resumo_prodes` corrigida via Migration 004 ✓ — 5.918 validados | 4.198 concordantes | 70,9%
 
 ---
 
-*Última atualização: 2026-05-22 | Pipeline v2 | 9/9 testes OK | 6 abas AO VIVO | PRODES 70,9% ✓ | CI/CD 5 workflows | Prefect 3 deployments | repo GitHub publicado | limpeza repo concluída | Dockerfile corrigido | dados brutos em MARCO*
+*Última atualização: 2026-05-22 | Pipeline v2 | 9/9 testes OK | 6 abas AO VIVO | PRODES 70,9% ✓ | Migration 004 aplicada | CI/CD 5 workflows OK | Prefect 3 deployments | repo GitHub publicado | dados brutos em MARCO*
