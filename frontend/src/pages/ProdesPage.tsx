@@ -86,6 +86,11 @@ export function ProdesPage() {
   const pctGeral  = Math.round(totalConcordantes / (totalValidados || 1) * 1000) / 10
   const tendencia = Math.round((getPct(2025) - getPct(2022)) * 10) / 10
 
+  // CP4 — percentuais da distribuição de cobertura (calculados dinamicamente)
+  const totalDistCob = peData.distCob.n.reduce((s: number, v: number) => s + v, 0)
+  const cp4Pct0 = totalDistCob > 0 ? (peData.distCob.n[0] / totalDistCob * 100).toFixed(1) : '29.3'
+  const cp4Pct5 = totalDistCob > 0 ? (peData.distCob.n[5] / totalDistCob * 100).toFixed(1) : '19.7'
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <FilterPanel />
@@ -122,7 +127,7 @@ export function ProdesPage() {
             <div className="kpi-value" style={{ color: 'var(--aut)' }}>+{tendencia}pp</div>
             <div className="kpi-sub">ciclo 2022 → 2025</div>
             <span className="kpi-badge" style={{ background: 'var(--aut-bg)', color: 'var(--aut)', marginTop: 4 }}>
-              {prodesData.ciclos[2022].pct}% → {prodesData.ciclos[2025].pct}%
+              {getPct(2022)}% → {getPct(2025)}%
             </span>
           </div>
           <div className="kpi-card">
@@ -225,7 +230,7 @@ export function ProdesPage() {
               </BarChart>
             </ResponsiveContainer>
             <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 6 }}>
-              Padrão bimodal: 29,3% com 0% e 19,7% com 90–100% de cobertura
+              Padrão bimodal: {cp4Pct0}% com 0% e {cp4Pct5}% com 90–100% de cobertura
             </div>
           </div>
 

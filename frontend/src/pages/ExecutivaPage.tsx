@@ -21,7 +21,7 @@ const TT_STYLE = {
 
 
 export function ExecutivaPage() {
-  const { anoFiltro, biomaFiltro } = useAppStore()
+  const { anoFiltro } = useAppStore()
   const { data: resumoData, isLoading: resumoLoading, isError: resumoError } = useResumoAnual()
   const { data: agregadoData } = useAgregado()
   const { data: staticData } = useResumoEstatico()
@@ -60,12 +60,9 @@ export function ExecutivaPage() {
 
   const anos = anoFiltro === 'all' ? YEARS : [anoFiltro as number]
 
-  const areaFiltrada = anos.reduce((s, a) => {
-    const total = getArea(a)
-    if (biomaFiltro === 'Cerrado')   return s + (staticData?.alertYr?.[a]?.cerrado  ?? alertYr[a]?.cerrado  ?? 0)
-    if (biomaFiltro === 'Caatinga')  return s + (staticData?.alertYr?.[a]?.caatinga ?? alertYr[a]?.caatinga ?? 0)
-    return s + total
-  }, 0)
+  // IPI = ha_irregular / ha_total — numerador e denominador devem ser do mesmo universo (todos os biomas).
+  // O filtro de bioma afeta apenas o mapa; não há dados de irregular por bioma disponíveis.
+  const areaFiltrada = anos.reduce((s, a) => s + getArea(a), 0)
 
   const irrFiltrado      = anos.reduce((s, a) => s + getIrr(a),   0)
   const autFiltrado      = anos.reduce((s, a) => s + getAut(a),   0)

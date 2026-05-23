@@ -69,8 +69,12 @@ export function TemporalPage() {
   const ipiAtual  = anos.length > 0 ? getIpi(anos[anos.length - 1]) : 0
   const reducao   = Math.round((ipiInicio - ipiAtual) * 10) / 10
 
-  const matPct2022 = Math.round((staticData?.matopibaYr?.[2022]?.mat ?? matopibaYr[2022].mat) / (staticData?.alertYr?.[2022]?.area ?? alertYr[2022].area) * 100)
-  const matPct2025 = Math.round((staticData?.matopibaYr?.[2025]?.mat ?? matopibaYr[2025].mat) / (staticData?.alertYr?.[2025]?.area ?? alertYr[2025].area) * 100)
+  // matPct = ha_irr_MATOPIBA / ha_irr_total_PI × 100 — "% do irregular PI que está no MATOPIBA"
+  // Denominador correto é ha_irregular (não ha_total), pois matopibaYr.mat já é ha_irregular MATOPIBA.
+  const matIrr2022 = Math.max(staticData?.classifYr?.[2022]?.irregular ?? classifYr[2022]?.irregular ?? 1, 1)
+  const matIrr2025 = Math.max(staticData?.classifYr?.[2025]?.irregular ?? classifYr[2025]?.irregular ?? 1, 1)
+  const matPct2022 = Math.round((staticData?.matopibaYr?.[2022]?.mat ?? matopibaYr[2022].mat) / matIrr2022 * 100)
+  const matPct2025 = Math.round((staticData?.matopibaYr?.[2025]?.mat ?? matopibaYr[2025].mat) / matIrr2025 * 100)
 
   const totalArea    = anos.reduce((s, a) => s + getArea(a), 0)
   const totalAlertas = anos.reduce((s, a) => s + getCount(a), 0)
@@ -144,9 +148,9 @@ export function TemporalPage() {
           </div>
 
           <div className="kpi-card">
-            <div className="kpi-label">MATOPIBA no total</div>
+            <div className="kpi-label">MATOPIBA no irregular</div>
             <div className="kpi-value" style={{ color: 'var(--mat)' }}>{matPct2022}% → {matPct2025}%</div>
-            <div className="kpi-sub">participação 2022 → 2025</div>
+            <div className="kpi-sub">% do irregular PI · 2022 → 2025</div>
             <span className="kpi-badge" style={{ background: 'var(--mat-bg)', color: 'var(--mat)', marginTop: 4 }}>
               ↓{matPct2022 - matPct2025}pp
             </span>

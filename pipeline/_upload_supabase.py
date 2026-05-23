@@ -279,7 +279,7 @@ def main():
 
     if not GEO_IN.exists():
         log.error("Arquivo não encontrado: %s", GEO_IN)
-        log.error("Execute preprocess.py antes do upload.")
+        log.error("Execute python -m pipeline antes do upload.")
         raise SystemExit(1)
     if not AGR_IN.exists():
         log.error("Arquivo não encontrado: %s", AGR_IN)

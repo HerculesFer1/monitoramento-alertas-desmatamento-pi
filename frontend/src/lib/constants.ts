@@ -125,8 +125,9 @@ export const prodesExtra = {
     caatinga:    [12153, 18550, 28530, 9222],
     semProdes:   [0,     0,     0,     14831],
   },
-  // NOTA: distCob.n deve somar ≤ prodesData.totalValidados (5918).
-  // Regenerar via pipeline após próxima execução (resumo_estatico.json).
+  // ATENÇÃO: distCob.n soma 6180 mas totalValidados=5918 (divergência de execução anterior).
+  // CP4 usa percentuais calculados dinamicamente — viés visual mínimo.
+  // Regenerar via python -m pipeline para sincronizar com resumo_estatico.json.
   distCob: {
     labels: ['0%','1–24%','25–49%','50–74%','75–89%','90–100%'],
     n:  [1730, 508, 642, 1077, 1060, 1163],
