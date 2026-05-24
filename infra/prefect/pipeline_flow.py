@@ -52,8 +52,8 @@ PROJECT_DIR = Path(__file__).parent.parent.parent.resolve()
 PYTHON      = sys.executable
 
 # Caminhos canônicos dos arquivos de dados
-BASE_DADOS   = PROJECT_DIR / "base de dados"
-RESULTADO    = PROJECT_DIR / "Resultado"
+BASE_DADOS   = PROJECT_DIR / "data" / "raw"
+RESULTADO    = PROJECT_DIR / "data" / "output"
 ALERTAS_PATH = BASE_DADOS / "Alertas de Desmatamento(MAPBIOMAS).geojson"
 ASVS_PATH    = BASE_DADOS / "ASVs Emitidas-PI(SINAFLOR+).geojson"
 PRODES_PATH  = BASE_DADOS / "PRODES_Cerrado_PI.geojson"

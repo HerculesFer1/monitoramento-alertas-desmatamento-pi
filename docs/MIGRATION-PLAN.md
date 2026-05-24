@@ -62,25 +62,26 @@ Limpeza pós-migração:
 ## Fase 4 — Design System
 **Duração:** 1 dia | **Pode rodar em paralelo com Fase 5**
 
-- 🔲 Criar `design/tokens/colors.json`, `typography.json`, `spacing.json`
-- 🔲 Criar `design/ux/personas.md`
-- 🔲 Criar `design/ux/decisions/UDR-001-navegacao-modular.md`
-- 🔲 Criar `design/ux/flows/alerta-classification-flow.md`
-- 🔲 **Commit:** `feat: phase-4 — design system tokens`
+- ✅ Criar `design/tokens/colors.json`, `typography.json`, `spacing.json`
+- ✅ Criar `design/ux/personas.md` (3 personas: Analista, Gestor, Dev GIS)
+- ✅ Criar `design/ux/decisions/UDR-001-navegacao-modular.md`
+- ✅ Criar `design/ux/flows/alerta-classification-flow.md`
+- ✅ **Commit:** `feat: phase-4 — design system tokens`
 
 ## Fase 5 — Limpeza de Infraestrutura
 **Duração:** 1–2 dias | **Depende de:** Fases 1–3
 
-- 🔲 `git mv "base de dados/" data/raw/`
-- 🔲 `git mv Resultado/ data/output/`
-- 🔲 `git mv rodar_*.ps1 _check_env.py _gerar_*.py scripts/`
-- 🔲 `git mv Dockerfile docker-compose.yml infra/docker/`
-- 🔲 `git mv CLAUDE.md.md docs/architecture/DECISIONS.md`
-- 🔲 Atualizar `.github/workflows/ci.yml` (validação de manifests)
-- 🔲 Criar `.github/workflows/release-module.yml`
-- 🔲 Verificar: root só tem `.env.example`, `README.md`, `environment.yml`, `pyproject.toml`
-- 🔲 `pytest && npm run build` → verde
-- 🔲 **Commit:** `feat: phase-5 — infra cleanup + ci/cd update`
+- ✅ `git mv "base de dados/" data/raw/` + atualizar todos os paths Python
+- ✅ `git mv Resultado/{*.json} data/output/` + atualizar paths Python
+- ✅ `git mv rodar_*.ps1 _check_env.py _gerar_*.py _baixar_prodes.py scripts/`
+- ✅ `git mv Dockerfile docker-compose.yml infra/docker/`
+- ✅ `cp CLAUDE.MD.md docs/architecture/DECISIONS.md` (arquivo não-rastreado)
+- ✅ Atualizar `.gitignore` com novos caminhos `data/raw/` e `data/output/`
+- ✅ Atualizar `.github/workflows/ci.yml` (lint → core/ modules/, validação de manifests)
+- ✅ Criar `.github/workflows/release-module.yml`
+- ✅ Corrigir bug pré-existente `indicators.py:48` — pandas 3.x `.astype(float)` antes de `.mean()`
+- ✅ `pytest` → 105/105 testes passam | `npm run build` → verde
+- ✅ **Commit:** `feat: phase-5 — infra cleanup + ci/cd update`
 
 ## Fase 6 — Validação Final
 **Duração:** 1 dia | **Depende de:** Fases 0–5

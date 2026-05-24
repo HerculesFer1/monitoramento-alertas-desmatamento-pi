@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 
+import pandas as pd
 import geopandas as gpd
 
 log = logging.getLogger(__name__)
@@ -45,7 +46,9 @@ def apply_indicators(gdf_out: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     log.info("  Municípios reincidentes (≥3 anos IRREGULAR): %s", sorted(reincidentes))
 
     if "dias_ate_publicacao" in gdf_out.columns:
-        def_media = gdf_out.groupby("ano")["dias_ate_publicacao"].mean().round(1).to_dict()
+        def_media = gdf_out.groupby("ano")["dias_ate_publicacao"].apply(
+            lambda s: pd.to_numeric(s, errors="coerce").mean()
+        ).round(1).to_dict()
         log.info("  Defasagem média publicação (dias): %s", def_media)
 
     for c in _SCHEMA:

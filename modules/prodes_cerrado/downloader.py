@@ -8,7 +8,7 @@ from typing import Optional
 import geopandas as gpd
 
 _ROOT = Path(__file__).resolve().parent.parent.parent
-_FILE = _ROOT / "base de dados" / "PRODES_Cerrado_PI.geojson"
+_FILE = _ROOT / "data" / "raw" / "PRODES_Cerrado_PI.geojson"
 
 log = logging.getLogger(__name__)
 

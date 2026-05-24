@@ -36,9 +36,9 @@ from shapely.geometry import box
 # ── Configuração ──────────────────────────────────────────────────────────────
 
 BASE     = Path(__file__).resolve().parent
-DATA_RAW = BASE / "base de dados"
+DATA_RAW = BASE / "data" / "raw"
 SAIDA    = DATA_RAW / "PRODES_Cerrado_PI.geojson"
-MUN_PI   = BASE / "Resultado" / "municipios_pi.geojson"
+MUN_PI   = BASE / "data" / "output" / "municipios_pi.geojson"
 
 # WFS endpoint verificado ativo (GetCapabilities retorna 200 OK)
 WFS_BASE = "https://terrabrasilis.dpi.inpe.br/geoserver/prodes-cerrado-nb/ows"

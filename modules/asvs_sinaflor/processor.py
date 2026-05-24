@@ -8,7 +8,7 @@ import geopandas as gpd
 from core.spatial_core import fix_geoms
 
 _ROOT = Path(__file__).resolve().parent.parent.parent
-_FILE = _ROOT / "base de dados" / "ASVs Emitidas-PI(SINAFLOR+).geojson"
+_FILE = _ROOT / "data" / "raw" / "ASVs Emitidas-PI(SINAFLOR+).geojson"
 
 
 def load() -> gpd.GeoDataFrame:

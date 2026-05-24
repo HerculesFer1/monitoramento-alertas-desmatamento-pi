@@ -46,16 +46,16 @@ jobs:
       - name: Instalar ruff
         run: pip install ruff
 
-      - name: Lint pipeline/
-        run: ruff check pipeline/ --select E,F,W,I --ignore E501
+      - name: Lint core/ modules/
+        run: ruff check core/ modules/ --select E,F,W,I --ignore E501
 
-      - name: Verificar imports circulares
+      - name: Verificar sintaxe de todos os módulos
         run: |
           python -c "
           import ast, pathlib, sys
-          pkg = pathlib.Path('pipeline')
-          files = list(pkg.glob('*.py'))
-          print(f'Verificando {len(files)} módulos...')
+          dirs = [pathlib.Path('core'), pathlib.Path('modules')]
+          files = [f for d in dirs for f in d.rglob('*.py') if '__pycache__' not in str(f)]
+          print(f'Verificando {len(files)} arquivos...')
           for f in files:
               try:
                   ast.parse(f.read_text(encoding='utf-8'))
@@ -63,6 +63,36 @@ jobs:
                   print(f'ERRO de sintaxe em {f}: {e}')
                   sys.exit(1)
           print('Sintaxe OK em todos os módulos')
+          "
+
+      - name: Validar manifests dos módulos
+        run: |
+          python -c "
+          import importlib, pathlib, sys
+          required = {'id', 'name', 'version', 'priority', 'enabled', 'schedule', 'outputs'}
+          errors = []
+          for manifest in pathlib.Path('modules').glob('*/manifest.py'):
+              mod_name = str(manifest.parent).replace('/', '.').replace('\\\\', '.')
+              try:
+                  spec = importlib.util.spec_from_file_location(mod_name + '.manifest', manifest)
+                  mod = importlib.util.module_from_spec(spec)
+                  spec.loader.exec_module(mod)
+                  m = getattr(mod, 'MODULE_MANIFEST', None)
+                  if m is None:
+                      errors.append(f'{manifest}: MODULE_MANIFEST ausente')
+                  else:
+                      missing = required - set(m.keys())
+                      if missing:
+                          errors.append(f'{manifest}: chaves ausentes {missing}')
+                      else:
+                          print(f'OK: {manifest.parent.name} v{m[\"version\"]} prio={m[\"priority\"]}')
+              except Exception as e:
+                  errors.append(f'{manifest}: {e}')
+          if errors:
+              for e in errors:
+                  print(f'ERRO: {e}')
+              sys.exit(1)
+          print(f'Todos os manifests validados.')
           "
 
   # ── 3. Testes unitários Python ───────────────────────────────────────────
@@ -160,7 +190,7 @@ jobs:
           import json, pathlib, sys
           committed = json.loads(pathlib.Path('pipeline/constants.json').read_text(encoding='utf-8'))
           sys.path.insert(0, '.')
-          from pipeline.constants import as_json_payload
+          from core.constants import as_json_payload
           regenerated = as_json_payload()
           if committed != regenerated:
               print('ERRO: pipeline/constants.json desatualizado — execute python -m pipeline.constants e faca commit do resultado')

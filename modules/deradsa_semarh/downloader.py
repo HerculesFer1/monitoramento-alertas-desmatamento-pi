@@ -28,7 +28,7 @@ from dotenv import load_dotenv
 
 # ── Configuração ──────────────────────────────────────────────────────────
 _ROOT = Path(__file__).resolve().parent.parent.parent
-_DATA = _ROOT / "base de dados"
+_DATA = _ROOT / "data" / "raw"
 load_dotenv(_ROOT / ".env")
 
 LOG_FMT = "%(asctime)s [%(levelname)s] %(message)s"

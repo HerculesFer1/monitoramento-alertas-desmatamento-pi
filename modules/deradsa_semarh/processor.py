@@ -9,8 +9,8 @@ from core.spatial_core import fix_geoms
 
 _ROOT = Path(__file__).resolve().parent.parent.parent
 _FILES: dict[int, Path] = {
-    2024: _ROOT / "base de dados" / "DERADSAs Emitidas[SEMARH-2024].geojson",
-    2025: _ROOT / "base de dados" / "DERADSAs Emitidas[SEMARH-2025].geojson",
+    2024: _ROOT / "data" / "raw" / "DERADSAs Emitidas[SEMARH-2024].geojson",
+    2025: _ROOT / "data" / "raw" / "DERADSAs Emitidas[SEMARH-2025].geojson",
 }
 
 

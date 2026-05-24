@@ -8,7 +8,7 @@ from modules.asvs_sinaflor.processor import _FILE
 
 def test_processor_file_constant():
     """Verifica que a constante de caminho aponta para o diretório correto."""
-    assert "base de dados" in str(_FILE)
+    assert "data" in str(_FILE) and "raw" in str(_FILE)
     assert _FILE.name == "ASVs Emitidas-PI(SINAFLOR+).geojson"
 
 

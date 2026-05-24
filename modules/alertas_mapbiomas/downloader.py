@@ -28,7 +28,7 @@ from dotenv import load_dotenv
 
 # ── Configuração ──────────────────────────────────────────────────────────
 _ROOT  = Path(__file__).resolve().parent.parent.parent
-_OUT   = _ROOT / "base de dados" / "Alertas de Desmatamento(MAPBIOMAS).geojson"
+_OUT   = _ROOT / "data" / "raw" / "Alertas de Desmatamento(MAPBIOMAS).geojson"
 
 load_dotenv(_ROOT / ".env")
 

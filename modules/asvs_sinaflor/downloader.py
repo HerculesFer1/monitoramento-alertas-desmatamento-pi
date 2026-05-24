@@ -26,7 +26,7 @@ import requests
 
 # ── Configuração ──────────────────────────────────────────────────────────
 _ROOT = Path(__file__).resolve().parent.parent.parent
-_OUT  = _ROOT / "base de dados" / "ASVs Emitidas-PI(SINAFLOR+).geojson"
+_OUT  = _ROOT / "data" / "raw" / "ASVs Emitidas-PI(SINAFLOR+).geojson"
 
 LOG_FMT = "%(asctime)s [%(levelname)s] %(message)s"
 logging.basicConfig(level=logging.INFO, format=LOG_FMT)

@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, module="geopandas
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="shapely")
 
 _ROOT = Path(__file__).resolve().parent.parent.parent
-_OUT_DIR = _ROOT / "Resultado"
+_OUT_DIR = _ROOT / "data" / "output"
 
 log = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ def run(config: dict) -> dict:
 
     # ── 2. LEITURA ───────────────────────────────────────────────────────────
     log.info("  Etapa 2: Leitura dos dados")
-    data_dir = _ROOT / "base de dados"
+    data_dir = _ROOT / "data" / "raw"
     reader = LocalGeoJSONReader(data_dir)
     gdf_al    = reader.read_alertas()
     gdf_asv   = reader.read_asvs()

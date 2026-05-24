@@ -13,22 +13,22 @@ frontend/dist/
 frontend/.vite/
 
 # Logs e arquivos de erro gerados pelo pipeline
-Resultado/pipeline.log
-Resultado/pipeline.err
-Resultado/pipeline.log.err
+data/output/pipeline.log
+data/output/pipeline.err
+data/output/pipeline.log.err
 
 # Arquivo de estado do workflow GitHub Actions (ASV hash)
-Resultado/.last_asv_hash
+data/output/.last_asv_hash
 
 # GeoJSONs brutos (ultrapassam limite do GitHub — manter localmente)
-base de dados/*.geojson
+data/raw/*.geojson
 
 # GeoJSONs gerados pelo pipeline (grandes)
-Resultado/alertas_classificados.geojson
-Resultado/municipios_pi.geojson
+data/output/alertas_classificados.geojson
+data/output/municipios_pi.geojson
 
 # Documentos Word gerados automaticamente (regeneráveis)
-Resultado/*.docx
+data/output/*.docx
 
 # Arquivos temporários do Windows
 Thumbs.db
@@ -38,3 +38,6 @@ desktop.ini
 # Conda / ambientes virtuais
 .conda/
 *.egg-info/
+
+# CLAUDE.MD.md fonte — conteúdo migrado para docs/architecture/DECISIONS.md
+CLAUDE.MD.md

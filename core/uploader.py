@@ -27,7 +27,7 @@ from supabase import create_client
 # ── Configuração ──────────────────────────────────────────────────────────
 ROOT   = Path(__file__).parent.parent
 
-RESULT = ROOT / "Resultado"
+RESULT = ROOT / "data" / "output"
 GEO_IN = RESULT / "alertas_classificados.geojson"
 AGR_IN = RESULT / "agregado_municipios.json"
 

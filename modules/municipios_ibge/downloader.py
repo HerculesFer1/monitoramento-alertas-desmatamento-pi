@@ -7,7 +7,7 @@ from pathlib import Path
 import requests
 
 _ROOT = Path(__file__).resolve().parent.parent.parent
-_DEFAULT_OUT = _ROOT / "base de dados" / "municipios_pi.geojson"
+_DEFAULT_OUT = _ROOT / "data" / "raw" / "municipios_pi.geojson"
 _IBGE_URL = (
     "https://servicodados.ibge.gov.br/api/v3/malhas/estados/22"
     "?formato=application/vnd.geo+json&resolucao=5"
