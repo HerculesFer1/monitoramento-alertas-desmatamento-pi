@@ -12,8 +12,8 @@ import logging
 import geopandas as gpd
 import pandas as pd
 
-from .constants import MATOPIBA_PI, STATUS_INVALIDOS_KW, STATUS_VALIDOS_KW, VP_PTBR
-from .utils import detect_id_col, norm_mun, parse_date_col, parse_fonte, strip_tz
+from core.constants import MATOPIBA_PI, STATUS_INVALIDOS_KW, STATUS_VALIDOS_KW, VP_PTBR
+from core.utils import detect_id_col, norm_mun, parse_date_col, parse_fonte, strip_tz
 
 log = logging.getLogger(__name__)
 

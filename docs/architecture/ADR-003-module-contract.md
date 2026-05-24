@@ -38,12 +38,12 @@ MODULE_MANIFEST = {
 
 def run(config: dict) -> dict:
     """
-    Entry point chamado pelo platform/orchestrator.py.
+    Entry point chamado pelo core/orchestrator.py.
 
     Args:
         config: dict com chaves opcionais:
             dry_run (bool)  — processar sem fazer upload
-            ano (int)       — restringir ao ano específico
+            ano (int)       — restringir ao ano especificado
             verbose (bool)  — logging detalhado
 
     Returns:
@@ -78,8 +78,8 @@ def run(config: dict) -> dict:
 1. `id` é imutável após ir para produção — chave em logs, DB e URLs
 2. `run()` é **idempotente**: mesmos dados → mesmo resultado
 3. `run()` usa `logging`, não `print()` direto
-4. Módulo importa apenas de `platform.*` — nunca de outro `modules.*`
-5. `enabled: False` → modulo coexiste no repo sem afetar o runtime
+4. Módulo importa apenas de `core.*` — nunca de outro `modules.*`
+5. `enabled: False` → módulo coexiste no repo sem afetar o runtime
 
 ## Estrutura de Pastas do Módulo
 

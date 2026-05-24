@@ -26,7 +26,7 @@ infra/
 | `prodes-anual` | `0 3 1 10 *` | Somente `prodes_cerrado` |
 | `dry-run` | Manual | Todos com `config.dry_run=True` |
 
-`platform_flow.py` usa `platform.registry` para descobrir módulos dinamicamente.
+`platform_flow.py` usa `core.registry` para descobrir módulos dinamicamente.
 Adicionar novo módulo com schedule → aparece no fluxo mensal automaticamente.
 
 ## Docker — Services
@@ -54,7 +54,7 @@ services:
 - name: Validate module manifests
   run: |
     python -c "
-    from platform.registry import ModuleRegistry
+    from core.registry import ModuleRegistry
     r = ModuleRegistry('modules/')
     r.discover()
     print(f'OK: {len(r.list())} módulos válidos')
@@ -71,7 +71,7 @@ services:
 | `PREFECT_API_KEY` | GitHub Secrets | Prefect Cloud auth |
 | `MAPBIOMAS_TOKEN` | `.env` | módulo alertas_mapbiomas |
 
-**Invariante:** `SUPABASE_SERVICE_KEY` nunca no frontend — upload sempre via `platform/uploader.py`.
+**Invariante:** `SUPABASE_SERVICE_KEY` nunca no frontend — upload sempre via `core/uploader.py`.
 
 ## Deployment de Novo Módulo (fluxo completo)
 

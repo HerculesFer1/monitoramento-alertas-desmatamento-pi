@@ -1,9 +1,9 @@
-"""Testes unitários para pipeline/spatial.py."""
+"""Testes unitários para platform/spatial_core.py."""
 import pytest
 import geopandas as gpd
 from shapely.geometry import Polygon, Point, GeometryCollection, MultiPolygon
 
-from pipeline.spatial import fix_geoms, dissolve_safe, extract_polygons, safe_intersection, safe_difference
+from core.spatial_core import fix_geoms, dissolve_safe, extract_polygons, safe_intersection, safe_difference
 
 
 def sq(x0, y0, x1, y1) -> Polygon:

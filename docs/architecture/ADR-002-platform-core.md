@@ -1,4 +1,4 @@
-# ADR-002: Núcleo da Plataforma (platform/)
+# ADR-002: Núcleo da Plataforma (core/)
 
 **Status:** Aceito
 **Data:** 2026-05-24
@@ -6,13 +6,13 @@
 
 ## Responsabilidade
 
-`platform/` é o único código que roda independente de qualquer módulo de análise.
-**Regra absoluta:** nenhum arquivo em `platform/` importa de `modules/`.
+`core/` é o único código que roda independente de qualquer módulo de análise.
+**Regra absoluta:** nenhum arquivo em `core/` importa de `modules/`.
 
 ## Estrutura
 
 ```
-platform/
+core/
 ├── __init__.py
 ├── registry.py        ← descobre e carrega módulos via manifest.py
 ├── orchestrator.py    ← itera sobre módulos registrados e chama run()
@@ -27,7 +27,7 @@ platform/
 ## registry.py — Interface Pública
 
 ```python
-from platform.registry import ModuleRegistry
+from core.registry import ModuleRegistry
 
 registry = ModuleRegistry(modules_dir="modules/")
 registry.discover()                         # lê manifest.py de cada subpasta
@@ -45,7 +45,7 @@ registry.export_json("module-registry.json")# → lido pelo frontend
 ## orchestrator.py — Interface Pública
 
 ```python
-from platform.orchestrator import run_all, run_one
+from core.orchestrator import run_all, run_one
 
 # Roda todos os módulos habilitados em ordem de prioridade
 result = run_all(config={"dry_run": False})
@@ -60,7 +60,7 @@ Módulos com mesma prioridade rodam sequencialmente (sem paralelismo por padrão
 ## uploader.py — Interface Pública
 
 ```python
-from platform.uploader import upload_geodataframe, upload_json
+from core.uploader import upload_geodataframe, upload_json
 
 upload_geodataframe(gdf, table="alertas_classificados", if_exists="upsert")
 upload_json(data, table="agregado_municipios", if_exists="upsert")
@@ -72,27 +72,26 @@ Módulos **não** importam `supabase` diretamente — usam esta interface.
 ## spatial_core.py — Funções Disponíveis
 
 ```python
-from platform.spatial_core import fix_geometry, reproject, area_ha, clip_to_state
+from core.spatial_core import fix_geoms, dissolve_safe, safe_intersection, safe_difference
 
-gdf = fix_geometry(gdf)                    # corrige geometrias inválidas
-gdf = reproject(gdf, to_crs="EPSG:5880")  # projeção equivalente para área
-ha  = area_ha(gdf)                         # calcula área em hectares
-gdf = clip_to_state(gdf, uf="PI")          # recorta ao estado do Piauí
+gdf = fix_geoms(gdf)                       # corrige geometrias inválidas
+union = dissolve_safe(gdf)                 # une todas em uma geometria
+inter = safe_intersection(geom_a, geom_b)  # interseção com tratamento de erro
+diff  = safe_difference(geom_a, geom_b)    # diferença com tratamento de erro
 ```
 
 ## Origem de Cada Arquivo (migração)
 
 | Arquivo novo | Origem |
 |---|---|
-| `platform/utils.py` | `pipeline/utils.py` |
-| `platform/spatial_core.py` | `pipeline/spatial.py` |
-| `platform/uploader.py` | `pipeline/_upload_supabase.py` |
-| `platform/constants.py` | `pipeline/constants.py` |
-| `platform/quality_core.py` | `pipeline/quality.py` (parte reutilizável) |
+| `core/utils.py` | `pipeline/utils.py` |
+| `core/spatial_core.py` | `pipeline/spatial.py` |
+| `core/uploader.py` | `pipeline/_upload_supabase.py` |
+| `core/constants.py` | `pipeline/constants.py` |
 
 ## Regras de Evolução
 
 - Nova função geoespacial genérica → `spatial_core.py`
 - Nova constante usada em mais de um módulo → `constants.py`
 - Nova lógica de upload/retry → `uploader.py`
-- Lógica específica de um módulo → **nunca** em `platform/`
+- Lógica específica de um módulo → **nunca** em `core/`

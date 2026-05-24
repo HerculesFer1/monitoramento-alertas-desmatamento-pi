@@ -70,13 +70,13 @@ except ImportError as exc:
 
 from .aggregate import aggregate_monthly, aggregate_municipal, aggregate_resumo_estatico, download_municipios_ibge  # noqa: E402, I001
 from .classify import AlertClassifier  # noqa: E402
-from .constants import ANOS, ANOS_DERADSA, CRS_CALC, CRS_OUT, M2_HA, export_json  # noqa: E402
+from core.constants import ANOS, ANOS_DERADSA, CRS_CALC, CRS_OUT, M2_HA, export_json  # noqa: E402
 from .indicators import apply_indicators  # noqa: E402
 from .parsers import build_asv_base, parse_alertas, parse_asvs, parse_deradsa  # noqa: E402
 from .quality import run_all_tests  # noqa: E402
 from .readers import LocalGeoJSONReader  # noqa: E402
-from .spatial import fix_geoms  # noqa: E402
-from .utils import elapsed  # noqa: E402
+from core.spatial_core import fix_geoms  # noqa: E402
+from core.utils import elapsed  # noqa: E402
 from .validation import run_prodes_validation  # noqa: E402
 
 
@@ -346,7 +346,7 @@ def _maybe_upload(n_fragmentos: int, n_mun: int) -> None:
     log.info("=" * 60)
     log.info("UPLOAD SUPABASE (automático)")
     try:
-        from pipeline._upload_supabase import main as _upload
+        from core.uploader import main as _upload
         _upload()
     except ImportError:
         log.warning("  supabase-py não instalado — instale com:")

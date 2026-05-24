@@ -12,18 +12,18 @@ Status: 🔲 Pendente | 🔄 Em andamento | ✅ Concluído
 - ✅ Criar `scripts/notificar_fase.ps1`
 - ✅ Configurar hook Stop em `.claude/settings.local.json`
 - ✅ Criar `modules/_template/` (manifest, downloader, processor, migrations, tests)
-- 🔲 **Commit:** `feat: phase-0 — docs architecture + hooks + module template`
+- ✅ **Commit:** `feat: phase-0 — docs architecture + hooks + module template`
 
 ## Fase 1 — Núcleo da Plataforma
 **Duração:** 2 dias | **Depende de:** Fase 0
 
-- 🔲 Criar `platform/__init__.py`, `registry.py`, `orchestrator.py`
-- 🔲 `git mv pipeline/utils.py platform/utils.py` + ajustar imports
-- 🔲 `git mv pipeline/spatial.py platform/spatial_core.py` + ajustar imports
-- 🔲 `git mv pipeline/_upload_supabase.py platform/uploader.py` + ajustar imports
-- 🔲 `git mv pipeline/constants.py platform/constants.py`
-- 🔲 Criar `tests/test_registry.py`
-- 🔲 `pytest tests/` → verde
+- ✅ Criar `core/__init__.py`, `registry.py`, `orchestrator.py`
+- ✅ `git mv pipeline/utils.py core/utils.py` + ajustar imports
+- ✅ `git mv pipeline/spatial.py core/spatial_core.py` + ajustar imports
+- ✅ `git mv pipeline/_upload_supabase.py core/uploader.py` + ajustar imports
+- ✅ `git mv pipeline/constants.py core/constants.py`
+- ✅ Criar `tests/test_registry.py`
+- ✅ `pytest tests/` → verde
 - 🔲 **Commit:** `feat: phase-1 — platform core`
 
 ## Fase 2 — Migrar Módulos Backend
@@ -48,9 +48,9 @@ Limpeza pós-migração:
 ## Fase 3 — Frontend Modular Shell
 **Duração:** 3 dias | **Depende de:** Fase 2
 
-- 🔲 Criar `frontend/src/platform/layout/` (AppShell, Sidebar, TabRouter)
-- 🔲 `git mv frontend/src/store → frontend/src/platform/store`
-- 🔲 `git mv frontend/src/lib → frontend/src/platform/lib`
+- 🔲 Criar `frontend/src/core/layout/` (AppShell, Sidebar, TabRouter)
+- 🔲 `git mv frontend/src/store → frontend/src/core/store`
+- 🔲 `git mv frontend/src/lib → frontend/src/core/lib`
 - 🔲 Criar `frontend/src/shared/components/` (BaseMap, Charts, Filters)
 - 🔲 Criar `frontend/src/modules/alertas_mapbiomas/` (4 views)
 - 🔲 Criar `frontend/src/modules/prodes_cerrado/`
@@ -95,9 +95,9 @@ Limpeza pós-migração:
 
 | Fase | Remover | Substituído por |
 |------|---------|-----------------|
-| 1 | `pipeline/utils.py`, `pipeline/spatial.py` | `platform/` |
-| 1 | `pipeline/_upload_supabase.py` | `platform/uploader.py` |
-| 2 | `pipeline/__main__.py` | `platform/orchestrator.py` |
+| 1 | `pipeline/utils.py`, `pipeline/spatial.py` | `core/` |
+| 1 | `pipeline/_upload_supabase.py` | `core/uploader.py` |
+| 2 | `pipeline/__main__.py` | `core/orchestrator.py` |
 | 2 | `pipeline/_baixar_*.py` | `modules/*/downloader.py` |
 | 3 | `frontend/src/pages/*.tsx` | `frontend/src/modules/` |
 | 5 | `base de dados/`, `Resultado/` | `data/raw/`, `data/output/` |

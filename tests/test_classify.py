@@ -15,7 +15,7 @@ import pytest
 from shapely.geometry import Polygon
 
 from pipeline.classify import AlertClassifier
-from pipeline.constants import CRS_CALC, THRESHOLD_AUTORIZADO
+from core.constants import CRS_CALC, THRESHOLD_AUTORIZADO
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────

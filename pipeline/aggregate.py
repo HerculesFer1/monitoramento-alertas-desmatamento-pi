@@ -14,7 +14,7 @@ import geopandas as gpd
 import pandas as pd
 import requests
 
-from .constants import ANOS_DERADSA, VP_PTBR
+from core.constants import ANOS_DERADSA, VP_PTBR
 
 log = logging.getLogger(__name__)
 

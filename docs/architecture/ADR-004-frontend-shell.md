@@ -8,7 +8,7 @@
 
 ```
 frontend/src/
-├── platform/                    ← shell genérico (não toca ao adicionar módulo)
+├── core/                    ← shell genérico (não toca ao adicionar módulo)
 │   ├── layout/
 │   │   ├── AppShell.tsx         ← layout raiz: sidebar + topbar + conteúdo
 │   │   ├── Sidebar.tsx          ← gerada a partir de module-registry.json
@@ -49,7 +49,7 @@ frontend/src/
 
 ## Descoberta de Módulos
 
-`platform/registry.py` gera `module-registry.json` durante o build:
+`core/registry.py` gera `module-registry.json` durante o build:
 
 ```json
 [
@@ -69,7 +69,7 @@ frontend/src/
 ## Padrão de Lazy Loading
 
 ```tsx
-// platform/layout/TabRouter.tsx
+// core/layout/TabRouter.tsx
 const modules = import.meta.glob('../modules/*/index.tsx')
 
 function loadModule(id: string) {
@@ -83,10 +83,10 @@ Cada módulo carrega apenas quando o usuário navega até ele — bundle split a
 
 | Arquivo novo | Origem |
 |---|---|
-| `platform/store/useAppStore.ts` | `src/store/useAppStore.ts` |
-| `platform/lib/supabase.ts` | `src/lib/supabase.ts` |
-| `platform/lib/queries.ts` | `src/lib/queries.ts` |
-| `platform/lib/hooks.ts` | `src/lib/hooks.ts` |
+| `core/store/useAppStore.ts` | `src/store/useAppStore.ts` |
+| `core/lib/supabase.ts` | `src/lib/supabase.ts` |
+| `core/lib/queries.ts` | `src/lib/queries.ts` |
+| `core/lib/hooks.ts` | `src/lib/hooks.ts` |
 | `modules/alertas_mapbiomas/` | `src/pages/Executiva*, Municipal*, Temporal*, Matopiba*` |
 | `modules/prodes_cerrado/` | `src/pages/ProdesPage.tsx` |
 | `shared/components/FilterPanel.tsx` | `src/components/Filters/FilterPanel.tsx` |
@@ -96,5 +96,5 @@ Cada módulo carrega apenas quando o usuário navega até ele — bundle split a
 - Novo módulo → criar `frontend/src/modules/<id>/index.tsx` + manifest no backend
 - Componente usado em >1 módulo → `shared/components/`
 - Componente específico de módulo → `modules/<id>/components/`
-- Estado global (filtros de ano, município) → `platform/store/useAppStore.ts`
-- Estado local de módulo → dentro do próprio módulo (não vazar para platform)
+- Estado global (filtros de ano, município) → `core/store/useAppStore.ts`
+- Estado local de módulo → dentro do próprio módulo (não vazar para o shell)

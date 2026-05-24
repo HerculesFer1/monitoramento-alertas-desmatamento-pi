@@ -7,7 +7,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from .constants import (
+from core.constants import (
     CONCORDANCIA_PRODES_MIN_PCT,
     FLAG_CONCORDANTE,
     FLAG_DADOS_PENDENTES,

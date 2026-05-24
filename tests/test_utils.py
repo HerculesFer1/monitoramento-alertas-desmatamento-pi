@@ -1,10 +1,10 @@
-"""Testes unitários para pipeline/utils.py."""
+"""Testes unitários para platform/utils.py."""
 import pandas as pd
 import pytest
 import geopandas as gpd
 from shapely.geometry import Point
 
-from pipeline.utils import norm_mun, parse_fonte, parse_date_col, strip_tz, detect_id_col, elapsed
+from core.utils import norm_mun, parse_fonte, parse_date_col, strip_tz, detect_id_col, elapsed
 
 
 # ── norm_mun ──────────────────────────────────────────────────────────────

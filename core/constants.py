@@ -138,10 +138,12 @@ def export_json(dest: Path | None = None) -> Path:
     """Gera pipeline/constants.json para consumo pelo frontend TypeScript.
 
     Chamado automaticamente pelo __main__.py ao final do pipeline.
-    Pode ser invocado manualmente: python -m pipeline.constants
+    Pode ser invocado manualmente: python -m core.constants
     """
     if dest is None:
-        dest = Path(__file__).parent / "constants.json"
+        # Escreve em pipeline/constants.json — alias @pipeline do Vite aponta aqui.
+        # Atualizado em Phase 3 quando o alias migrar para @core.
+        dest = Path(__file__).parent.parent / "pipeline" / "constants.json"
     dest.write_text(
         json.dumps(as_json_payload(), ensure_ascii=False, indent=2),
         encoding="utf-8",

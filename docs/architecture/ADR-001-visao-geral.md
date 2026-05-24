@@ -22,7 +22,7 @@ escalabilidade:
 Adotar o padrão **Vertical Slice + Plugin Registry**:
 
 > Cada módulo de análise vive em seu próprio slice (`modules/<nome>/`) com backend,
-> migrations, testes e manifesto. O core da plataforma (`platform/`) orquestra os
+> migrations, testes e manifesto. O core da plataforma (`core/`) orquestra os
 > módulos descobertos dinamicamente, sem conhecer seus detalhes internos.
 
 ## Padrão Escolhido vs. Alternativas
@@ -38,7 +38,7 @@ Adotar o padrão **Vertical Slice + Plugin Registry**:
 ## Estrutura Resultante
 
 ```
-platform/          ← núcleo (orchestrator, registry, uploader, spatial)
+core/              ← núcleo (orchestrator, registry, uploader, spatial)
 modules/           ← um slice por módulo de análise (plugin)
 frontend/src/
   platform/        ← shell genérico (AppShell, routing dinâmico)
@@ -69,7 +69,7 @@ docs/              ← este documento + ADRs por domínio
 - Deploys independentes por módulo via `release-module.yml`
 
 **Fica mais difícil:**
-- Dependência cruzada entre módulos deve passar pelo `platform/` (disciplina de equipe)
+- Dependência cruzada entre módulos deve passar pelo `core/` (disciplina de equipe)
 - PRs devem respeitar a fronteira dos slices — revisor precisa verificar vazamento
 
 **Revisitar quando:**

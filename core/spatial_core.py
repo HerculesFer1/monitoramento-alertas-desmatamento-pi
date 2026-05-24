@@ -1,5 +1,5 @@
 """
-pipeline/spatial.py — Operações geométricas puras.
+platform/spatial_core.py — Operações geométricas puras.
 
 Todas as funções são stateless (sem efeitos colaterais, sem I/O).
 Dependem apenas de Shapely e GeoPandas — nenhuma dependência interna do pipeline.
@@ -14,7 +14,7 @@ from shapely.geometry.base import BaseGeometry as Geometry
 from shapely.ops import unary_union
 from shapely.validation import make_valid
 
-from .constants import MIN_AREA_M2
+from core.constants import MIN_AREA_M2
 
 log = logging.getLogger(__name__)
 

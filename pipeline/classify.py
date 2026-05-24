@@ -20,7 +20,7 @@ from typing import Optional
 import geopandas as gpd
 import pandas as pd
 
-from .constants import (
+from core.constants import (
     ANOS,
     ANOS_DERADSA,
     CRS_CALC,
@@ -28,8 +28,8 @@ from .constants import (
     SUFIXO_CLASSE,
     THRESHOLD_AUTORIZADO,
 )
-from .spatial import dissolve_safe, safe_difference, safe_intersection
-from .utils import strip_tz
+from core.spatial_core import dissolve_safe, safe_difference, safe_intersection
+from core.utils import strip_tz
 
 log = logging.getLogger(__name__)
 

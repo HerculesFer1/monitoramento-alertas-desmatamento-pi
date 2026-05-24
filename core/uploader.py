@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Upload dos outputs do pipeline para o Supabase via REST API (supabase-py).
+platform/uploader.py — Upload dos outputs do pipeline para o Supabase.
 
 Uso:
-    python pipeline/_upload_supabase.py
+    python -m platform.uploader
 
 Requer:
     - .env com SUPABASE_URL e SUPABASE_SERVICE_KEY
     - conda activate desmatamento
-    - conda install -c conda-forge supabase python-dotenv
 """
 
 import json
