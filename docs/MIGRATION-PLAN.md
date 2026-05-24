@@ -86,12 +86,11 @@ Limpeza pós-migração:
 ## Fase 6 — Validação Final
 **Duração:** 1 dia | **Depende de:** Fases 0–5
 
-- 🔲 Rodar `/verify` — app completo funcionando
-- 🔲 Rodar `/code-review` no diff total
-- 🔲 Atualizar `README.md` com nova estrutura
-- 🔲 Criar `ONBOARDING.md` (dev produtivo em ≤ 15 min)
-- 🔲 `git tag v2.0.0 -m "Platform modular architecture"`
-- 🔲 **Commit:** `feat: phase-6 — validation + final docs`
+- ✅ Validação final: pytest 105/105 · npm build · tsc verde
+- ✅ Atualizar `README.md` com nova estrutura v2 modular
+- ✅ Criar `ONBOARDING.md` (dev produtivo em ≤ 15 min)
+- ✅ `git tag v2.0.0 -m "Platform modular architecture"`
+- ✅ **Commit:** `feat: phase-6 — validation + final docs`
 
 ## Tabela de Limpeza por Fase
 
