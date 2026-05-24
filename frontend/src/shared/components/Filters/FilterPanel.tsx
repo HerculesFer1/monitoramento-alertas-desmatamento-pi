@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from 'react'
-import { useAppStore, type AnoFiltro } from '../../store/useAppStore'
-import { useAgregado } from '../../lib/hooks'
-import { top20, VP_PTBR, ANOS } from '../../lib/constants'
+import { useAppStore, type AnoFiltro } from '../../../core/store/useAppStore'
+import { useAgregado } from '../../../core/lib/hooks'
+import { top20, VP_PTBR, ANOS } from '../../../core/lib/constants'
 
 const BIOMAS = ['Cerrado', 'Caatinga']
 const PRESSOES = Object.entries(VP_PTBR).map(([k, v]) => ({ key: k, label: v }))

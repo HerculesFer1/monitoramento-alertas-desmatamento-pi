@@ -1,8 +1,8 @@
 import Map, { Layer, Source, NavigationControl } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { useAlertasGeoJson } from '../../lib/hooks'
-import { useAppStore } from '../../store/useAppStore'
-import { CHART_COLORS } from '../../lib/constants'
+import { useAlertasGeoJson } from '../../../core/lib/hooks'
+import { useAppStore } from '../../../core/store/useAppStore'
+import { CHART_COLORS } from '../../../core/lib/constants'
 
 const COR_CLASSE: Record<string, string> = {
   IRREGULAR:               CHART_COLORS.irr,

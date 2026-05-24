@@ -3,16 +3,16 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { FilterPanel }    from '../components/Filters/FilterPanel'
-import { MapView }        from '../components/Map/MapView'
-import { ErrorBoundary }  from '../components/ErrorBoundary'
-import { StatusBadge }    from '../components/StatusBadge'
-import { useAppStore }    from '../store/useAppStore'
-import { useResumoAnual, useAgregado, useResumoEstatico } from '../lib/hooks'
+import { FilterPanel }    from '../../shared/components/Filters/FilterPanel'
+import { MapView }        from '../../shared/components/Map/BaseMap'
+import { ErrorBoundary }  from '../../shared/components/ErrorBoundary'
+import { StatusBadge }    from '../../shared/components/StatusBadge'
+import { useAppStore }    from '../../core/store/useAppStore'
+import { useResumoAnual, useAgregado, useResumoEstatico } from '../../core/lib/hooks'
 import {
   alertYr, classifYr, ipiYr, matopibaYr, YEARS,
   fmtHa, fmtNum, CHART_COLORS, calcAutTotal,
-} from '../lib/constants'
+} from '../../core/lib/constants'
 
 const TT_STYLE = {
   background: 'var(--bg3)', border: '1px solid var(--sep)',
@@ -20,7 +20,7 @@ const TT_STYLE = {
 }
 
 
-export function ExecutivaPage() {
+export function ExecutivaView() {
   const { anoFiltro } = useAppStore()
   const { data: resumoData, isLoading: resumoLoading, isError: resumoError } = useResumoAnual()
   const { data: agregadoData } = useAgregado()

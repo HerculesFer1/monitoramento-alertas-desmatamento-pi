@@ -3,14 +3,14 @@ import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { FilterPanel }    from '../components/Filters/FilterPanel'
-import { StatusBadge }    from '../components/StatusBadge'
-import { useAppStore }    from '../store/useAppStore'
-import { useResumoAnual, useMonthlyAlertas, useResumoEstatico } from '../lib/hooks'
+import { FilterPanel }    from '../../shared/components/Filters/FilterPanel'
+import { StatusBadge }    from '../../shared/components/StatusBadge'
+import { useAppStore }    from '../../core/store/useAppStore'
+import { useResumoAnual, useMonthlyAlertas, useResumoEstatico } from '../../core/lib/hooks'
 import {
   alertYr, classifYr, ipiYr, matopibaYr, YEARS, MESES, CHART_COLORS,
   fmtHa, fmtNum, calcAutTotal,
-} from '../lib/constants'
+} from '../../core/lib/constants'
 
 const TT = {
   background: 'var(--bg3)', border: '1px solid var(--sep)',
@@ -29,7 +29,7 @@ function heatColor(v: number, min: number, max: number): string {
   return `rgb(${Math.round(249 + (153 - 249) * u)},${Math.round(115 + (27 - 115) * u)},${Math.round(22 + (27 - 22) * u)})`
 }
 
-export function TemporalPage() {
+export function TemporalView() {
   const { anoFiltro } = useAppStore()
 
   // ── Dados anuais (Supabase live ou fallback estático) ─────────────────

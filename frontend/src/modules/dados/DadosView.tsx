@@ -5,9 +5,9 @@
  * sistema, fontes de dados e guia de atualização para operadores do CGEO.
  */
 import { useMemo } from 'react'
-import { useExecucoes, useAgregado, useResumoEstatico } from '../lib/hooks'
-import { StatusBadge } from '../components/StatusBadge'
-import { fmtHa, fmtNum, ANOS, ANOS_DERADSA } from '../lib/constants'
+import { useExecucoes, useAgregado, useResumoEstatico } from '../../core/lib/hooks'
+import { StatusBadge } from '../../shared/components/StatusBadge'
+import { fmtHa, fmtNum, ANOS, ANOS_DERADSA } from '../../core/lib/constants'
 
 // ── Helpers visuais ────────────────────────────────────────────────────────
 
@@ -82,7 +82,7 @@ function Step({
 
 // ── Componente principal ───────────────────────────────────────────────────
 
-export function DadosPage() {
+export function DadosView() {
   const { data: execucoes, isLoading: execLoading, isError: execError } = useExecucoes()
   const { data: agregado } = useAgregado()
   const { data: staticData } = useResumoEstatico()

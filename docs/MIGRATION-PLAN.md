@@ -31,32 +31,33 @@ Status: 🔲 Pendente | 🔄 Em andamento | ✅ Concluído
 
 Ordem (menor dependência → maior):
 
-- 🔲 `modules/asvs_sinaflor/` ← `_baixar_asvs.py` + parsers ASV
-- 🔲 `modules/deradsa_semarh/` ← `_baixar_deradsa_storage.py`
-- 🔲 `modules/prodes_cerrado/` ← `_baixar_prodes.py` + `validation.py`
-- 🔲 `modules/municipios_ibge/` ← parte de `aggregate.py`
-- 🔲 `modules/alertas_mapbiomas/` ← `_baixar_mapbiomas.py` + `classify.py` + `indicators.py`
+- ✅ `modules/asvs_sinaflor/` ← `_baixar_asvs.py` + parsers ASV
+- ✅ `modules/deradsa_semarh/` ← `_baixar_deradsa_storage.py`
+- ✅ `modules/prodes_cerrado/` ← `downloader.py` + `validation.py`
+- ✅ `modules/municipios_ibge/` ← parte de `aggregate.py`
+- ✅ `modules/alertas_mapbiomas/` ← `_baixar_mapbiomas.py` + `classify.py` + `indicators.py`
 
 Para cada módulo: criar `manifest.py`, mover arquivos, criar `migrations/`, mover testes.
 
 Limpeza pós-migração:
-- 🔲 `git rm pipeline/__main__.py`
-- 🔲 `git rm pipeline/_baixar_*.py`
-- 🔲 `pytest modules/` → verde
-- 🔲 **Commit:** `feat: phase-2 — migrate all backend modules`
+- ✅ `git rm pipeline/__main__.py`
+- ✅ `git rm pipeline/_baixar_*.py`
+- ✅ `pytest modules/` → verde (97 testes passam)
+- ✅ **Commit:** `feat: phase-2 — migrate all backend modules`
 
 ## Fase 3 — Frontend Modular Shell
 **Duração:** 3 dias | **Depende de:** Fase 2
 
-- 🔲 Criar `frontend/src/core/layout/` (AppShell, Sidebar, TabRouter)
-- 🔲 `git mv frontend/src/store → frontend/src/core/store`
-- 🔲 `git mv frontend/src/lib → frontend/src/core/lib`
-- 🔲 Criar `frontend/src/shared/components/` (BaseMap, Charts, Filters)
-- 🔲 Criar `frontend/src/modules/alertas_mapbiomas/` (4 views)
-- 🔲 Criar `frontend/src/modules/prodes_cerrado/`
-- 🔲 `git rm frontend/src/pages/`
-- 🔲 `npm run build && npm run test` → verde
-- 🔲 **Commit:** `feat: phase-3 — modular frontend shell`
+- ✅ Criar `frontend/src/core/layout/` (AppShell, TabRouter)
+- ✅ `git mv frontend/src/store → frontend/src/core/store`
+- ✅ `git mv frontend/src/lib → frontend/src/core/lib`
+- ✅ Criar `frontend/src/shared/components/` (BaseMap, FilterPanel, StatusBadge, ErrorBoundary)
+- ✅ Criar `frontend/src/modules/alertas_mapbiomas/` (4 views + index.tsx)
+- ✅ Criar `frontend/src/modules/prodes_cerrado/` (ProdesView + index.tsx)
+- ✅ Criar `frontend/src/modules/dados/` (DadosView + index.tsx)
+- ✅ Remover `frontend/src/pages/` (vazio após git mv)
+- ✅ `npm run build && npm run test` → verde (29 testes passam)
+- ✅ **Commit:** `feat: phase-3 — modular frontend shell`
 
 ## Fase 4 — Design System
 **Duração:** 1 dia | **Pode rodar em paralelo com Fase 5**

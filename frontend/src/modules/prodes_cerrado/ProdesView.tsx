@@ -3,10 +3,10 @@ import {
   BarChart, Bar, ComposedChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { FilterPanel }    from '../components/Filters/FilterPanel'
-import { StatusBadge }    from '../components/StatusBadge'
-import { useResumoProdes, useResumoEstatico } from '../lib/hooks'
-import { prodesData, prodesExtra, fmtHa, fmtNum, CHART_COLORS } from '../lib/constants'
+import { FilterPanel }    from '../../shared/components/Filters/FilterPanel'
+import { StatusBadge }    from '../../shared/components/StatusBadge'
+import { useResumoProdes, useResumoEstatico } from '../../core/lib/hooks'
+import { prodesData, prodesExtra, fmtHa, fmtNum, CHART_COLORS } from '../../core/lib/constants'
 
 const TT = {
   background: 'var(--bg3)', border: '1px solid var(--sep)',
@@ -23,7 +23,7 @@ function semaforico(pct: number) {
   return '#EF4444'
 }
 
-export function ProdesPage() {
+export function ProdesView() {
   const { data: prodesLive, isLoading, isError } = useResumoProdes()
   const { data: staticData } = useResumoEstatico()
   const isLive = !isLoading && !isError && !!prodesLive?.length

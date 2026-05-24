@@ -2,14 +2,14 @@ import { useMemo } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'
-import { FilterPanel }  from '../components/Filters/FilterPanel'
-import { ErrorBoundary } from '../components/ErrorBoundary'
-import { useAppStore }  from '../store/useAppStore'
-import { useAgregado, useResumoEstatico }  from '../lib/hooks'
+import { FilterPanel }  from '../../shared/components/Filters/FilterPanel'
+import { ErrorBoundary } from '../../shared/components/ErrorBoundary'
+import { useAppStore }  from '../../core/store/useAppStore'
+import { useAgregado, useResumoEstatico }  from '../../core/lib/hooks'
 import {
   top20, munIrrReal, MUN_BIOME, MATOPIBA_LIST, REINCIDENT_MUNIS,
   fmtHa, fmtNum,
-} from '../lib/constants'
+} from '../../core/lib/constants'
 
 const TT = {
   background: 'var(--bg3)', border: '1px solid var(--sep)',
@@ -50,7 +50,7 @@ function buildStaticRows(
     }))
 }
 
-export function MunicipalPage() {
+export function MunicipalView() {
   const { anoFiltro, matopibaFiltro, biomaFiltro } = useAppStore()
   const { data: agregado, isLoading, isError } = useAgregado()
   const { data: staticData } = useResumoEstatico()

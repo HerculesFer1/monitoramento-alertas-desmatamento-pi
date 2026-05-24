@@ -1,0 +1,1 @@
+export { DadosView } from './DadosView'

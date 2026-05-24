@@ -3,9 +3,9 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine,
 } from 'recharts'
-import { useResumoMatopiba, useMatopibaMunicipios, useResumoAnual } from '../lib/hooks'
-import { isSupabaseConfigured }                      from '../lib/supabase'
-import { ipiYr, matopibaYr, YEARS, fmtHa, fmtNum, CHART_COLORS } from '../lib/constants'
+import { useResumoMatopiba, useMatopibaMunicipios, useResumoAnual } from '../../core/lib/hooks'
+import { isSupabaseConfigured }                      from '../../core/lib/supabase'
+import { ipiYr, matopibaYr, YEARS, fmtHa, fmtNum, CHART_COLORS } from '../../core/lib/constants'
 
 const TT = {
   background: 'var(--bg3)', border: '1px solid var(--sep)',
@@ -93,7 +93,7 @@ function OfflineTeaser() {
   )
 }
 
-export function MatopibaPage() {
+export function MatopibaView() {
   const [anoTabela, setAnoTabela] = useState<number | undefined>(undefined)
 
   const { data: resumo,    isLoading: resumoLoading    } = useResumoMatopiba()
