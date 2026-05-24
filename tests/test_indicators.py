@@ -3,7 +3,7 @@ import pytest
 import geopandas as gpd
 from shapely.geometry import Point
 
-from pipeline.indicators import apply_indicators
+from modules.alertas_mapbiomas.indicators import apply_indicators
 
 
 def _base_gdf() -> gpd.GeoDataFrame:

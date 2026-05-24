@@ -275,6 +275,100 @@ def registrar_execucao(sb, n_alertas, n_mun, testes_ok: int = 9, testes_total: i
     log.info("  ✓ execucoes_pipeline: execução registrada")
 
 
+# ── Interface pública para módulos (ADR-002) ──────────────────────────────
+
+def upload_geodataframe(
+    gdf: "gpd.GeoDataFrame",
+    table: str,
+    if_exists: str = "upsert",
+    conflict_col: str | None = None,
+) -> int:
+    """
+    Faz upsert de um GeoDataFrame em qualquer tabela Supabase.
+
+    A geometria é convertida para EWKT (SRID=4326). Todos os demais campos
+    passam por _limpar() para remover NaN/inf. O conflict_col determina a
+    coluna de deduplicação; se None, usa a primeira coluna do GDF.
+
+    Args:
+        gdf: GeoDataFrame com CRS definido (reprojetado para EPSG:4326 se necessário).
+        table: Nome da tabela Supabase.
+        if_exists: Somente "upsert" suportado por ora.
+        conflict_col: Coluna de deduplicação (padrão: primeira coluna não-geometry).
+
+    Returns:
+        Número de registros enviados.
+    """
+    load_dotenv(ROOT / ".env")
+    sb = criar_cliente()
+
+    if gdf.crs is None:
+        log.warning("[%s] GeoDataFrame sem CRS — assumindo EPSG:4326", table)
+    elif gdf.crs.to_epsg() != 4326:
+        gdf = gdf.to_crs(epsg=4326)
+
+    non_geom_cols = [c for c in gdf.columns if c != gdf.geometry.name]
+    col_conf = conflict_col or (non_geom_cols[0] if non_geom_cols else "id")
+
+    registros = []
+    for _, row in gdf.iterrows():
+        rec: dict = {}
+        for col in non_geom_cols:
+            rec[col] = _limpar(row[col])
+        geom = row.geometry
+        rec["geom"] = f"SRID=4326;{geom.wkt}" if geom is not None else None
+        registros.append(rec)
+
+    total = len(registros)
+    n_batches = math.ceil(total / BATCH) if total else 0
+    log.info("[%s] Enviando %d registros em %d batches...", table, total, n_batches)
+    for i, batch in enumerate(_batches(registros, BATCH)):
+        log.info("  [%3d%%] batch %d / %d", int(i * BATCH / max(total, 1) * 100), i + 1, n_batches)
+        _upsert_with_retry(sb, table, batch, col_conf)
+
+    log.info("  ✓ %s: %d registros inseridos/atualizados", table, total)
+    return total
+
+
+def upload_json(
+    data: list,
+    table: str,
+    if_exists: str = "upsert",
+    conflict_col: str | None = None,
+) -> int:
+    """
+    Faz upsert de uma lista de dicts em qualquer tabela Supabase.
+
+    Args:
+        data: Lista de dicts com os registros a inserir.
+        table: Nome da tabela Supabase.
+        if_exists: Somente "upsert" suportado por ora.
+        conflict_col: Coluna de deduplicação (padrão: primeira chave do primeiro dict).
+
+    Returns:
+        Número de registros enviados.
+    """
+    load_dotenv(ROOT / ".env")
+    sb = criar_cliente()
+
+    if not data:
+        log.info("[%s] Nenhum registro para upload", table)
+        return 0
+
+    col_conf = conflict_col or next(iter(data[0]))
+
+    registros = [{k: _limpar(v) for k, v in row.items()} for row in data]
+    total = len(registros)
+    n_batches = math.ceil(total / BATCH)
+    log.info("[%s] Enviando %d registros em %d batches...", table, total, n_batches)
+    for i, batch in enumerate(_batches(registros, BATCH)):
+        log.info("  [%3d%%] batch %d / %d", int(i * BATCH / total * 100), i + 1, n_batches)
+        _upsert_with_retry(sb, table, batch, col_conf)
+
+    log.info("  ✓ %s: %d registros inseridos/atualizados", table, total)
+    return total
+
+
 # ── Main ──────────────────────────────────────────────────────────────────
 def main():
     load_dotenv(ROOT / ".env")

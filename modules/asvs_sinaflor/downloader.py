@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-pipeline/_baixar_asvs.py — Download de ASVs SINAFLOR (WFS IBAMA).
+modules/asvs_sinaflor/downloader.py — Download de ASVs SINAFLOR (WFS IBAMA).
 
 Baixa as Autorizações de Supressão de Vegetação do Piauí via WFS ArcGIS
 do IBAMA/SINAFLOR e salva em "base de dados/ASVs Emitidas-PI(SINAFLOR+).geojson".
 
 Uso:
-    python pipeline/_baixar_asvs.py
+    python -m modules.asvs_sinaflor.downloader
 
 Fonte: IBAMA SINAFLOR — WFS ArcGIS REST Service
        Atualização planejada: semanal (segunda-feira)
@@ -25,7 +25,7 @@ from pathlib import Path
 import requests
 
 # ── Configuração ──────────────────────────────────────────────────────────
-_ROOT = Path(__file__).resolve().parent.parent
+_ROOT = Path(__file__).resolve().parent.parent.parent
 _OUT  = _ROOT / "base de dados" / "ASVs Emitidas-PI(SINAFLOR+).geojson"
 
 LOG_FMT = "%(asctime)s [%(levelname)s] %(message)s"

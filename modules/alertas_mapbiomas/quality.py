@@ -1,11 +1,11 @@
 """
-pipeline/quality.py — Testes de qualidade T1-T9.
+modules/alertas_mapbiomas/quality.py — Testes de qualidade T1-T9.
 
 Cada teste é uma função pura que recebe o GeoDataFrame de saída e retorna
 um TestResult. run_all_tests() executa a bateria completa.
 
 Uso:
-    from pipeline.quality import run_all_tests
+    from modules.alertas_mapbiomas.quality import run_all_tests
     report = run_all_tests(gdf_out, anos=[2022, 2023, 2024, 2025])
     if not report.all_passed:
         raise RuntimeError(report.summary())

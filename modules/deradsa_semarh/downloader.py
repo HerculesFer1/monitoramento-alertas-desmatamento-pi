@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-pipeline/_baixar_deradsa_storage.py — Download de DERADSAs do Supabase Storage.
+modules/deradsa_semarh/downloader.py — Download de DERADSAs do Supabase Storage.
 
 Em modo CI (GitHub Actions), os arquivos GeoJSON de DERADSA são baixados do
 Supabase Storage em vez dos arquivos locais. Os arquivos são disponibilizados
 pelo CGEO/SEMARH via interface de upload no frontend.
 
 Uso:
-    python pipeline/_baixar_deradsa_storage.py
-    python pipeline/_baixar_deradsa_storage.py --anos 2024 2025
+    python -m modules.deradsa_semarh.downloader
+    python -m modules.deradsa_semarh.downloader --anos 2024 2025
 
 Requer:
     - SUPABASE_URL e SUPABASE_SERVICE_KEY no .env
@@ -27,7 +27,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # ── Configuração ──────────────────────────────────────────────────────────
-_ROOT = Path(__file__).resolve().parent.parent
+_ROOT = Path(__file__).resolve().parent.parent.parent
 _DATA = _ROOT / "base de dados"
 load_dotenv(_ROOT / ".env")
 

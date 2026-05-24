@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-pipeline/_baixar_mapbiomas.py — Download de alertas MapBiomas Alerta (GraphQL).
+modules/alertas_mapbiomas/downloader.py — Download de alertas MapBiomas Alerta (GraphQL).
 
 Baixa os alertas de desmatamento do Piauí via API GraphQL do MapBiomas Alerta
 e salva em "base de dados/Alertas de Desmatamento(MAPBIOMAS).geojson".
 
 Uso:
-    python pipeline/_baixar_mapbiomas.py
-    python pipeline/_baixar_mapbiomas.py --anos 2024 2025
+    python -m modules.alertas_mapbiomas.downloader
+    python -m modules.alertas_mapbiomas.downloader --anos 2024 2025
 
 Requer:
     - MAPBIOMAS_TOKEN no .env (obter em https://plataforma.alerta.mapbiomas.org)
@@ -27,7 +27,7 @@ import requests
 from dotenv import load_dotenv
 
 # ── Configuração ──────────────────────────────────────────────────────────
-_ROOT  = Path(__file__).resolve().parent.parent
+_ROOT  = Path(__file__).resolve().parent.parent.parent
 _OUT   = _ROOT / "base de dados" / "Alertas de Desmatamento(MAPBIOMAS).geojson"
 
 load_dotenv(_ROOT / ".env")

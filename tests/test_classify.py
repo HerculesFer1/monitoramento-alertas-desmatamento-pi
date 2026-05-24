@@ -14,7 +14,7 @@ import geopandas as gpd
 import pytest
 from shapely.geometry import Polygon
 
-from pipeline.classify import AlertClassifier
+from modules.alertas_mapbiomas.classify import AlertClassifier
 from core.constants import CRS_CALC, THRESHOLD_AUTORIZADO
 
 
@@ -222,7 +222,7 @@ class TestSafeDifferenceFailureNoPrecedenceViolation:
 
     def test_diff_falha_nao_vaza_deradsa_na_area_asv(self, monkeypatch):
         """Se safe_difference retorna None (falha), DERADSA não processa área ASV."""
-        import pipeline.classify as cls_mod
+        import modules.alertas_mapbiomas.classify as cls_mod
 
         # Simula falha da diferença geométrica (ex: TopologyException)
         monkeypatch.setattr(cls_mod, "safe_difference", lambda *a, **kw: None)

@@ -4,7 +4,7 @@ import pytest
 import geopandas as gpd
 from shapely.geometry import Point
 
-from pipeline.quality import (
+from modules.alertas_mapbiomas.quality import (
     run_all_tests,
     _t1_unique_ids,
     _t2_classification_filled,

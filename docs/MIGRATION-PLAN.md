@@ -24,7 +24,7 @@ Status: 🔲 Pendente | 🔄 Em andamento | ✅ Concluído
 - ✅ `git mv pipeline/constants.py core/constants.py`
 - ✅ Criar `tests/test_registry.py`
 - ✅ `pytest tests/` → verde
-- 🔲 **Commit:** `feat: phase-1 — platform core`
+- ✅ **Commit:** `feat: phase-1 — platform core`
 
 ## Fase 2 — Migrar Módulos Backend
 **Duração:** 3 dias | **Depende de:** Fase 1
