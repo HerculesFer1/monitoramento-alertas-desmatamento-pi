@@ -60,7 +60,7 @@ jobs:
       # Estratégia: bbox Piauí + CQL_FILTER por ano (evita baixar 1 GB)
       - name: Download PRODES Cerrado (WFS TerraBrasilis)
         run: |
-          PRODES_OUT="base de dados/PRODES_Cerrado_PI.geojson"
+          PRODES_OUT="data/raw/PRODES_Cerrado_PI.geojson"
           FORCE="${{ github.event.inputs.force_download }}"
 
           if [ -f "$PRODES_OUT" ] && [ "$FORCE" != "true" ]; then
@@ -69,13 +69,13 @@ jobs:
           fi
 
           echo "Executando download PRODES WFS..."
-          conda run -n desmatamento python pipeline/_baixar_prodes.py
+          conda run -n desmatamento python scripts/_baixar_prodes.py
 
       - name: Verificar PRODES baixado
         run: |
           python -c "
           from pathlib import Path
-          p = Path('base de dados/PRODES_Cerrado_PI.geojson')
+          p = Path('data/raw/PRODES_Cerrado_PI.geojson')
           if not p.exists():
               raise SystemExit('PRODES não encontrado')
           import json
@@ -88,7 +88,7 @@ jobs:
 
       # ── Dados de entrada (alertas + ASVs + DERADSAs) ──────────────────────
       - name: Download DERADSAs do Supabase Storage
-        run: conda run -n desmatamento python pipeline/_baixar_deradsa_storage.py
+        run: conda run -n desmatamento python -m modules.deradsa_semarh.downloader
         continue-on-error: true
 
       - name: Verificar alertas MapBiomas e ASVs
@@ -96,8 +96,8 @@ jobs:
           python -c "
           from pathlib import Path
           for f in [
-            'base de dados/Alertas de Desmatamento(MAPBIOMAS).geojson',
-            'base de dados/ASVs Emitidas-PI(SINAFLOR+).geojson',
+            'data/raw/Alertas de Desmatamento(MAPBIOMAS).geojson',
+            'data/raw/ASVs Emitidas-PI(SINAFLOR+).geojson',
           ]:
               p = Path(f)
               if not p.exists():
@@ -106,17 +106,14 @@ jobs:
           "
 
       # ── Executar pipeline completo ─────────────────────────────────────────
-      - name: Executar Pipeline v2 (com validação PRODES)
-        run: conda run -n desmatamento python -m pipeline
-
-      - name: Upload para Supabase
-        run: conda run -n desmatamento python pipeline/_upload_supabase.py
+      - name: Executar Orquestrador v2 (com validação PRODES)
+        run: conda run -n desmatamento python -m core.orchestrator
 
       # ── Gerar documentação técnica atualizada ─────────────────────────────
       - name: Gerar documentação técnica
         run: |
-          if [ -f "_gerar_documentacao.py" ]; then
-            conda run -n desmatamento python _gerar_documentacao.py
+          if [ -f "scripts/_gerar_documentacao.py" ]; then
+            conda run -n desmatamento python scripts/_gerar_documentacao.py
             echo "✓ Documentação atualizada"
           fi
         continue-on-error: true
@@ -127,9 +124,9 @@ jobs:
         with:
           name: prodes-update-${{ github.run_number }}
           path: |
-            Resultado/pipeline.log
-            Resultado/agregado_municipios.json
-            Resultado/*.docx
+            data/output/pipeline.log
+            data/output/agregado_municipios.json
+            data/output/*.docx
           retention-days: 90   # Relatórios PRODES mantidos por 3 meses
 
       - name: Resumo da execução
@@ -137,9 +134,9 @@ jobs:
         run: |
           echo "## Atualização PRODES Cerrado" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f "Resultado/pipeline.log" ]; then
+          if [ -f "data/output/pipeline.log" ]; then
             echo '```' >> $GITHUB_STEP_SUMMARY
-            grep -E "(ETAPA|✓|IRREGULAR|CONCORDANTE|testes)" Resultado/pipeline.log \
+            grep -E "(ETAPA|✓|IRREGULAR|CONCORDANTE|testes)" data/output/pipeline.log \
               | tail -30 >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
           fi

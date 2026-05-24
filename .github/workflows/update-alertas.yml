@@ -12,7 +12,7 @@ on:
         required: false
         default: ""
       dry_run:
-        description: "Apenas baixa dados, não faz upload (true/false)"
+        description: "Processar pipeline sem fazer upload (true/false)"
         required: false
         default: "false"
 
@@ -50,7 +50,6 @@ jobs:
       # ── 3. Autenticar no MapBiomas e criar .env ──────────────────────────
       - name: Autenticar MapBiomas + criar .env
         run: |
-          # Obtém token fresco via GraphQL (JWT expira — usar email/senha)
           MAPBIOMAS_TOKEN=$(curl -s -X POST \
             -H "Content-Type: application/json" \
             -d "{\"query\":\"mutation { signIn(email: \\\"${{ secrets.MAPBIOMAS_EMAIL }}\\\" password: \\\"${{ secrets.MAPBIOMAS_PASSWORD }}\\\") { token } }\"}" \
@@ -69,7 +68,7 @@ jobs:
       # ── 4. Download DERADSAs do Supabase Storage ──────────────────────────
       - name: Download DERADSAs (Supabase Storage)
         run: |
-          conda run -n desmatamento python pipeline/_baixar_deradsa_storage.py --anos 2024 2025
+          conda run -n desmatamento python -m modules.deradsa_semarh.downloader --anos 2024 2025
         continue-on-error: true   # Pipeline continua mesmo sem DERADSAs
 
       # ── 5. Download alertas MapBiomas ─────────────────────────────────────
@@ -79,11 +78,11 @@ jobs:
           if [ -n "${{ github.event.inputs.anos }}" ]; then
             ANOS_ARG="--anos ${{ github.event.inputs.anos }}"
           fi
-          conda run -n desmatamento python pipeline/_baixar_mapbiomas.py $ANOS_ARG
+          conda run -n desmatamento python -m modules.alertas_mapbiomas.downloader $ANOS_ARG
 
       # ── 6. Download ASVs SINAFLOR ─────────────────────────────────────────
       - name: Download ASVs SINAFLOR
-        run: conda run -n desmatamento python pipeline/_baixar_asvs.py
+        run: conda run -n desmatamento python -m modules.asvs_sinaflor.downloader
         continue-on-error: true   # Usa arquivo existente se WFS indisponível
 
       # ── 7. Verificar dados de entrada ─────────────────────────────────────
@@ -92,8 +91,8 @@ jobs:
           python -c "
           from pathlib import Path
           arquivos = [
-            'base de dados/Alertas de Desmatamento(MAPBIOMAS).geojson',
-            'base de dados/ASVs Emitidas-PI(SINAFLOR+).geojson',
+            'data/raw/Alertas de Desmatamento(MAPBIOMAS).geojson',
+            'data/raw/ASVs Emitidas-PI(SINAFLOR+).geojson',
           ]
           ok = True
           for f in arquivos:
@@ -107,32 +106,30 @@ jobs:
               raise SystemExit('Arquivos obrigatórios ausentes')
           "
 
-      # ── 8. Executar pipeline ───────────────────────────────────────────────
-      - name: Executar Pipeline v2
+      # ── 8. Executar pipeline (classify + aggregate + upload) ──────────────
+      - name: Executar Orquestrador v2
         run: |
-          conda run -n desmatamento python -m pipeline
+          DRY_RUN_FLAG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            DRY_RUN_FLAG="--dry-run"
+          fi
+          conda run -n desmatamento python -m core.orchestrator $DRY_RUN_FLAG
 
-      # ── 9. Upload para Supabase ────────────────────────────────────────────
-      - name: Upload para Supabase
-        if: ${{ github.event.inputs.dry_run != 'true' }}
-        run: |
-          conda run -n desmatamento python pipeline/_upload_supabase.py
-
-      # ── 10. Salvar artefatos da execução ──────────────────────────────────
+      # ── 9. Salvar artefatos da execução ───────────────────────────────────
       - name: Upload artefatos
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pipeline-output-${{ github.run_number }}
           path: |
-            Resultado/pipeline.log
-            Resultado/agregado_municipios.json
+            data/output/pipeline.log
+            data/output/agregado_municipios.json
           retention-days: 30
 
-      # ── 11. Notificar em caso de falha ────────────────────────────────────
+      # ── 10. Notificar em caso de falha ────────────────────────────────────
       - name: Notificar falha
         if: failure()
         run: |
           echo "::error::Pipeline falhou. Verifique os logs em Actions > pipeline-output-${{ github.run_number }}"
           echo "Log das últimas 50 linhas:"
-          tail -50 Resultado/pipeline.log 2>/dev/null || echo "(log não gerado)"
+          tail -50 data/output/pipeline.log 2>/dev/null || echo "(log não gerado)"

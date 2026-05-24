@@ -51,13 +51,13 @@ jobs:
           chmod 600 .env
 
       - name: Download ASVs SINAFLOR
-        run: conda run -n desmatamento python pipeline/_baixar_asvs.py
+        run: conda run -n desmatamento python -m modules.asvs_sinaflor.downloader
 
       - name: Verificar arquivo ASV
         run: |
           python -c "
           from pathlib import Path
-          p = Path('base de dados/ASVs Emitidas-PI(SINAFLOR+).geojson')
+          p = Path('data/raw/ASVs Emitidas-PI(SINAFLOR+).geojson')
           if not p.exists():
               raise SystemExit('ASVs não baixadas')
           import json
@@ -73,9 +73,9 @@ jobs:
       - name: Verificar se ASVs mudaram
         id: check-change
         run: |
-          if [ -f "Resultado/.last_asv_hash" ]; then
-            OLD=$(cat Resultado/.last_asv_hash)
-            NEW=$(md5sum "base de dados/ASVs Emitidas-PI(SINAFLOR+).geojson" | cut -d' ' -f1)
+          if [ -f "data/output/.last_asv_hash" ]; then
+            OLD=$(cat data/output/.last_asv_hash)
+            NEW=$(md5sum "data/raw/ASVs Emitidas-PI(SINAFLOR+).geojson" | cut -d' ' -f1)
             if [ "$OLD" = "$NEW" ]; then
               echo "changed=false" >> $GITHUB_OUTPUT
               echo "ASVs sem mudança desde último download — pipeline não será re-executado"
@@ -88,17 +88,16 @@ jobs:
 
       - name: Download DERADSAs (Supabase Storage)
         if: steps.check-change.outputs.changed == 'true'
-        run: conda run -n desmatamento python pipeline/_baixar_deradsa_storage.py
+        run: conda run -n desmatamento python -m modules.deradsa_semarh.downloader
         continue-on-error: true
 
       - name: Download MapBiomas Alertas (reutilizar existente)
         if: steps.check-change.outputs.changed == 'true'
         run: |
-          # Verifica se existe arquivo local recente (< 7 dias)
           python -c "
           from pathlib import Path
           import time
-          p = Path('base de dados/Alertas de Desmatamento(MAPBIOMAS).geojson')
+          p = Path('data/raw/Alertas de Desmatamento(MAPBIOMAS).geojson')
           if p.exists():
               age_days = (time.time() - p.stat().st_mtime) / 86400
               print(f'Alertas existentes: {age_days:.1f} dias de idade')
@@ -110,24 +109,20 @@ jobs:
               raise SystemExit('ERRO: Alertas MapBiomas não encontrados. Execute update-alertas.yml primeiro.')
           "
 
-      - name: Executar Pipeline v2
+      - name: Executar Orquestrador v2
         if: ${{ steps.check-change.outputs.changed == 'true' && github.event.inputs.dry_run != 'true' }}
-        run: conda run -n desmatamento python -m pipeline
-
-      - name: Upload para Supabase
-        if: ${{ steps.check-change.outputs.changed == 'true' && github.event.inputs.dry_run != 'true' }}
-        run: conda run -n desmatamento python pipeline/_upload_supabase.py
+        run: conda run -n desmatamento python -m core.orchestrator
 
       - name: Salvar hash das ASVs
         if: steps.check-change.outputs.changed == 'true'
         run: |
-          mkdir -p Resultado
-          md5sum "base de dados/ASVs Emitidas-PI(SINAFLOR+).geojson" | cut -d' ' -f1 > Resultado/.last_asv_hash
+          mkdir -p data/output
+          md5sum "data/raw/ASVs Emitidas-PI(SINAFLOR+).geojson" | cut -d' ' -f1 > data/output/.last_asv_hash
 
       - name: Upload artefatos
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: asv-update-${{ github.run_number }}
-          path: Resultado/pipeline.log
+          path: data/output/pipeline.log
           retention-days: 14
