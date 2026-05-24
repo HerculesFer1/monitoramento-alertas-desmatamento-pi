@@ -1,0 +1,23 @@
+-- Migration template — substitua pelo schema real do módulo.
+-- Execute no Supabase Dashboard ANTES do primeiro run().
+-- Consulte: docs/architecture/ADR-007-database-strategy.md
+
+-- CREATE TABLE IF NOT EXISTS <nome_tabela> (
+--   id          SERIAL PRIMARY KEY,
+--   ano         SMALLINT NOT NULL CHECK (ano BETWEEN 2022 AND 2099),
+--   municipio   TEXT,
+--   area_ha     NUMERIC(12,4),
+--   geom        GEOMETRY(GEOMETRY, 4326),
+--   inserido_em TIMESTAMPTZ DEFAULT NOW()
+-- );
+--
+-- CREATE INDEX IF NOT EXISTS <nome>_ano_idx  ON <nome_tabela> (ano);
+-- CREATE INDEX IF NOT EXISTS <nome>_mun_idx  ON <nome_tabela> (municipio);
+-- CREATE INDEX IF NOT EXISTS <nome>_geom_idx ON <nome_tabela> USING GIST(geom);
+--
+-- ALTER TABLE <nome_tabela> ENABLE ROW LEVEL SECURITY;
+--
+-- CREATE POLICY "leitura_publica_<nome>"
+--   ON <nome_tabela> FOR SELECT USING (true);
+--
+-- COMMENT ON TABLE <nome_tabela> IS '<Descrição do módulo> — CGEO/SEMARH-PI';
