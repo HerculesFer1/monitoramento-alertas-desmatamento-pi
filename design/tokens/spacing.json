@@ -1,0 +1,34 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "comment": "Design tokens de espaçamento — escala 4px",
+
+  "space": {
+    "0":  { "value": "0px" },
+    "1":  { "value": "4px" },
+    "2":  { "value": "8px" },
+    "3":  { "value": "12px" },
+    "4":  { "value": "16px" },
+    "5":  { "value": "20px" },
+    "6":  { "value": "24px" },
+    "8":  { "value": "32px" },
+    "10": { "value": "40px" },
+    "12": { "value": "48px" },
+    "16": { "value": "64px" }
+  },
+
+  "borderRadius": {
+    "sm":   { "value": "4px" },
+    "base": { "value": "6px" },
+    "md":   { "value": "8px" },
+    "lg":   { "value": "12px" },
+    "full": { "value": "9999px" }
+  },
+
+  "layout": {
+    "topbarHeight": { "value": "56px" },
+    "sidebarWidth": { "value": "220px" },
+    "cardPadding":  { "value": "16px" },
+    "pagePadding":  { "value": "20px" },
+    "maxContentWidth": { "value": "1400px" }
+  }
+}

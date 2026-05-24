@@ -1,0 +1,35 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "comment": "Design tokens de tipografia — base: system-ui, Inter fallback",
+
+  "fontFamily": {
+    "base": { "value": "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" },
+    "mono": { "value": "'JetBrains Mono', 'Fira Code', 'Consolas', monospace" }
+  },
+
+  "fontSize": {
+    "xs":   { "value": "10px" },
+    "sm":   { "value": "11px" },
+    "base": { "value": "12px", "comment": "Tamanho base do dashboard" },
+    "md":   { "value": "13px" },
+    "lg":   { "value": "14px" },
+    "xl":   { "value": "16px" },
+    "2xl":  { "value": "20px" },
+    "3xl":  { "value": "24px" }
+  },
+
+  "fontWeight": {
+    "normal":   { "value": "400" },
+    "medium":   { "value": "500" },
+    "semibold": { "value": "600" },
+    "bold":     { "value": "700" },
+    "extrabold":{ "value": "800" }
+  },
+
+  "lineHeight": {
+    "tight":  { "value": "1.2" },
+    "snug":   { "value": "1.35" },
+    "normal": { "value": "1.5" },
+    "relaxed":{ "value": "1.625" }
+  }
+}

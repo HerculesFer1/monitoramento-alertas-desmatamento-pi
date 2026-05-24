@@ -1,0 +1,35 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "comment": "Design tokens de cor — derivados das CSS custom properties em index.css",
+
+  "semantic": {
+    "irregular": { "value": "#EF4444", "comment": "IRREGULAR — vermelho" },
+    "autorizado": { "value": "#10B981", "comment": "AUTORIZADO — verde esmeralda" },
+    "autorizado_parcialmente": { "value": "#60A5FA", "comment": "AUTORIZADO_PARCIALMENTE — azul" },
+    "regularizado": { "value": "#F97316", "comment": "REGULARIZADO — laranja" },
+    "matopiba": { "value": "#F59E0B", "comment": "MATOPIBA — âmbar" },
+    "cerrado": { "value": "#84CC16", "comment": "Bioma Cerrado — lima" },
+    "caatinga": { "value": "#FB923C", "comment": "Bioma Caatinga — laranja médio" },
+    "restPI": { "value": "#94A3B8", "comment": "Restante Piauí — cinza azulado" }
+  },
+
+  "surface": {
+    "bg1": { "value": "#0F172A", "comment": "Fundo primário — slate-900" },
+    "bg2": { "value": "#1E293B", "comment": "Fundo cards — slate-800" },
+    "bg3": { "value": "#293548", "comment": "Fundo elevado / topbar" },
+    "sep": { "value": "#334155", "comment": "Separador — slate-700" }
+  },
+
+  "text": {
+    "t1": { "value": "#F1F5F9", "comment": "Texto primário — slate-100" },
+    "t2": { "value": "#94A3B8", "comment": "Texto secundário — slate-400" },
+    "t3": { "value": "#64748B", "comment": "Texto terciário / placeholder — slate-500" }
+  },
+
+  "feedback": {
+    "success": { "value": "#10B981" },
+    "warning": { "value": "#F59E0B" },
+    "error":   { "value": "#EF4444" },
+    "info":    { "value": "#60A5FA" }
+  }
+}
