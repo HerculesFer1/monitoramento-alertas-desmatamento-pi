@@ -38,7 +38,20 @@ def run(config: dict) -> dict:
     log.info("  [asvs_sinaflor] %d ASVs carregadas", n)
 
     if not dry_run and n > 0:
-        upload_geodataframe(gdf, table="asvs_sinaflor", if_exists="upsert")
+        # Verificar colunas obrigatórias antes do upload
+        _REQUIRED = {"nu_autoriz", "dt_valid_i", "dt_valid_f", "status_aut", "bioma_pamg"}
+        _missing = _REQUIRED - set(gdf.columns)
+        if _missing:
+            log.warning(
+                "  [asvs_sinaflor] Colunas ausentes no GDF: %s — "
+                "ajuste MAPA_CAMPOS em downloader.py. Upload abortado.",
+                sorted(_missing),
+            )
+            return {"status": "warning", "records": n,
+                    "message": f"{n} ASVs carregadas mas não enviadas — colunas ausentes: {sorted(_missing)}"}
+        # conflict_col obrigatório: sem ele o uploader usa a 1ª coluna (não determinístico)
+        upload_geodataframe(gdf, table="asvs_sinaflor", if_exists="upsert",
+                            conflict_col="nu_autoriz")
         log.info("  [asvs_sinaflor] Upload concluído")
 
     return {"status": "ok", "records": n, "message": f"{n} ASVs processadas"}

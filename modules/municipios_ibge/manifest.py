@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 MODULE_MANIFEST = {
     "id":          "municipios_ibge",
     "name":        "Municípios IBGE",
-    "version":     "1.0.0",
+    "version":     "1.1.0",
     "description": "Download da malha municipal do Piauí via API IBGE para agregação espacial.",
     "icon":        "🗺️",
     "frontend_module": "municipios_ibge",
@@ -25,20 +25,32 @@ def run(config: dict) -> dict:
     from .processor import load
 
     path = download()
+
+    # download() retorna None em caso de falha (não um Path inexistente)
+    if path is None:
+        return {
+            "status":  "warning",
+            "records": 0,
+            "message": "Download da malha IBGE falhou — spatial joins usarão cache anterior se disponível",
+        }
+
     gdf = load(path)
     if gdf is None:
         return {
-            "status": "ok",
+            "status":  "warning",
             "records": 0,
-            "message": "Malha municipal indisponível (download falhou ou arquivo ausente)",
+            "message": "Malha municipal indisponível (arquivo não pôde ser lido)",
         }
 
     n = len(gdf)
-    log.info("  [municipios_ibge] %d municípios", n)
+    log.info("  [municipios_ibge] %d municípios carregados", n)
+    # A malha é usada apenas como input para spatial joins locais em classify.py.
+    # Não há tabela municipios_pi no Supabase — dados municipais chegam ao frontend
+    # via agregado_municipios e frontend/public/data/.
+    log.info("  [municipios_ibge] Disponível localmente em data/raw/municipios_pi.geojson")
 
-    # A malha municipal é usada apenas como input para operações espaciais locais
-    # (spatial join em classify.py). Não existe tabela municipios_pi no Supabase —
-    # os dados municipais chegam ao frontend via agregado_municipios e frontend/public/data/.
-    log.info("  [municipios_ibge] Malha salva localmente em data/raw/municipios_pi.geojson")
-
-    return {"status": "ok", "records": n, "message": f"{n} municípios do Piauí disponíveis localmente"}
+    return {
+        "status":  "ok",
+        "records": 0,   # 0 = nada foi enviado ao Supabase (uso local apenas)
+        "message": f"{n} municípios do Piauí disponíveis localmente para spatial joins",
+    }

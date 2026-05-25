@@ -39,6 +39,11 @@ def run(config: dict) -> dict:
     # Os polígonos PRODES são usados apenas para validação cruzada local (cross-join com
     # alertas_mapbiomas). Não há tabela prodes_cerrado no Supabase — os resultados da
     # validação são gravados diretamente em alertas_classificados.flag_validacao_externa.
+    # records = 0: indica que nenhum registro foi enviado ao Supabase (uso local apenas).
     log.info("  [prodes_cerrado] Disponível localmente para validação cruzada")
 
-    return {"status": "ok", "records": n, "message": f"{n} polígonos PRODES disponíveis localmente"}
+    return {
+        "status":  "ok",
+        "records": 0,   # 0 = nada enviado ao Supabase; n polígonos usados localmente
+        "message": f"{n} polígonos PRODES carregados localmente (validação cruzada ativa)",
+    }

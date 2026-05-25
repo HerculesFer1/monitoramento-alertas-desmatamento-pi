@@ -14,14 +14,21 @@ from typing import Optional
 
 import geopandas as gpd
 
+from core.constants import ANOS_DERADSA
+
 log = logging.getLogger(__name__)
 
-# Nomes canônicos dos arquivos na pasta 'base de dados/'
+# Nomes canônicos dos arquivos na pasta 'data/raw/'
 _FILE_ALERTAS = "Alertas de Desmatamento(MAPBIOMAS).geojson"
 _FILE_ASVS    = "ASVs Emitidas-PI(SINAFLOR+).geojson"
-_FILE_DER24   = "DERADSAs Emitidas[SEMARH-2024].geojson"
-_FILE_DER25   = "DERADSAs Emitidas[SEMARH-2025].geojson"
 _FILE_PRODES  = "PRODES_Cerrado_PI.geojson"
+
+# Mapa dinâmico: ano → nome do arquivo DERADSA
+# Guiado por ANOS_DERADSA em core/constants.py — adicionar um novo ano lá basta.
+_DERADSA_FILES: dict[int, str] = {
+    ano: f"DERADSAs Emitidas[SEMARH-{ano}].geojson"
+    for ano in ANOS_DERADSA
+}
 
 
 class DataReader(ABC):
@@ -56,11 +63,20 @@ class LocalGeoJSONReader(DataReader):
         self._validate()
 
     def _validate(self) -> None:
-        obrigatorios = [_FILE_ALERTAS, _FILE_ASVS, _FILE_DER24, _FILE_DER25]
+        # Arquivos fixos obrigatórios
+        obrigatorios = [_FILE_ALERTAS, _FILE_ASVS]
+        # Arquivos DERADSA: obrigatório ter ao menos 1 dos anos de ANOS_DERADSA
+        der_files = [self.data_dir / f for f in _DERADSA_FILES.values()]
+        der_found = [p for p in der_files if p.exists()]
         for fname in obrigatorios:
             p = self.data_dir / fname
             if not p.exists():
                 raise FileNotFoundError(f"Arquivo obrigatório não encontrado: {p}")
+        if not der_found:
+            raise FileNotFoundError(
+                f"Nenhum arquivo DERADSA encontrado em {self.data_dir}. "
+                f"Esperados: {[p.name for p in der_files]}"
+            )
 
     def read_alertas(self) -> gpd.GeoDataFrame:
         path = self.data_dir / _FILE_ALERTAS
@@ -79,9 +95,9 @@ class LocalGeoJSONReader(DataReader):
         return gdf
 
     def read_deradsa(self, year: int) -> gpd.GeoDataFrame:
-        fname = {2024: _FILE_DER24, 2025: _FILE_DER25}.get(year)
+        fname = _DERADSA_FILES.get(year)
         if fname is None:
-            log.info("  DERADSA %d: indisponível (Série A)", year)
+            log.info("  DERADSA %d: ano fora de ANOS_DERADSA — retornando vazio", year)
             return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
         path = self.data_dir / fname
         log.info("  Lendo DERADSA %d: %s", year, path.name)

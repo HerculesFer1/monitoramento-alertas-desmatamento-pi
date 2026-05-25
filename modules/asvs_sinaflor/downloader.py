@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import logging
+import tempfile
 import time
 from pathlib import Path
 
@@ -28,8 +29,8 @@ import requests
 _ROOT = Path(__file__).resolve().parent.parent.parent
 _OUT  = _ROOT / "data" / "raw" / "ASVs Emitidas-PI(SINAFLOR+).geojson"
 
-LOG_FMT = "%(asctime)s [%(levelname)s] %(message)s"
-logging.basicConfig(level=logging.INFO, format=LOG_FMT)
+# logging.basicConfig NÃO deve ser chamado em módulos importáveis —
+# apenas em __main__. O orchestrator configura o logging globalmente.
 log = logging.getLogger(__name__)
 
 # ── Endpoints WFS (testar o que estiver ativo) ────────────────────────────
@@ -62,6 +63,17 @@ ARCGIS_PARAMS = {
 }
 
 TIMEOUT = 300   # segundos — WFS pode ser lento para datasets grandes
+
+
+def _write_atomic(path: Path, text: str) -> None:
+    """Escreve text em path de forma atômica (temp → rename) para evitar corrupção."""
+    tmp = path.with_suffix(".tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        tmp.replace(path)
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        raise
 
 
 def _baixar_url(base_url: str, params: dict, descricao: str) -> dict | None:
@@ -140,8 +152,8 @@ def main():
     if data is None:
         log.error("Ambas as fontes falharam. Verifique a conectividade.")
         log.error("URLs testadas:")
-        log.error("  Primária: %s", WFS_PRIMARY[:80] + "...")
-        log.error("  Fallback:  %s", ARCGIS_BACKUP[:80] + "...")
+        log.error("  Primária: %s", WFS_BASE)
+        log.error("  Fallback:  %s", ARCGIS_BASE)
         raise SystemExit(1)
 
     data = normalizar_campos(data)
@@ -154,10 +166,7 @@ def main():
         raise SystemExit(1)
 
     _OUT.parent.mkdir(parents=True, exist_ok=True)
-    _OUT.write_text(
-        json.dumps(data, ensure_ascii=False, separators=(",", ":")),
-        encoding="utf-8",
-    )
+    _write_atomic(_OUT, json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     sz_mb = _OUT.stat().st_size / 1_048_576
     log.info("  → %s (%.1f MB)", _OUT.name, sz_mb)
     log.info("=" * 60)
@@ -169,4 +178,8 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+    )
     main()

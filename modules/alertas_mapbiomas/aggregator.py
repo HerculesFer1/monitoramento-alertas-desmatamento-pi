@@ -159,8 +159,11 @@ def aggregate_resumo_estatico(gdf_out: gpd.GeoDataFrame) -> dict:
 
         irr_sub = sub[sub["classificacao"] == "IRREGULAR"]
         if "matopiba" in irr_sub.columns:
-            mat_irr  = float(irr_sub[irr_sub["matopiba"] == True]["area_ha"].sum())   # noqa: E712
-            rest_irr = float(irr_sub[irr_sub["matopiba"] != True]["area_ha"].sum())   # noqa: E712
+            # Usar .eq(True) em vez de == True: evita que pd.NA seja incluído no grupo "rest"
+            # (pd.NA != True avalia como pd.NA, não False — inflaria rest_irr)
+            _mat_mask = irr_sub["matopiba"].eq(True)
+            mat_irr  = float(irr_sub[_mat_mask]["area_ha"].sum())
+            rest_irr = float(irr_sub[~_mat_mask]["area_ha"].sum())
         else:
             mat_irr, rest_irr = 0.0, 0.0
         matopiba_yr[ano] = {"mat": round(mat_irr, 2), "rest": round(rest_irr, 2)}

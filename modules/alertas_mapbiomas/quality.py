@@ -95,16 +95,19 @@ def _t3_pct_cobertura_range(gdf: gpd.GeoDataFrame) -> TestResult:
 
 def _t4_autp_max_99(gdf: gpd.GeoDataFrame) -> TestResult:
     autp = gdf.loc[gdf["classificacao"] == "AUTORIZADO_PARCIALMENTE", "pct_cobertura"]
-    n_bad = int((autp > 99.0).sum()) if not autp.empty else 0
+    # Usar >= 99 (não > 99.0): consistente com T5 que usa < 99.
+    # AUTORIZADO_PARCIALMENTE deve ter pct < 99; >= 99 indica erro de classificação.
+    n_bad = int((autp >= 99).sum()) if not autp.empty else 0
     return TestResult(
-        "T4", "AUTORIZADO_PARCIALMENTE ≤ 99%",
+        "T4", "AUTORIZADO_PARCIALMENTE < 99%",
         passed=(n_bad == 0),
-        detail=f"{n_bad} fragmentos com pct_cob > 99%" if n_bad else "",
+        detail=f"{n_bad} fragmentos com pct_cob >= 99%" if n_bad else "",
     )
 
 
 def _t5_aut_min_99(gdf: gpd.GeoDataFrame) -> TestResult:
     aut = gdf.loc[gdf["classificacao"] == "AUTORIZADO", "pct_cobertura"]
+    # AUTORIZADO deve ter pct >= 99 (limiar THRESHOLD_AUTORIZADO = 0.99).
     n_bad = int((aut < 99).sum()) if not aut.empty else 0
     return TestResult(
         "T5", "AUTORIZADO ≥ 99%",

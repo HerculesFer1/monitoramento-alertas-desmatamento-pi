@@ -31,8 +31,8 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 _DATA = _ROOT / "data" / "raw"
 load_dotenv(_ROOT / ".env")
 
-LOG_FMT = "%(asctime)s [%(levelname)s] %(message)s"
-logging.basicConfig(level=logging.INFO, format=LOG_FMT)
+# logging.basicConfig NÃO deve ser chamado em módulos importáveis —
+# apenas em __main__. O orchestrator configura o logging globalmente.
 log = logging.getLogger(__name__)
 
 # Nome do bucket no Supabase Storage
@@ -43,6 +43,40 @@ ARQUIVO_PADRAO = {
     2024: "DERADSAs Emitidas[SEMARH-2024].geojson",
     2025: "DERADSAs Emitidas[SEMARH-2025].geojson",
 }
+
+
+def download(anos: list[int] | None = None) -> dict[int, bool]:
+    """API programática — usada pelo manifest.py sem manipular sys.argv.
+
+    Args:
+        anos: lista de anos a baixar (None = [2024, 2025]).
+
+    Returns:
+        dict {ano: True/False} indicando sucesso por ano.
+
+    Raises:
+        RuntimeError: se credenciais ausentes.
+    """
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_SERVICE_KEY")
+    if not url or not key:
+        raise RuntimeError("SUPABASE_URL e SUPABASE_SERVICE_KEY não definidos no .env")
+
+    from supabase import create_client
+    sb = create_client(url, key)
+    log.info("✓ Supabase conectado")
+
+    resultados: dict[int, bool] = {}
+    for ano in (anos or [2024, 2025]):
+        ok = baixar_do_storage(sb, ano) or baixar_via_rpc(sb, ano)
+        resultados[ano] = ok
+        if not ok:
+            log.warning(
+                "  DERADSA %d: indisponível no Storage e na tabela — "
+                "pipeline executará sem dados deste ano.",
+                ano,
+            )
+    return resultados
 
 
 def baixar_do_storage(sb, ano: int) -> bool:
@@ -62,7 +96,14 @@ def baixar_do_storage(sb, ano: int) -> bool:
             return False
 
         _DATA.mkdir(parents=True, exist_ok=True)
-        destino.write_bytes(response)
+        # Escrita atômica: evita arquivo corrompido se interrompido
+        tmp = destino.with_suffix(".tmp")
+        try:
+            tmp.write_bytes(response)
+            tmp.replace(destino)
+        except Exception:
+            tmp.unlink(missing_ok=True)
+            raise
         sz_kb = destino.stat().st_size / 1024
         log.info("  ✓ DERADSA %d: %s (%.1f KB)", ano, destino.name, sz_kb)
         return True
@@ -92,10 +133,16 @@ def baixar_via_rpc(sb, ano: int) -> bool:
             return False
 
         _DATA.mkdir(parents=True, exist_ok=True)
-        destino.write_text(
-            json.dumps(geojson, ensure_ascii=False, separators=(",", ":")),
-            encoding="utf-8",
-        )
+        tmp = destino.with_suffix(".tmp")
+        try:
+            tmp.write_text(
+                json.dumps(geojson, ensure_ascii=False, separators=(",", ":")),
+                encoding="utf-8",
+            )
+            tmp.replace(destino)
+        except Exception:
+            tmp.unlink(missing_ok=True)
+            raise
         n = len(geojson["features"])
         log.info("  ✓ DERADSA %d: %d polígonos via RPC", ano, n)
         return True
@@ -153,4 +200,8 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+    )
     main()

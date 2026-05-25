@@ -7,6 +7,11 @@ Contrato:      docs/architecture/ADR-003-module-contract.md
 """
 from __future__ import annotations
 
+from pathlib import Path
+
+# _ROOT calculado a partir do arquivo — nunca usar Path("data/raw") relativo ao cwd
+_ROOT = Path(__file__).resolve().parent.parent.parent
+
 MODULE_MANIFEST = {
     # ── Identidade ───────────────────────────────────────────────────────────
     "id":          "<nome_snake_case>",       # igual ao nome da pasta; imutável
@@ -33,25 +38,44 @@ MODULE_MANIFEST = {
 
 def run(config: dict) -> dict:
     """
-    Entry point chamado pelo platform/orchestrator.py.
+    Entry point chamado pelo core/orchestrator.py.
 
     Args:
         config: dry_run (bool), ano (int), verbose (bool)
 
     Returns:
-        {"status": "ok"|"error", "records": int, "message": str}
+        {"status": "ok"|"warning"|"error", "records": int, "message": str}
+        records = número de registros enviados ao Supabase (0 se só uso local).
     """
-    from pathlib import Path
     from .downloader import download
     from .processor import process
 
     dry_run = config.get("dry_run", False)
-    dest = Path("data/raw") / MODULE_MANIFEST["id"]
+
+    # CORRETO: usar _ROOT absoluto, nunca Path("data/raw") relativo ao cwd
+    dest = _ROOT / "data" / "raw" / MODULE_MANIFEST["id"]
     dest.mkdir(parents=True, exist_ok=True)
 
-    raw_path = download(dest, config)
+    try:
+        raw_path = download(dest, config)
+    except Exception as exc:
+        return {"status": "error", "records": 0, "message": f"Download falhou: {exc}"}
 
     if dry_run:
         return {"status": "ok", "records": 0, "message": "dry-run: download OK, upload ignorado"}
 
-    return process(raw_path, config)
+    try:
+        return process(raw_path, config)
+    except Exception as exc:
+        return {"status": "error", "records": 0, "message": f"Processamento falhou: {exc}"}
+
+    # ── Exemplo de upload (descomentar e adaptar) ─────────────────────────────
+    # from core.uploader import upload_geodataframe, upload_json
+    #
+    # upload_geodataframe(
+    #     gdf,
+    #     table="<nome_tabela>",
+    #     if_exists="upsert",
+    #     conflict_col="<coluna_chave_primaria>",  # OBRIGATÓRIO para upsert correto
+    # )
+    # return {"status": "ok", "records": len(gdf), "message": f"{len(gdf)} registros processados"}

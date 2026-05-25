@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 import logging
 import shutil
-import sys
 import time
 import warnings
 from pathlib import Path
@@ -64,15 +63,21 @@ def run(config: dict) -> dict:
     # ── 1. DOWNLOAD ──────────────────────────────────────────────────────────
     if not config.get("skip_download", False):
         log.info("  Etapa 1: Download MapBiomas")
-        from .downloader import main as dl_main
-        _argv = sys.argv
-        sys.argv = ["downloader"]
+        from .downloader import download as dl_download, _OUT as _ALERTAS_OUT
         try:
-            dl_main()
-        except SystemExit:
-            pass
-        finally:
-            sys.argv = _argv
+            dl_download(anos=list(anos))
+        except RuntimeError as exc:
+            # Download falhou — verificar se há cache válido em disco
+            if _ALERTAS_OUT.exists() and _ALERTAS_OUT.stat().st_size > 1000:
+                log.warning(
+                    "  Download MapBiomas falhou (%s) — usando cache existente: %s",
+                    exc, _ALERTAS_OUT.name,
+                )
+            else:
+                return {
+                    "status": "error", "records": 0,
+                    "message": f"Download MapBiomas falhou e sem cache: {exc}",
+                }
 
     # ── 2. LEITURA ───────────────────────────────────────────────────────────
     log.info("  Etapa 2: Leitura dos dados")

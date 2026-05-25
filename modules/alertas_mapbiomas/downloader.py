@@ -32,8 +32,8 @@ _OUT   = _ROOT / "data" / "raw" / "Alertas de Desmatamento(MAPBIOMAS).geojson"
 
 load_dotenv(_ROOT / ".env")
 
-LOG_FMT = "%(asctime)s [%(levelname)s] %(message)s"
-logging.basicConfig(level=logging.INFO, format=LOG_FMT)
+# logging.basicConfig NÃO deve ser chamado em módulos importáveis —
+# apenas em __main__. O orchestrator configura o logging globalmente.
 log = logging.getLogger(__name__)
 
 # MapBiomas Alerta GraphQL API v2
@@ -162,6 +162,48 @@ def converter_geojson(alertas: list[dict]) -> dict:
     }
 
 
+def _write_atomic(path: Path, text: str) -> None:
+    """Escreve text em path de forma atômica (temp → rename) para evitar corrupção."""
+    tmp = path.with_suffix(".tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        tmp.replace(path)
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
+def download(anos: list[int] | None = None, out: Path | None = None) -> Path:
+    """API programática — usada pelo manifest.py sem manipular sys.argv.
+
+    Args:
+        anos: lista de anos a baixar (None = todos disponíveis).
+        out:  path de saída (None = _OUT padrão).
+
+    Returns:
+        Path do arquivo GeoJSON gerado.
+
+    Raises:
+        RuntimeError: se token ausente ou nenhum alerta retornado.
+    """
+    token = os.environ.get("MAPBIOMAS_TOKEN")
+    if not token:
+        raise RuntimeError(
+            "MAPBIOMAS_TOKEN não definido no .env — "
+            "obter em https://plataforma.alerta.mapbiomas.org"
+        )
+    target = out or _OUT
+    alertas_list = baixar(token, anos or [])
+    if not alertas_list:
+        raise RuntimeError("Nenhum alerta retornado — verifique token e filtros")
+    geojson = converter_geojson(alertas_list)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    _write_atomic(target, json.dumps(geojson, ensure_ascii=False, separators=(",", ":")))
+    sz_mb = target.stat().st_size / 1_048_576
+    log.info("  → %s (%.1f MB, %d features)", target.name, sz_mb, len(geojson["features"]))
+    return target
+
+
 def main():
     parser = argparse.ArgumentParser(description="Download MapBiomas Alerta (PI)")
     parser.add_argument(
@@ -194,10 +236,7 @@ def main():
     log.info("  Features GeoJSON: %d", len(geojson["features"]))
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(
-        json.dumps(geojson, ensure_ascii=False, separators=(",", ":")),
-        encoding="utf-8",
-    )
+    _write_atomic(args.out, json.dumps(geojson, ensure_ascii=False, separators=(",", ":")))
     sz_mb = args.out.stat().st_size / 1_048_576
     log.info("  → %s (%.1f MB)", args.out.name, sz_mb)
     log.info("=" * 60)
@@ -205,4 +244,8 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+    )
     main()

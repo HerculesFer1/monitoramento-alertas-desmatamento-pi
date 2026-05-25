@@ -14,11 +14,26 @@ log = logging.getLogger(__name__)
 
 
 def download() -> Optional[gpd.GeoDataFrame]:
-    """Retorna GDF com polígonos PRODES-Cerrado, ou None se o arquivo não existir."""
+    """Retorna GDF com polígonos PRODES-Cerrado, ou None se indisponível.
+
+    Retorna None em dois casos:
+      - arquivo não existe (validação cruzada desativada intencionalmente)
+      - arquivo corrompido ou ilegível (falha silenciosa que seria pior)
+    """
     if not _FILE.exists():
         log.warning("PRODES não encontrado em %s — validação desativada", _FILE)
         return None
+
     log.info("  Lendo PRODES: %s", _FILE.name)
-    gdf = gpd.read_file(_FILE)
+    try:
+        gdf = gpd.read_file(_FILE)
+    except Exception as exc:
+        log.error(
+            "  PRODES: falha ao ler %s — %s. "
+            "Validação cruzada desativada para esta execução.",
+            _FILE.name, exc,
+        )
+        return None
+
     log.info("    → %d features | Colunas: %s", len(gdf), list(gdf.columns))
     return gdf
