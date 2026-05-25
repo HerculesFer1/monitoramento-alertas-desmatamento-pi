@@ -72,12 +72,16 @@ export interface ExecucaoPipeline {
   id: number
   executado_em: string
   versao: string
+  status: 'ok' | 'warning' | 'error' | null
   testes_ok: number | null
   testes_total: number | null
   n_alertas: number | null
   n_municipios: number | null
   ha_irregular: number | null
   ha_total: number | null
+  duracao_s: number | null
+  modulos_ok: number | null
+  modulos_total: number | null
   log_resumo: string | null
 }
 

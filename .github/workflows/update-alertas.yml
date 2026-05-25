@@ -126,10 +126,62 @@ jobs:
             data/output/agregado_municipios.json
           retention-days: 30
 
-      # ── 10. Notificar em caso de falha ────────────────────────────────────
-      - name: Notificar falha
-        if: failure()
+      # ── 10. Preparar + enviar e-mail de resultado ────────────────────────
+      - name: Preparar e-mail de resultado
+        if: always() && !cancelled()
+        env:
+          GH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          echo "::error::Pipeline falhou. Verifique os logs em Actions > pipeline-output-${{ github.run_number }}"
-          echo "Log das últimas 50 linhas:"
-          tail -50 data/output/pipeline.log 2>/dev/null || echo "(log não gerado)"
+          mkdir -p data/output
+          python3 scripts/gerar_email.py || echo "⚠ Geração do e-mail falhou — fallback para texto plano"
+          # Exportar HTML para GITHUB_ENV (permite referência em passos seguintes)
+          if [ -f data/output/email_body.html ]; then
+            echo "EMAIL_HTML_BODY<<HTMLEOF" >> $GITHUB_ENV
+            cat data/output/email_body.html >> $GITHUB_ENV
+            echo "HTMLEOF" >> $GITHUB_ENV
+          fi
+
+      - name: "📧 E-mail: dados atualizados"
+        if: success() && env.PIPELINE_STATUS == 'ok'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          secure: false
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.MAIL_TO }}
+          from: "CGEO Monitoramento <${{ secrets.MAIL_USERNAME }}>"
+          subject: "✅ Dados atualizados — ${{ env.PIPELINE_N_ALERTAS }} fragmentos | ${{ env.PIPELINE_N_MUN }} municípios (PI)"
+          html_body: ${{ env.EMAIL_HTML_BODY }}
+          body: "Pipeline de alertas de desmatamento executado com sucesso. Ver logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: "📧 E-mail: atualizado com avisos"
+        if: success() && env.PIPELINE_STATUS == 'warning'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          secure: false
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.MAIL_TO }}
+          from: "CGEO Monitoramento <${{ secrets.MAIL_USERNAME }}>"
+          subject: "⚠️ Pipeline com avisos — ${{ env.PIPELINE_N_ALERTAS }} fragmentos | verificar módulos"
+          html_body: ${{ env.EMAIL_HTML_BODY }}
+          body: "Pipeline concluído com avisos — alguns módulos usaram cache ou tiveram degradação parcial. Ver: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: "📧 E-mail: falha crítica"
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          secure: false
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.MAIL_TO }}
+          from: "CGEO Monitoramento <${{ secrets.MAIL_USERNAME }}>"
+          subject: "🚨 FALHA CRÍTICA — Pipeline MapBiomas (run #${{ github.run_number }})"
+          html_body: ${{ env.EMAIL_HTML_BODY }}
+          body: "O pipeline de alertas de desmatamento FALHOU. Intervenção manual necessária. Ver logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

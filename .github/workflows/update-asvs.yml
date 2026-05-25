@@ -134,3 +134,62 @@ jobs:
           name: asv-update-${{ github.run_number }}
           path: data/output/pipeline.log
           retention-days: 14
+
+      # ── Notificações por e-mail ──────────────────────────────────────────
+      - name: Preparar e-mail de resultado
+        if: always() && !cancelled()
+        env:
+          GH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p data/output
+          python3 scripts/gerar_email.py || echo "⚠ Geração do e-mail falhou — fallback para texto plano"
+          if [ -f data/output/email_body.html ]; then
+            echo "EMAIL_HTML_BODY<<HTMLEOF" >> $GITHUB_ENV
+            cat data/output/email_body.html >> $GITHUB_ENV
+            echo "HTMLEOF" >> $GITHUB_ENV
+          fi
+
+      - name: "📧 E-mail: ASVs atualizadas"
+        if: success() && env.PIPELINE_STATUS == 'ok'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          secure: false
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.MAIL_TO }}
+          from: "CGEO Monitoramento <${{ secrets.MAIL_USERNAME }}>"
+          subject: "✅ ASVs atualizadas — ${{ env.PIPELINE_N_ALERTAS }} fragmentos | SINAFLOR+ (PI)"
+          html_body: ${{ env.EMAIL_HTML_BODY }}
+          body: "Pipeline de ASVs SINAFLOR+ executado com sucesso. Ver: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: "📧 E-mail: ASVs com avisos"
+        if: success() && env.PIPELINE_STATUS == 'warning'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          secure: false
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.MAIL_TO }}
+          from: "CGEO Monitoramento <${{ secrets.MAIL_USERNAME }}>"
+          subject: "⚠️ ASVs com avisos — download WFS parcial ou cache usado"
+          html_body: ${{ env.EMAIL_HTML_BODY }}
+          body: "Pipeline de ASVs concluído com avisos. Ver: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: "📧 E-mail: falha no pipeline de ASVs"
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          secure: false
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.MAIL_TO }}
+          from: "CGEO Monitoramento <${{ secrets.MAIL_USERNAME }}>"
+          subject: "🚨 FALHA — Pipeline ASVs SINAFLOR+ (run #${{ github.run_number }})"
+          html_body: ${{ env.EMAIL_HTML_BODY }}
+          body: "O pipeline de ASVs SINAFLOR+ falhou. Ver: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

@@ -299,17 +299,41 @@ def refresh_matopiba(sb) -> None:
 
 
 # ── Registro de auditoria ─────────────────────────────────────────────────
-def registrar_execucao(sb, n_alertas, n_mun, testes_ok: int = 9, testes_total: int = 9):
+def registrar_execucao(
+    sb,
+    n_alertas: int,
+    n_mun: int,
+    testes_ok: int = 9,
+    testes_total: int = 9,
+    status: str = "ok",
+    duracao_s: int | None = None,
+    modulos_ok: int | None = None,
+    modulos_total: int | None = None,
+    log_resumo: str | None = None,
+) -> None:
+    """Registra uma execução do pipeline em execucoes_pipeline.
+
+    Args:
+        status: "ok" | "warning" | "error"
+        duracao_s: duração total em segundos
+        modulos_ok: número de módulos com status ok
+        modulos_total: total de módulos executados
+        log_resumo: mensagem resumida da execução
+    """
     ts = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
     sb.table("execucoes_pipeline").insert({
-        "versao":       "v2",
-        "testes_ok":    testes_ok,
-        "testes_total": testes_total,
-        "n_alertas":    n_alertas,
-        "n_municipios": n_mun,
-        "log_resumo":   f"Upload automático em {ts}",
+        "versao":        "v2",
+        "status":        status,
+        "testes_ok":     testes_ok,
+        "testes_total":  testes_total,
+        "n_alertas":     n_alertas,
+        "n_municipios":  n_mun,
+        "duracao_s":     duracao_s,
+        "modulos_ok":    modulos_ok,
+        "modulos_total": modulos_total,
+        "log_resumo":    log_resumo or f"Pipeline {status} em {ts}",
     }).execute()
-    log.info("  ✓ execucoes_pipeline: execução registrada")
+    log.info("  ✓ execucoes_pipeline: execução registrada (status=%s)", status)
 
 
 # ── Interface pública para módulos (ADR-002) ──────────────────────────────

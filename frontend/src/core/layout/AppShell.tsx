@@ -1,6 +1,7 @@
 import React from 'react'
 import { useAppStore, type Tab } from '../store/useAppStore'
 import { TabRouter } from './TabRouter'
+import { DataStatusBadge } from '../../shared/components/DataStatusBadge'
 
 interface TabDef { id: Tab; label: string; icon: React.ReactNode }
 
@@ -89,9 +90,7 @@ export function AppShell() {
           ))}
         </nav>
 
-        <div style={{ fontSize: 10, color: 'var(--t3)', flexShrink: 0 }}>
-          Pipeline v2 · 9/9 ✓
-        </div>
+        <DataStatusBadge />
       </header>
 
       {/* ── Conteúdo ───────────────────────────────────────────────────── */}
