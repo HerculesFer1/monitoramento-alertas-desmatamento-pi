@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 from supabase import create_client
@@ -63,6 +64,42 @@ def _limpar(val):
             return None
     except Exception:
         pass
+    return val
+
+
+def _to_json_safe(val):
+    """Converte tipos numpy/pandas para tipos Python nativos serializáveis em JSON.
+
+    Trata: numpy integers/floats/bools, pandas Timestamp/NaT, datetime.date,
+    datetime.datetime e qualquer objeto com .isoformat().
+    """
+    if val is None:
+        return None
+    # numpy inteiros (int8, int16, int32, int64, uint*, …)
+    if isinstance(val, np.integer):
+        return int(val)
+    # numpy floats
+    if isinstance(val, np.floating):
+        f = float(val)
+        return None if (math.isnan(f) or math.isinf(f)) else f
+    # numpy bool
+    if isinstance(val, np.bool_):
+        return bool(val)
+    # float nativo
+    if isinstance(val, float):
+        return None if (math.isnan(val) or math.isinf(val)) else val
+    # "NaT" como string — artefato de export/import via GeoJSON com GDAL
+    if isinstance(val, str) and val == "NaT":
+        return None
+    # pandas NaT / numpy NaT ANTES de .isoformat() — pd.NaT.isoformat() retorna "NaT"
+    try:
+        if pd.isna(val):
+            return None
+    except Exception:
+        pass
+    # datetime / date com isoformat (cobre Timestamp, datetime, date)
+    if hasattr(val, "isoformat"):
+        return val.isoformat()
     return val
 
 
@@ -314,7 +351,7 @@ def upload_geodataframe(
     for _, row in gdf.iterrows():
         rec: dict = {}
         for col in non_geom_cols:
-            rec[col] = _limpar(row[col])
+            rec[col] = _to_json_safe(row[col])
         geom = row.geometry
         rec["geom"] = f"SRID=4326;{geom.wkt}" if geom is not None else None
         registros.append(rec)
@@ -357,7 +394,7 @@ def upload_json(
 
     col_conf = conflict_col or next(iter(data[0]))
 
-    registros = [{k: _limpar(v) for k, v in row.items()} for row in data]
+    registros = [{k: _to_json_safe(v) for k, v in row.items()} for row in data]
     total = len(registros)
     n_batches = math.ceil(total / BATCH)
     log.info("[%s] Enviando %d registros em %d batches...", table, total, n_batches)

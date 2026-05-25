@@ -23,9 +23,6 @@ MODULE_MANIFEST = {
 def run(config: dict) -> dict:
     from .downloader import download
     from .processor import load
-    from core.uploader import upload_geodataframe
-
-    dry_run = config.get("dry_run", False)
 
     path = download()
     gdf = load(path)
@@ -39,8 +36,9 @@ def run(config: dict) -> dict:
     n = len(gdf)
     log.info("  [municipios_ibge] %d municípios", n)
 
-    if not dry_run and n > 0:
-        upload_geodataframe(gdf, table="municipios_pi", if_exists="upsert")
-        log.info("  [municipios_ibge] Upload concluído")
+    # A malha municipal é usada apenas como input para operações espaciais locais
+    # (spatial join em classify.py). Não existe tabela municipios_pi no Supabase —
+    # os dados municipais chegam ao frontend via agregado_municipios e frontend/public/data/.
+    log.info("  [municipios_ibge] Malha salva localmente em data/raw/municipios_pi.geojson")
 
-    return {"status": "ok", "records": n, "message": f"{n} municípios do Piauí processados"}
+    return {"status": "ok", "records": n, "message": f"{n} municípios do Piauí disponíveis localmente"}

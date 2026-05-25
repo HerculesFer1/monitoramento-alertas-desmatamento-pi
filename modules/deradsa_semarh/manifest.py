@@ -47,9 +47,30 @@ def run(config: dict) -> dict:
     log.info("  [deradsa_semarh] Total: %d polígonos em %d anos", n_total, len(gdfs))
 
     if not dry_run and n_total > 0:
-        for ano, gdf in gdfs.items():
+        for ano_val, gdf in gdfs.items():
             if not gdf.empty:
-                upload_geodataframe(gdf, table="deradsa_semarh", if_exists="upsert")
-        log.info("  [deradsa_semarh] Upload concluído")
+                # Renomear colunas para corresponder ao schema Supabase (tabela: deradsa)
+                rename_map = {
+                    "Id":          "id_deradsa",
+                    "Município":   "municipio",
+                    "Área/ha":     "area_ha",
+                    "�rea/ha": "area_ha",   # fallback para encoding corrompido
+                    "Ano":         "ano",
+                }
+                gdf_up = gdf.rename(columns={k: v for k, v in rename_map.items()
+                                             if k in gdf.columns})
+                # Garantir colunas obrigatórias
+                if "ano" not in gdf_up.columns:
+                    gdf_up = gdf_up.copy()
+                    gdf_up["ano"] = int(ano_val)
+                keep = [c for c in ["id_deradsa", "municipio", "area_ha", "ano"]
+                        if c in gdf_up.columns]
+                gdf_up = gdf_up[keep + [gdf_up.geometry.name]]
+                upload_geodataframe(
+                    gdf_up, table="deradsa",
+                    if_exists="upsert",
+                    conflict_col="id_deradsa,ano",
+                )
+        log.info("  [deradsa_semarh] Upload concluído → tabela deradsa")
 
     return {"status": "ok", "records": n_total, "message": f"{n_total} DERADSAs em {anos}"}

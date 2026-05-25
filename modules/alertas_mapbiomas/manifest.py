@@ -174,8 +174,36 @@ def run(config: dict) -> dict:
     # ── 11. UPLOAD ───────────────────────────────────────────────────────────
     if not dry_run:
         log.info("  Etapa 11: Upload Supabase")
-        upload_geodataframe(gdf_out, table="alertas_classificados", if_exists="upsert")
-        upload_json(agg_rows, table="agregado_municipios", if_exists="upsert")
+        # Preparar gdf_out para upload (cópia para não alterar o GeoJSON já exportado)
+        gdf_upload = gdf_out.copy()
+
+        # Garantir tipos inteiros para colunas SMALLINT/INTEGER do schema
+        import pandas as _pd
+        for _int_col in ("ano", "ano_prodes_ref", "codealerta", "dias_ate_publicacao"):
+            if _int_col in gdf_upload.columns:
+                gdf_upload[_int_col] = _pd.to_numeric(
+                    gdf_upload[_int_col], errors="coerce"
+                ).astype("Int64")
+
+        # fonte_list: _export() serializa lista→string JSON para o arquivo GeoJSON.
+        # PostgREST espera lista Python (TEXT[] no schema) — parsear de volta.
+        if "fonte_list" in gdf_upload.columns:
+            gdf_upload["fonte_list"] = gdf_upload["fonte_list"].apply(
+                lambda x: json.loads(x) if isinstance(x, str) else
+                          (list(x) if isinstance(x, (list, tuple)) else [])
+            )
+
+        upload_geodataframe(
+            gdf_upload,
+            table="alertas_classificados",
+            if_exists="upsert",
+            conflict_col="id_fragmento",
+        )
+        upload_json(
+            agg_rows, table="agregado_municipios",
+            if_exists="upsert",
+            conflict_col="municipio,ano",
+        )
 
     return {
         "status":  "ok",
@@ -197,10 +225,22 @@ def _export(gdf_out, out_path: Path, crs_out: str, fix_geoms_fn) -> "gpd.GeoData
     gdf_out["fonte_list"] = gdf_out["fonte_list"].apply(
         lambda x: json.dumps(x if isinstance(x, list) else [])
     )
-    gdf_out["datadetec"] = gdf_out["datadetec"].apply(
-        lambda x: str(x.date()) if pd.notna(x) and hasattr(x, "date") else
-                  str(x) if pd.notna(x) else None
-    )
+    # Serializar todos os campos de data para string ISO (GeoJSON não tem tipo date nativo)
+    def _fmt_date(x):
+        if x is None:
+            return None
+        try:
+            if pd.isna(x):
+                return None
+        except Exception:
+            pass
+        if hasattr(x, "date"):
+            return str(x.date())
+        return str(x) if x is not None else None
+
+    for _dcol in ("datadetec", "data_validade_instrumento"):
+        if _dcol in gdf_out.columns:
+            gdf_out[_dcol] = gdf_out[_dcol].apply(_fmt_date)
     for bc in ["matopiba", "reincidente"]:
         if bc in gdf_out.columns:
             gdf_out[bc] = gdf_out[bc].apply(lambda v: bool(v) if pd.notna(v) else False)

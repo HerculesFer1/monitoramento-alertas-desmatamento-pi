@@ -23,9 +23,6 @@ MODULE_MANIFEST = {
 def run(config: dict) -> dict:
     from .downloader import download
     from .processor import process
-    from core.uploader import upload_geodataframe
-
-    dry_run = config.get("dry_run", False)
 
     gdf_raw = download()
     if gdf_raw is None:
@@ -39,8 +36,9 @@ def run(config: dict) -> dict:
     n = len(gdf)
     log.info("  [prodes_cerrado] %d polígonos carregados", n)
 
-    if not dry_run and n > 0:
-        upload_geodataframe(gdf, table="prodes_cerrado", if_exists="upsert")
-        log.info("  [prodes_cerrado] Upload concluído")
+    # Os polígonos PRODES são usados apenas para validação cruzada local (cross-join com
+    # alertas_mapbiomas). Não há tabela prodes_cerrado no Supabase — os resultados da
+    # validação são gravados diretamente em alertas_classificados.flag_validacao_externa.
+    log.info("  [prodes_cerrado] Disponível localmente para validação cruzada")
 
-    return {"status": "ok", "records": n, "message": f"{n} polígonos PRODES processados"}
+    return {"status": "ok", "records": n, "message": f"{n} polígonos PRODES disponíveis localmente"}
