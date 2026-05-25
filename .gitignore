@@ -23,6 +23,10 @@ data/output/.last_asv_hash
 # GeoJSONs brutos (ultrapassam limite do GitHub — manter localmente)
 data/raw/*.geojson
 
+# Pastas legadas (pré-refatoração) — dados locais, não versionar
+data_base/
+Resultado/
+
 # GeoJSONs gerados pelo pipeline (grandes)
 data/output/alertas_classificados.geojson
 data/output/municipios_pi.geojson
@@ -41,3 +45,6 @@ desktop.ini
 
 # CLAUDE.MD.md fonte — conteúdo migrado para docs/architecture/DECISIONS.md
 CLAUDE.MD.md
+
+# Arquivo de estado do hook de fase (gerado por scripts/notificar_fase.ps1)
+.claude.fase_marker
