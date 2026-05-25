@@ -34,47 +34,54 @@ log = logging.getLogger(__name__)
 
 # ── Endpoints WFS (testar o que estiver ativo) ────────────────────────────
 # Fonte primária: IBAMA SISCOM WFS OGC
-WFS_PRIMARY = (
-    "https://siscom.ibama.gov.br/geoserver/ows"
-    "?service=WFS"
-    "&version=2.0.0"
-    "&request=GetFeature"
-    "&typeName=sinaflor:vw_autorizacao_supressao_vegetacao"
-    "&outputFormat=application%2Fjson"
-    "&CQL_FILTER=uf='PI' AND status_aut='Autorização Emitida'"
-    "&srsName=EPSG:4326"
-)
+# Parâmetros separados para que requests faça o URL-encoding correto
+# (aspas simples e caracteres acentuados causam HTTP 400 se concatenados na URL)
+WFS_BASE = "https://siscom.ibama.gov.br/geoserver/ows"
+WFS_PARAMS = {
+    "service":       "WFS",
+    "version":       "2.0.0",
+    "request":       "GetFeature",
+    "typeName":      "sinaflor:vw_autorizacao_supressao_vegetacao",
+    "outputFormat":  "application/json",
+    "CQL_FILTER":    "uf='PI' AND status_aut='Autorização Emitida'",
+    "srsName":       "EPSG:4326",
+}
 
 # Fonte alternativa: ArcGIS REST (caso o WFS OGC esteja indisponível)
-ARCGIS_BACKUP = (
+ARCGIS_BASE = (
     "https://servicos.ibama.gov.br/arcgis/rest/services/"
     "SINAFLOR/SINAFLOR_ASV/MapServer/0/query"
-    "?where=uf='PI' AND status_aut='Autorização Emitida'"
-    "&outFields=*"
-    "&geometryType=esriGeometryPolygon"
-    "&outSR=4326"
-    "&f=geojson"
-    "&resultRecordCount=5000"
 )
+ARCGIS_PARAMS = {
+    "where":            "uf='PI' AND status_aut='Autorização Emitida'",
+    "outFields":        "*",
+    "geometryType":     "esriGeometryPolygon",
+    "outSR":            "4326",
+    "f":                "geojson",
+    "resultRecordCount": "5000",
+}
 
 TIMEOUT = 300   # segundos — WFS pode ser lento para datasets grandes
 
 
-def _baixar_url(url: str, descricao: str) -> dict | None:
-    """Tenta baixar GeoJSON de uma URL. Retorna None em caso de falha."""
+def _baixar_url(base_url: str, params: dict, descricao: str) -> dict | None:
+    """Tenta baixar GeoJSON de uma URL com params. Retorna None em caso de falha."""
     log.info("  Tentando %s...", descricao)
     try:
-        resp = requests.get(url, timeout=TIMEOUT, stream=True)
+        resp = requests.get(base_url, params=params, timeout=TIMEOUT, stream=True)
+        log.debug("  URL final: %s", resp.url)
         resp.raise_for_status()
         data = resp.json()
         if data.get("type") == "FeatureCollection" and data.get("features"):
             log.info("  ✓ %s: %d features", descricao, len(data["features"]))
             return data
-        log.warning("  %s: resposta inesperada ou vazia", descricao)
+        log.warning("  %s: resposta inesperada ou vazia — %s", descricao,
+                    str(data)[:200])
     except requests.Timeout:
         log.warning("  %s: timeout após %ds", descricao, TIMEOUT)
     except requests.HTTPError as exc:
-        log.warning("  %s: HTTP %s", descricao, exc.response.status_code)
+        log.warning("  %s: HTTP %s — %s", descricao,
+                    exc.response.status_code, exc.response.text[:300])
     except Exception as exc:
         log.warning("  %s: erro — %s", descricao, exc)
     return None
@@ -122,13 +129,13 @@ def main():
     data = None
 
     # Tenta fonte primária (WFS OGC)
-    data = _baixar_url(WFS_PRIMARY, "WFS OGC IBAMA")
+    data = _baixar_url(WFS_BASE, WFS_PARAMS, "WFS OGC IBAMA")
 
     # Fallback para ArcGIS REST
     if data is None:
         log.warning("  Fonte primária indisponível — tentando fallback ArcGIS...")
         time.sleep(2)
-        data = _baixar_url(ARCGIS_BACKUP, "ArcGIS REST IBAMA")
+        data = _baixar_url(ARCGIS_BASE, ARCGIS_PARAMS, "ArcGIS REST IBAMA")
 
     if data is None:
         log.error("Ambas as fontes falharam. Verifique a conectividade.")

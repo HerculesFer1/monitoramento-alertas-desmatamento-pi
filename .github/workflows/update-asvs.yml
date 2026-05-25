@@ -51,6 +51,10 @@ jobs:
           chmod 600 .env
 
       - name: Download ASVs SINAFLOR
+        id: download-asvs
+        # continue-on-error: serviço IBAMA pode estar temporariamente indisponível.
+        # O passo seguinte verifica se há dados (novos ou cache) e decide se prossegue.
+        continue-on-error: true
         run: conda run -n desmatamento python -m modules.asvs_sinaflor.downloader
 
       - name: Verificar arquivo ASV
@@ -59,13 +63,17 @@ jobs:
           from pathlib import Path
           p = Path('data/raw/ASVs Emitidas-PI(SINAFLOR+).geojson')
           if not p.exists():
+              print('AVISO: ASVs não disponíveis (WFS IBAMA indisponível e sem cache).')
+              print('O pipeline será interrompido — execute novamente quando o IBAMA estiver acessível.')
               raise SystemExit('ASVs não baixadas')
           import json
           data = json.loads(p.read_text(encoding='utf-8'))
           n = len(data.get('features', []))
-          print(f'✓ {n} ASVs carregadas')
+          print(f'✓ {n} ASVs disponíveis')
           if n == 0:
               raise SystemExit('Nenhuma ASV retornada — verificar WFS IBAMA')
+          if '${{ steps.download-asvs.outcome }}' == 'failure':
+              print('AVISO: Download falhou mas arquivo de cache encontrado — usando dados anteriores.')
           "
 
       # Só re-executa o pipeline completo se os dados mudaram
