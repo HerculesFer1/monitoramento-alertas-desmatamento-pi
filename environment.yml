@@ -14,3 +14,5 @@ dependencies:
   - supabase>=2.9.0
   - python-dotenv>=1.0.0
   - pytest>=8.0.0
+  - rasterio>=1.4.0
+  - rasterstats>=0.20.0

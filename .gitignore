@@ -23,6 +23,14 @@ data/output/.last_asv_hash
 # GeoJSONs brutos (ultrapassam limite do GitHub — manter localmente)
 data/raw/*.geojson
 
+# Rasters brutos — arquivos pesados, não versionar
+data/raw/**/*.tif
+data/raw/**/*.tfw
+data/raw/**/*.ovr
+data/raw/**/*.aux.xml
+data/raw/**/*.vat.dbf
+data/raw/**/*.vat.cpg
+
 # Pastas legadas (pré-refatoração) — dados locais, não versionar
 data_base/
 Resultado/
@@ -48,3 +56,22 @@ CLAUDE.MD.md
 
 # Arquivo de estado do hook de fase (gerado por scripts/notificar_fase.ps1)
 .claude.fase_marker
+
+# Arquivos temporários de sessão — SQL de carga, GeoJSONs de trabalho, zips de dados
+/_batch_classes_*.sql
+/_batch_resumo_*.sql
+/_all_classes.sql
+/_temp_classes.json
+/_temp_resumo.geojson
+/_*.py
+/*.zip
+/base de dados/
+/PRODES/
+/Resultado.zip
+/carregar projeto em outro pc.txt
+
+# Vercel build output
+frontend/.vercel/
+
+# Dados brutos do módulo areas_prioritarias (rasters locais grandes)
+data/raw/areas_prioritarias/

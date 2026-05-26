@@ -10,7 +10,12 @@ const TemporalView    = React.lazy(() => import('../../modules/alertas_mapbiomas
 const ComparativaView = React.lazy(() => import('../../modules/alertas_mapbiomas/ComparativaView').then(m => ({ default: m.ComparativaView })))
 const ProdesView      = React.lazy(() => import('../../modules/prodes_cerrado/ProdesView').then(m => ({ default: m.ProdesView })))
 const MatopibaView    = React.lazy(() => import('../../modules/alertas_mapbiomas/MatopibaView').then(m => ({ default: m.MatopibaView })))
-const DadosView       = React.lazy(() => import('../../modules/dados/DadosView').then(m => ({ default: m.DadosView })))
+const DadosView            = React.lazy(() => import('../../modules/dados/DadosView').then(m => ({ default: m.DadosView })))
+const VisaoGeralView_AP    = React.lazy(() => import('../../modules/areas_prioritarias').then(m => ({ default: m.VisaoGeralView })))
+const MunicipalView_AP     = React.lazy(() => import('../../modules/areas_prioritarias').then(m => ({ default: m.MunicipalView })))
+const ProdesPrioridadeView = React.lazy(() => import('../../modules/areas_prioritarias').then(m => ({ default: m.ProdesPrioridadeView })))
+const RankingView_AP       = React.lazy(() => import('../../modules/areas_prioritarias').then(m => ({ default: m.RankingView })))
+const MetodologiaView_AP   = React.lazy(() => import('../../modules/areas_prioritarias').then(m => ({ default: m.MetodologiaView })))
 
 function ViewFallback() {
   return (
@@ -31,6 +36,13 @@ const MODULE_VIEWS: Record<Module, { id: string; label: string }[]> = {
   prodes:   [{ id: 'concordancia', label: 'Concordância PRODES' }],
   matopiba: [{ id: 'territorial',  label: 'Visão Territorial' }],
   dados:    [],
+  areas_prioritarias: [
+    { id: 'visao_geral',       label: 'Visão Geral'         },
+    { id: 'municipal',         label: 'Municipal'           },
+    { id: 'prodes_prioridade', label: 'PRODES × Prioridade' },
+    { id: 'ranking',           label: 'Ranking'             },
+    { id: 'metodologia',       label: 'Metodologia'         },
+  ],
 }
 
 const ANOS: AnoFiltro[] = ['all', 2022, 2023, 2024, 2025]
@@ -154,6 +166,11 @@ export function AppShell() {
             {activeModule === 'prodes'    && <ProdesView />}
             {activeModule === 'matopiba'  && <MatopibaView />}
             {activeModule === 'dados'     && <DadosView />}
+            {activeModule === 'areas_prioritarias' && activeView === 'visao_geral'       && <VisaoGeralView_AP />}
+            {activeModule === 'areas_prioritarias' && activeView === 'municipal'         && <MunicipalView_AP />}
+            {activeModule === 'areas_prioritarias' && activeView === 'prodes_prioridade' && <ProdesPrioridadeView />}
+            {activeModule === 'areas_prioritarias' && activeView === 'ranking'           && <RankingView_AP />}
+            {activeModule === 'areas_prioritarias' && activeView === 'metodologia'       && <MetodologiaView_AP />}
           </Suspense>
         </main>
 
