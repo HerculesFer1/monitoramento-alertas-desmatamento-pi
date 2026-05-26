@@ -3,7 +3,6 @@ import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { FilterPanel }    from '../../shared/components/Filters/FilterPanel'
 import { StatusBadge }    from '../../shared/components/StatusBadge'
 import { useAppStore }    from '../../core/store/useAppStore'
 import { useResumoAnual, useMonthlyAlertas, useResumoEstatico } from '../../core/lib/hooks'
@@ -106,9 +105,8 @@ export function TemporalView() {
   const matopibaData = anos.map(a => ({ ano: a, MATOPIBA: staticData?.matopibaYr?.[a]?.mat ?? matopibaYr[a].mat, 'Restante PI': staticData?.matopibaYr?.[a]?.rest ?? matopibaYr[a].rest }))
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <FilterPanel />
-      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div className="view-no-map">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* KPIs */}
         <div className="grid-4">
@@ -362,3 +360,4 @@ export function TemporalView() {
     </div>
   )
 }
+

@@ -33,6 +33,7 @@ export interface GeoJsonParams {
   municipio?: string
   bioma?: string
   matopiba?: boolean
+  flagValidacao?: string   // 'CONCORDANTE' | 'DISCORDANTE' | 'SEM_PRODES_NO_CICLO' etc.
   limit?: number
   offset?: number
 }

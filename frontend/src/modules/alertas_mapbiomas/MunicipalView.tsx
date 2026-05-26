@@ -1,85 +1,45 @@
 import { useMemo } from 'react'
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
-} from 'recharts'
-import { FilterPanel }  from '../../shared/components/Filters/FilterPanel'
-import { ErrorBoundary } from '../../shared/components/ErrorBoundary'
-import { useAppStore }  from '../../core/store/useAppStore'
-import { useAgregado, useResumoEstatico }  from '../../core/lib/hooks'
-import {
-  top20, munIrrReal, MUN_BIOME, MATOPIBA_LIST, REINCIDENT_MUNIS,
-  fmtHa, fmtNum,
-} from '../../core/lib/constants'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { ErrorBoundary }  from '../../shared/components/ErrorBoundary'
+import { StatusBadge }    from '../../shared/components/StatusBadge'
+import { ChoroplethMap }  from '../../shared/components/Map/ChoroplethMap'
+import { useAppStore }    from '../../core/store/useAppStore'
+import { useAgregado, useResumoEstatico } from '../../core/lib/hooks'
+import { top20, munIrrReal, MUN_BIOME, MATOPIBA_LIST, REINCIDENT_MUNIS, fmtHa, fmtNum } from '../../core/lib/constants'
 
 const TT = {
-  background: 'var(--bg3)', border: '1px solid var(--sep)',
-  borderRadius: 8, fontSize: 12, color: 'var(--t1)',
+  background: '#222222', border: '1px solid rgba(255,255,255,.08)',
+  borderRadius: 8, fontSize: 12, color: '#F2F2F2',
 }
 
-// Tipos derivados dos dados agregados (vivos ou estáticos)
 interface MunRow {
-  municipio: string
-  haTotal:   number
-  haIrr:     number
-  haAut:     number
-  haReg:     number
-  bioma:     string
-  matopiba:  boolean
+  municipio:   string
+  haTotal:     number
+  haIrr:       number
+  haAut:       number
+  haReg:       number
+  bioma:       string
+  matopiba:    boolean
   reincidente: boolean
 }
 
-function buildStaticRows(
-  biomaFiltro: string | null,
-  matopibaFiltro: boolean | null,
-  top20Data: [string, number][],
-  irrData: Record<string, number>,
-  biomeData: Record<string, string>,
-): MunRow[] {
-  return top20Data
-    .filter(([m]) => !biomaFiltro   || biomeData[m] === biomaFiltro)
-    .filter(([m]) => matopibaFiltro === null || MATOPIBA_LIST.includes(m) === matopibaFiltro)
-    .map(([m, haTotal]) => ({
-      municipio:   m,
-      haTotal,
-      haIrr:       irrData[m] ?? 0,
-      haAut:       0,
-      haReg:       0,
-      bioma:       biomeData[m] ?? 'Cerrado',
-      matopiba:    MATOPIBA_LIST.includes(m),
-      reincidente: REINCIDENT_MUNIS.includes(m as typeof REINCIDENT_MUNIS[number]),
-    }))
-}
-
 export function MunicipalView() {
-  const { anoFiltro, matopibaFiltro, biomaFiltro } = useAppStore()
+  const { anoFiltro } = useAppStore()
   const { data: agregado, isLoading, isError } = useAgregado()
   const { data: staticData } = useResumoEstatico()
-  const top20Data  = (staticData?.top20    ?? top20)    as [string, number][]
-  const irrData    = staticData?.munIrrReal ?? munIrrReal
-  const biomeData  = staticData?.munBiome   ?? MUN_BIOME
+
+  const top20Data = (staticData?.top20    ?? top20)    as [string, number][]
+  const irrData   = staticData?.munIrrReal ?? munIrrReal
+  const biomeData = staticData?.munBiome   ?? MUN_BIOME
 
   const liveRows = useMemo((): MunRow[] | null => {
     if (!agregado?.length) return null
-
-    const filtered = agregado.filter(r =>
-      (anoFiltro === 'all' || r.ano === anoFiltro) &&
-      (!biomaFiltro    || r.bioma_predominante === biomaFiltro) &&
-      (matopibaFiltro === null || r.matopiba === matopibaFiltro),
-    )
-
+    const filtered = agregado.filter(r => anoFiltro === 'all' || r.ano === anoFiltro)
     const acc: Record<string, MunRow> = {}
     for (const r of filtered) {
       if (!acc[r.municipio]) {
-        acc[r.municipio] = {
-          municipio:   r.municipio,
-          haTotal:     0,
-          haIrr:       0,
-          haAut:       0,
-          haReg:       0,
-          bioma:       r.bioma_predominante,
-          matopiba:    r.matopiba,
-          reincidente: false,
-        }
+        acc[r.municipio] = { municipio: r.municipio, haTotal: 0, haIrr: 0, haAut: 0, haReg: 0,
+          bioma: r.bioma_predominante, matopiba: r.matopiba, reincidente: false }
       }
       const m = acc[r.municipio]
       m.haTotal += r.ha_total
@@ -88,180 +48,148 @@ export function MunicipalView() {
       m.haReg   += r.ha_regularizado
       m.reincidente = m.reincidente || r.reincidente
     }
-
-    return Object.values(acc).sort((a, b) => b.haTotal - a.haTotal)
-  }, [agregado, anoFiltro, biomaFiltro, matopibaFiltro])
+    return Object.values(acc).sort((a, b) => b.haIrr - a.haIrr)
+  }, [agregado, anoFiltro])
 
   const isLive = !isLoading && !isError && !!liveRows?.length
-  const rows = liveRows ?? buildStaticRows(biomaFiltro, matopibaFiltro, top20Data, irrData, biomeData)
 
-  const top10      = rows.slice(0, 10)
-  const totalGeral = rows.reduce((s, r) => s + r.haTotal, 0)
-  const top10Total = top10.reduce((s, r) => s + r.haTotal, 0)
-
-  const top10IrrData = top10.map(r => ({
-    municipio: r.municipio.length > 18 ? r.municipio.slice(0, 17) + '…' : r.municipio,
-    ha:        r.haIrr,
-    matopiba:  r.matopiba,
+  const rows: MunRow[] = liveRows ?? top20Data.map(([m, haTotal]) => ({
+    municipio: m, haTotal, haIrr: irrData[m] ?? 0, haAut: 0, haReg: 0,
+    bioma: biomeData[m] ?? 'Cerrado',
+    matopiba: MATOPIBA_LIST.includes(m), reincidente: REINCIDENT_MUNIS.includes(m as typeof REINCIDENT_MUNIS[number]),
   }))
 
-  const top5GroupData = rows.slice(0, 5).map(r => ({
-    mun:         r.municipio.length > 14 ? r.municipio.slice(0, 13) + '…' : r.municipio,
-    Irregular:   r.haIrr,
-    Autorizado:  r.haAut,
-    Regularizado:r.haReg,
-  }))
+  const top10     = rows.slice(0, 10)
+  const totalMuns = rows.length
+  const reincMuns = rows.filter(r => r.reincidente).length
+  const matMuns   = rows.filter(r => r.matopiba && r.haIrr > 0).length
+  const totalIrr  = rows.reduce((s, r) => s + r.haIrr, 0)
 
-  const critico     = rows[0]
-  const reincidentes = rows.filter(r => r.reincidente).length
-  const concTop10   = totalGeral > 0 ? Math.round(top10Total / totalGeral * 100) : 0
+  const barData = top10.map(r => ({
+    name:    r.municipio.length > 14 ? r.municipio.slice(0, 13) + '…' : r.municipio,
+    full:    r.municipio,
+    Irregular:  r.haIrr,
+    Autorizado: r.haAut,
+    _mat: r.matopiba,
+    _rei: r.reincidente,
+  }))
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <FilterPanel />
-      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-        {/* Estado de fonte dos dados */}
-        {!isLive && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '7px 14px', borderRadius: 7, fontSize: 11,
-            background: 'var(--bg3)', border: '1px solid var(--sep)', color: 'var(--t3)',
-          }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: isLoading ? 'var(--mat)' : 'var(--t3)', display: 'inline-block' }} />
-            {isLoading ? 'Carregando dados do Supabase…' : isError
-              ? 'Supabase não disponível — exibindo dados do último pipeline (área irregular real; classificação detalhada indisponível)'
-              : 'Dados estáticos do último pipeline'
-            }
-          </div>
-        )}
+    <div className="view-with-map">
+      {/* ── Conteúdo 70% ─────────────────────────────────────────── */}
+      <div className="view-content">
 
         {/* KPIs */}
-        <div className="grid-4">
-          <div className="kpi-card">
-            <div className="kpi-label">Municípios Afetados</div>
-            <div className="kpi-value">{rows.length}</div>
-            <div className="kpi-sub">com alertas 2022–2025</div>
+        <div className="bento">
+          <div className="kpi-card b-3">
+            <div className="kpi-label">Municípios com Irregular <StatusBadge live={isLive} /></div>
+            <div className="kpi-value">{fmtNum(totalMuns)}</div>
+            <div className="kpi-sub">com alertas no período</div>
           </div>
-          <div className="kpi-card">
-            <div className="kpi-label">Município Crítico</div>
-            <div className="kpi-value" style={{ fontSize: 18, color: 'var(--irr)' }}>
-              {critico?.municipio ?? '—'}
-            </div>
-            <div className="kpi-sub">{fmtHa(critico?.haTotal ?? 0)} alertados</div>
-            {critico?.matopiba && (
-              <span className="tag tag-matopiba" style={{ marginTop: 4 }}>MATOPIBA</span>
-            )}
+          <div className="kpi-card b-3">
+            <div className="kpi-label">Área Irregular Total</div>
+            <div className="kpi-value" style={{ color: 'var(--irr)' }}>{fmtHa(totalIrr)}</div>
+            <div className="kpi-sub">acumulado no período</div>
           </div>
-          <div className="kpi-card">
-            <div className="kpi-label">Municípios Reincidentes</div>
-            <div className="kpi-value" style={{ color: 'var(--mat)' }}>{reincidentes}</div>
-            <div className="kpi-sub">≥ 3 anos com IRREGULAR</div>
+          <div className="kpi-card b-3">
+            <div className="kpi-label">Reincidentes</div>
+            <div className="kpi-value" style={{ color: 'var(--reg)' }}>{reincMuns}</div>
+            <div className="kpi-sub">≥ 3 anos com irregular</div>
           </div>
-          <div className="kpi-card">
-            <div className="kpi-label">Concentração Top 10</div>
-            <div className="kpi-value">{concTop10}%</div>
-            <div className="kpi-sub">do total alertado</div>
+          <div className="kpi-card b-3">
+            <div className="kpi-label">Municípios MATOPIBA</div>
+            <div className="kpi-value" style={{ color: 'var(--mat)' }}>{matMuns}</div>
+            <div className="kpi-sub">com irregular no período</div>
           </div>
         </div>
 
-        {/* Tabela + barras horizontal */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 14 }}>
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--sep)', fontWeight: 600, fontSize: 12, color: 'var(--t2)' }}>
-              Top 10 Municípios — Maior Área Alertada
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>#</th><th>Município</th><th>Bioma</th>
-                    <th style={{ textAlign:'right' }}>Área (ha)</th>
-                    <th style={{ textAlign:'right' }}>Irregular</th>
-                    <th style={{ textAlign:'right' }}>% Total</th>
-                    <th style={{ minWidth:70 }}>Dist.</th>
+        {/* Barras top 10 */}
+        <div className="card">
+          <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--t2)', marginBottom: 12 }}>
+            Top 10 municípios — Área Irregular (ha)
+          </div>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={barData} layout="vertical" barSize={14} margin={{ left: 4, right: 16 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.06)" horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--t3)' }} axisLine={false} tickLine={false}
+                tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
+              <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11, fill: 'var(--t2)' }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={TT}
+                formatter={(v: unknown, _: unknown, p) => {
+                  const row = barData.find(r => r.name === (p as { payload: { name: string } }).payload.name)
+                  return [fmtHa(v as number), row?._mat ? '⬛ MATOPIBA' : '']
+                }}
+              />
+              <Bar dataKey="Irregular" radius={[0, 4, 4, 0]}>
+                {barData.map((entry, i) => (
+                  <Cell key={i} fill={entry._mat ? '#F59E0B' : entry._rei ? '#F97316' : '#EF4444'} fillOpacity={0.85} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+
+          {/* Legenda */}
+          <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 11, color: 'var(--t3)' }}>
+            {[['#EF4444','Irregular'],['#F97316','Reincidente'],['#F59E0B','MATOPIBA']].map(([c,l]) => (
+              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 10, height: 10, borderRadius: 2, background: c, display: 'inline-block' }} />
+                <span>{l}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tabela top 10 */}
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Município</th>
+                <th>Irregular (ha)</th>
+                <th>Total (ha)</th>
+                <th>IPI</th>
+                <th>Bioma</th>
+                <th>Flags</th>
+              </tr>
+            </thead>
+            <tbody>
+              {top10.map((r, i) => {
+                const ipi = r.haTotal > 0 ? Math.round(r.haIrr / r.haTotal * 100) : 0
+                return (
+                  <tr key={r.municipio}>
+                    <td style={{ color: 'var(--t3)', width: 32 }}>{i + 1}</td>
+                    <td style={{ fontWeight: 600, color: 'var(--t1)' }}>{r.municipio}</td>
+                    <td style={{ color: 'var(--irr)', fontVariantNumeric: 'tabular-nums' }}>{fmtHa(r.haIrr)}</td>
+                    <td style={{ color: 'var(--t2)', fontVariantNumeric: 'tabular-nums' }}>{fmtHa(r.haTotal)}</td>
+                    <td>
+                      <span style={{
+                        color: ipi >= 80 ? 'var(--irr)' : ipi >= 50 ? 'var(--reg)' : 'var(--aut)',
+                        fontWeight: 700, fontSize: 12,
+                      }}>{ipi}%</span>
+                    </td>
+                    <td>
+                      <span className={r.bioma === 'Cerrado' ? 'tag tag-cerrado' : 'tag tag-caatinga'}>{r.bioma}</span>
+                    </td>
+                    <td style={{ display: 'flex', gap: 4 }}>
+                      {r.matopiba    && <span className="tag tag-matopiba">MAT</span>}
+                      {r.reincidente && <span className="tag tag-irr">REINCID.</span>}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {top10.map((r, i) => {
-                    const pct = totalGeral > 0 ? Math.round(r.haTotal / totalGeral * 100) : 0
-                    return (
-                      <tr key={r.municipio}>
-                        <td style={{ color: i < 3 ? 'var(--mat)' : 'var(--t3)', fontWeight: 700 }}>{i+1}</td>
-                        <td>
-                          <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                            <span style={{ fontWeight: i < 3 ? 600 : 400 }}>{r.municipio}</span>
-                            {r.reincidente && <span title="Reincidente" style={{ color:'var(--mat)' }}>⚠</span>}
-                            {r.matopiba    && <span className="tag tag-matopiba" style={{ fontSize:9 }}>MAT</span>}
-                          </div>
-                        </td>
-                        <td><span className={`tag tag-${r.bioma.toLowerCase()}`}>{r.bioma}</span></td>
-                        <td style={{ textAlign:'right', fontVariantNumeric:'tabular-nums' }}>{fmtNum(r.haTotal)}</td>
-                        <td style={{ textAlign:'right', color:'var(--irr)', fontVariantNumeric:'tabular-nums' }}>{fmtNum(r.haIrr)}</td>
-                        <td style={{ textAlign:'right', color:'var(--t2)' }}>{pct}%</td>
-                        <td>
-                          <div className="bar-track" style={{ height:5 }}>
-                            <div className="bar-fill" style={{ width:`${Math.min(pct*3,100)}%`, background:'var(--irr)' }} />
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="card">
-            <div style={{ fontWeight:600, fontSize:12, color:'var(--t2)', marginBottom:12 }}>
-              Área Irregular — Top 10 (ha)
-            </div>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={top10IrrData} layout="vertical" barSize={14} margin={{ left:8, right:14 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--sep)" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize:10, fill:'var(--t3)' }} axisLine={false} tickLine={false}
-                  tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)} />
-                <YAxis type="category" dataKey="municipio" tick={{ fontSize:10, fill:'var(--t2)' }}
-                  axisLine={false} tickLine={false} width={88} />
-                <Tooltip contentStyle={TT} formatter={(v: unknown) => [fmtHa(v as number), 'Irregular']} />
-                <Bar dataKey="ha" radius={[0,4,4,0]}>
-                  {top10IrrData.map((d,i) => <Cell key={i} fill={d.matopiba ? 'var(--mat)' : 'var(--irr)'} fillOpacity={.82} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
-
-        {/* Barras agrupadas top-5 */}
-        <ErrorBoundary label="Classificação por tipo">
-          <div className="card">
-            <div style={{ fontWeight:600, fontSize:12, color:'var(--t2)', marginBottom:12 }}>
-              Top 5 Municípios — Classificação por tipo (ha)
-              {!isLive && (
-                <span style={{
-                  fontSize:9, padding:'1px 5px', borderRadius:999, marginLeft:8,
-                  background:'var(--bg3)', color:'var(--t3)', fontWeight:700,
-                }}>
-                  {isLoading ? 'CARREGANDO' : 'ESTÁTICO — sem split de classificação'}
-                </span>
-              )}
-            </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={top5GroupData} barSize={18} barGap={2}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--sep)" vertical={false} />
-                <XAxis dataKey="mun" tick={{ fontSize:11, fill:'var(--t2)' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize:10, fill:'var(--t3)' }} axisLine={false} tickLine={false}
-                  tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)} />
-                <Tooltip contentStyle={TT} formatter={(v: unknown) => [fmtHa(v as number), '']} />
-                <Bar dataKey="Irregular"    fill="rgba(239,68,68,.8)"  radius={[3,3,0,0]} />
-                <Bar dataKey="Autorizado"   fill="rgba(16,185,129,.8)" radius={[3,3,0,0]} />
-                <Bar dataKey="Regularizado" fill="rgba(249,115,22,.8)" radius={[3,3,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </ErrorBoundary>
-
       </div>
+
+      {/* ── Mapa coroplético retrato 30% ─────────────────────────── */}
+      <ErrorBoundary label="Mapa Municipal">
+        <div className="map-portrait-panel">
+          <ChoroplethMap mode="ipi" />
+        </div>
+      </ErrorBoundary>
     </div>
   )
 }

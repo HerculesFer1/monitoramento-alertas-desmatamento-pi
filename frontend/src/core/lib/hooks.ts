@@ -75,6 +75,20 @@ export function useExecucoes() {
   })
 }
 
+// ── GeoJSON de municípios do Piauí (gerado pelo pipeline, IBGE) ───────────
+export function useMunicipiosGeoJSON() {
+  return useQuery({
+    queryKey: ['municipios-geojson'],
+    queryFn: () =>
+      fetch('/data/municipios_pi.geojson').then(r => {
+        if (!r.ok) throw new Error('municipios_pi.geojson não encontrado')
+        return r.json() as Promise<GeoJSON.FeatureCollection>
+      }),
+    staleTime: Infinity,
+    retry: false,
+  })
+}
+
 // ── Dados mensais gerados pelo pipeline (arquivo estático) ─────────────────
 export function useMonthlyAlertas() {
   return useQuery({

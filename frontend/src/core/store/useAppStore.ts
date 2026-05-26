@@ -1,55 +1,62 @@
 import { create } from 'zustand'
 
-export type Tab = 'executiva' | 'municipal' | 'temporal' | 'prodes' | 'matopiba' | 'dados'
+export type Module = 'mapbiomas' | 'prodes' | 'matopiba' | 'dados'
 export type AnoFiltro = number | 'all'
 
-interface AppState {
-  activeTab: Tab
-  setActiveTab: (tab: Tab) => void
+// Sub-views por módulo
+export type MapBiomasView = 'executiva' | 'temporal' | 'municipal' | 'comparativa'
+export type ProdesView    = 'concordancia'
+export type MatopibaView  = 'territorial'
+export type DadosView     = 'gestao'
 
-  // Filtro de ano único — 'all' = todos os anos; number = ano específico
+// Backward-compat: Tab ainda exportado para componentes que ainda o referenciam
+export type Tab = MapBiomasView | ProdesView | MatopibaView | DadosView
+
+interface AppState {
+  activeModule: Module
+  setActiveModule: (m: Module) => void
+
+  activeView: string
+  setActiveView: (v: string) => void
+
   anoFiltro: AnoFiltro
   setAnoFiltro: (v: AnoFiltro) => void
 
-  biomaFiltro: string | null
-  setBioma: (v: string | null) => void
-
-  municipioFiltro: string | null
-  setMunicipio: (v: string | null) => void
-
-  vpressaoFiltro: string | null
-  setVpressao: (v: string | null) => void
-
-  matopibaFiltro: boolean | null
-  setMatopiba: (v: boolean | null) => void
-
+  // resetFiltros mantido para compatibilidade
   resetFiltros: () => void
+
+  // Deprecated — removidos da UI, mantidos como null para compatibilidade
+  // durante migração gradual das views
+  biomaFiltro:     null
+  municipioFiltro: null
+  vpressaoFiltro:  null
+  matopibaFiltro:  null
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  activeTab: 'executiva',
-  setActiveTab: (tab) => set({ activeTab: tab }),
+  activeModule: 'mapbiomas',
+  setActiveModule: (m) => set({ activeModule: m, activeView: defaultView(m) }),
+
+  activeView: 'executiva',
+  setActiveView: (v) => set({ activeView: v }),
 
   anoFiltro: 'all',
   setAnoFiltro: (v) => set({ anoFiltro: v }),
 
-  biomaFiltro: null,
-  setBioma: (v) => set({ biomaFiltro: v }),
+  resetFiltros: () => set({ anoFiltro: 'all' }),
 
+  // Filtros removidos — sempre null
+  biomaFiltro:     null,
   municipioFiltro: null,
-  setMunicipio: (v) => set({ municipioFiltro: v }),
-
-  vpressaoFiltro: null,
-  setVpressao: (v) => set({ vpressaoFiltro: v }),
-
-  matopibaFiltro: null,
-  setMatopiba: (v) => set({ matopibaFiltro: v }),
-
-  resetFiltros: () => set({
-    anoFiltro: 'all',
-    biomaFiltro: null,
-    municipioFiltro: null,
-    vpressaoFiltro: null,
-    matopibaFiltro: null,
-  }),
+  vpressaoFiltro:  null,
+  matopibaFiltro:  null,
 }))
+
+function defaultView(m: Module): string {
+  switch (m) {
+    case 'mapbiomas': return 'executiva'
+    case 'prodes':    return 'concordancia'
+    case 'matopiba':  return 'territorial'
+    case 'dados':     return 'gestao'
+  }
+}

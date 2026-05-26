@@ -1,122 +1,93 @@
-import React from 'react'
-import { useAppStore, type Tab } from '../store/useAppStore'
-import { TabRouter } from './TabRouter'
+import React, { Suspense } from 'react'
+import { useAppStore, type AnoFiltro } from '../store/useAppStore'
+import { PrimaryRail }    from './PrimaryRail'
+import { SecondaryPanel } from './SecondaryPanel'
 import { DataStatusBadge } from '../../shared/components/DataStatusBadge'
 
-interface TabDef { id: Tab; label: string; icon: React.ReactNode }
+// ── Lazy views ─────────────────────────────────────────────────────────────
+const ExecutivaView   = React.lazy(() => import('../../modules/alertas_mapbiomas/ExecutivaView').then(m => ({ default: m.ExecutivaView })))
+const MunicipalView   = React.lazy(() => import('../../modules/alertas_mapbiomas/MunicipalView').then(m => ({ default: m.MunicipalView })))
+const TemporalView    = React.lazy(() => import('../../modules/alertas_mapbiomas/TemporalView').then(m => ({ default: m.TemporalView })))
+const ComparativaView = React.lazy(() => import('../../modules/alertas_mapbiomas/ComparativaView').then(m => ({ default: m.ComparativaView })))
+const ProdesView      = React.lazy(() => import('../../modules/prodes_cerrado/ProdesView').then(m => ({ default: m.ProdesView })))
+const MatopibaView    = React.lazy(() => import('../../modules/alertas_mapbiomas/MatopibaView').then(m => ({ default: m.MatopibaView })))
+const DadosView       = React.lazy(() => import('../../modules/dados/DadosView').then(m => ({ default: m.DadosView })))
 
-const TABS: TabDef[] = [
-  {
-    id: 'executiva', label: 'Visão Geral',
-    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z"/></svg>,
-  },
-  {
-    id: 'municipal', label: 'Panorama Municipal',
-    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>,
-  },
-  {
-    id: 'temporal', label: 'Evolução Temporal',
-    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
-  },
-  {
-    id: 'prodes', label: 'Validação PRODES',
-    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>,
-  },
-  {
-    id: 'matopiba', label: 'MATOPIBA',
-    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 14.93V15a1 1 0 00-2 0v1.93A8.001 8.001 0 014.07 13H6a1 1 0 000-2H4.07A8.001 8.001 0 0111 4.07V6a1 1 0 002 0V4.07A8.001 8.001 0 0119.93 11H18a1 1 0 000 2h1.93A8.001 8.001 0 0113 16.93z"/></svg>,
-  },
-  {
-    id: 'dados', label: 'Gestão de Dados',
-    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
-  },
-]
+function ViewFallback() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: '#5A5A5A', fontSize: 13 }}>
+      Carregando...
+    </div>
+  )
+}
+
+const ANOS: AnoFiltro[] = ['all', 2022, 2023, 2024, 2025]
 
 export function AppShell() {
-  const { activeTab, setActiveTab } = useAppStore()
+  const { activeModule, activeView, anoFiltro, setAnoFiltro } = useAppStore()
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg1)' }}>
+    <div className="app-shell">
+      <PrimaryRail />
+      <SecondaryPanel />
 
-      {/* ── Topbar ─────────────────────────────────────────────────────── */}
-      <header style={{
-        height: 56, background: 'var(--bg2)', borderBottom: '1px solid var(--sep)',
-        display: 'flex', alignItems: 'center', padding: '0 20px', gap: 16,
-        position: 'sticky', top: 0, zIndex: 100,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <div style={{
-            background: 'var(--aut-bg)', border: '1px solid rgba(16,185,129,.25)',
-            borderRadius: 8, padding: '3px 10px',
-            fontSize: 12, fontWeight: 800, color: 'var(--aut)', letterSpacing: '.06em',
-          }}>CGEO</div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)', lineHeight: 1.2 }}>
+      <div className="app-content">
+        {/* ── Topbar ─────────────────────────────────────────────────── */}
+        <header className="app-topbar">
+          {/* Brand */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#F2F2F2', lineHeight: 1.2 }}>
               Monitoramento de Alertas de{' '}
-              <span style={{ color: 'var(--mat)' }}>Desmatamento</span>
+              <span style={{ color: '#F59E0B' }}>Desmatamento</span>
             </div>
-            <div style={{ fontSize: 10, color: 'var(--t3)' }}>CGEO / SEMARH-PI · 2022–2025</div>
+            <div style={{ fontSize: 10, color: '#5A5A5A', fontWeight: 500 }}>
+              CGEO / SEMARH-PI
+            </div>
           </div>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: 'var(--aut-bg)', border: '1px solid rgba(16,185,129,.2)',
-            borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 600, color: 'var(--aut)',
-          }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--aut)', display: 'inline-block' }} />
-            Ativo
+
+          <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,.07)', flexShrink: 0 }} />
+
+          {/* Year pills */}
+          <div className="year-pills">
+            {ANOS.map(v => (
+              <button
+                key={String(v)}
+                className={`year-pill${anoFiltro === v ? ' active' : ''}`}
+                onClick={() => setAnoFiltro(v)}
+              >
+                {v === 'all' ? 'Todos' : String(v)}
+              </button>
+            ))}
           </div>
-        </div>
 
-        <div style={{ width: 1, height: 28, background: 'var(--sep)', flexShrink: 0 }} />
+          <div style={{ flex: 1 }} />
+          <DataStatusBadge />
+        </header>
 
-        {/* Tab navigation */}
-        <nav style={{ display: 'flex', gap: 2, flex: 1, justifyContent: 'center' }}>
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '5px 13px', borderRadius: 8, cursor: 'pointer',
-                border: activeTab === t.id ? '1px solid var(--sep)' : '1px solid transparent',
-                background: activeTab === t.id ? 'var(--bg3)' : 'transparent',
-                color: activeTab === t.id ? 'var(--t1)' : 'var(--t3)',
-                fontSize: 12, fontWeight: 500, transition: 'all .15s',
-              }}
-            >
-              {t.icon}
-              {t.label}
-            </button>
-          ))}
-        </nav>
+        {/* ── Conteúdo ────────────────────────────────────────────────── */}
+        <main className="app-main">
+          <Suspense fallback={<ViewFallback />}>
+            {activeModule === 'mapbiomas' && activeView === 'executiva'   && <ExecutivaView />}
+            {activeModule === 'mapbiomas' && activeView === 'temporal'    && <TemporalView />}
+            {activeModule === 'mapbiomas' && activeView === 'municipal'   && <MunicipalView />}
+            {activeModule === 'mapbiomas' && activeView === 'comparativa' && <ComparativaView />}
+            {activeModule === 'prodes'    && <ProdesView />}
+            {activeModule === 'matopiba'  && <MatopibaView />}
+            {activeModule === 'dados'     && <DadosView />}
+          </Suspense>
+        </main>
 
-        <DataStatusBadge />
-      </header>
-
-      {/* ── Conteúdo ───────────────────────────────────────────────────── */}
-      <main style={{ flex: 1, overflow: 'auto' }}>
-        <TabRouter />
-      </main>
-
-      {/* ── Footer ─────────────────────────────────────────────────────── */}
-      <footer style={{ background: 'var(--bg3)', borderTop: '1px solid var(--sep)', padding: '10px 20px' }}>
-        <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--t3)', marginBottom: 6 }}>
-          <strong style={{ color: 'var(--t2)' }}>CGEO — Centro de Geotecnologia Fundiária e Ambiental</strong>
-          {' · '}Fontes: MapBiomas Alerta · SINAFLOR+/IBAMA · SEMARH-PI · IBGE/Malha Municipal · 2022–2025
-        </div>
-        <div style={{
-          display: 'flex', alignItems: 'flex-start', gap: 8, justifyContent: 'center',
-          background: 'rgba(245,158,11,.07)', border: '1px solid rgba(245,158,11,.18)',
-          borderRadius: 8, padding: '6px 14px', maxWidth: 900, margin: '0 auto',
-        }}>
-          <span style={{ color: 'var(--mat)', fontSize: 13, flexShrink: 0 }}>⚠</span>
-          <span style={{ fontSize: 11, color: 'var(--t2)', lineHeight: 1.5 }}>
-            DERADSAs indisponíveis para 2022 e 2023 — Regularizado zerado nesses anos.
-            As classificações são estimativas baseadas nos dados disponíveis.{' '}
-            <strong style={{ color: 'var(--mat)' }}>Estimativa exploratória — não substitui autuação ambiental.</strong>
-          </span>
-        </div>
-      </footer>
+        {/* ── Footer ──────────────────────────────────────────────────── */}
+        <footer className="app-footer">
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, justifyContent: 'center', maxWidth: 860, margin: '0 auto' }}>
+            <span style={{ color: '#F59E0B', fontSize: 13, flexShrink: 0, marginTop: 1 }}>⚠</span>
+            <span style={{ fontSize: 11, color: '#5A5A5A', lineHeight: 1.5 }}>
+              DERADSAs indisponíveis para 2022–2023. Fontes: MapBiomas Alerta · SINAFLOR+/IBAMA · SEMARH-PI · IBGE · INPE.{' '}
+              <strong style={{ color: '#ABABAB' }}>Estimativa exploratória — não substitui autuação ambiental.</strong>
+            </span>
+          </div>
+        </footer>
+      </div>
     </div>
   )
 }
