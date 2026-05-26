@@ -126,62 +126,46 @@ jobs:
             data/output/agregado_municipios.json
           retention-days: 30
 
-      # ── 10. Preparar + enviar e-mail de resultado ────────────────────────
-      - name: Preparar e-mail de resultado
-        if: always() && !cancelled()
-        env:
-          GH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      # ── 10. Resumo da execução (GitHub Actions Summary) ─────────────────
+      # O GitHub envia este sumário no e-mail de falha que ele dispara
+      # automaticamente — configure em github.com → Settings → Notifications.
+      - name: Resumo da execução
+        if: always()
         run: |
-          mkdir -p data/output
-          python3 scripts/gerar_email.py || echo "⚠ Geração do e-mail falhou — fallback para texto plano"
-          # Exportar HTML para GITHUB_ENV (permite referência em passos seguintes)
-          if [ -f data/output/email_body.html ]; then
-            echo "EMAIL_HTML_BODY<<HTMLEOF" >> $GITHUB_ENV
-            cat data/output/email_body.html >> $GITHUB_ENV
-            echo "HTMLEOF" >> $GITHUB_ENV
-          fi
+          STATUS="${PIPELINE_STATUS:-desconhecido}"
+          case "$STATUS" in
+            ok)      ICONE="✅" ; LABEL="CONCLUÍDO" ;;
+            warning) ICONE="⚠️" ; LABEL="COM AVISOS" ;;
+            error)   ICONE="🚨" ; LABEL="COM ERROS"  ;;
+            *)       ICONE="❓" ; LABEL="DESCONHECIDO" ;;
+          esac
 
-      - name: "📧 E-mail: dados atualizados"
-        if: success() && env.PIPELINE_STATUS == 'ok'
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          secure: false
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          to: ${{ secrets.MAIL_TO }}
-          from: "CGEO Monitoramento <${{ secrets.MAIL_USERNAME }}>"
-          subject: "✅ Dados atualizados — ${{ env.PIPELINE_N_ALERTAS }} fragmentos | ${{ env.PIPELINE_N_MUN }} municípios (PI)"
-          html_body: ${{ env.EMAIL_HTML_BODY }}
-          body: "Pipeline de alertas de desmatamento executado com sucesso. Ver logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-      - name: "📧 E-mail: atualizado com avisos"
-        if: success() && env.PIPELINE_STATUS == 'warning'
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          secure: false
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          to: ${{ secrets.MAIL_TO }}
-          from: "CGEO Monitoramento <${{ secrets.MAIL_USERNAME }}>"
-          subject: "⚠️ Pipeline com avisos — ${{ env.PIPELINE_N_ALERTAS }} fragmentos | verificar módulos"
-          html_body: ${{ env.EMAIL_HTML_BODY }}
-          body: "Pipeline concluído com avisos — alguns módulos usaram cache ou tiveram degradação parcial. Ver: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-      - name: "📧 E-mail: falha crítica"
-        if: failure()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          secure: false
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          to: ${{ secrets.MAIL_TO }}
-          from: "CGEO Monitoramento <${{ secrets.MAIL_USERNAME }}>"
-          subject: "🚨 FALHA CRÍTICA — Pipeline MapBiomas (run #${{ github.run_number }})"
-          html_body: ${{ env.EMAIL_HTML_BODY }}
-          body: "O pipeline de alertas de desmatamento FALHOU. Intervenção manual necessária. Ver logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            echo "## $ICONE Pipeline MapBiomas Alertas — $LABEL"
+            echo ""
+            echo "| Campo | Valor |"
+            echo "|---|---|"
+            echo "| Fragmentos detectados | ${PIPELINE_N_ALERTAS:-—} |"
+            echo "| Municípios afetados   | ${PIPELINE_N_MUN:-—} |"
+            echo "| Duração               | ${PIPELINE_DURACAO:-—}s |"
+            echo "| Run                   | [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |"
+            echo ""
+            if [ -n "$PIPELINE_RESUMO_MODULOS" ]; then
+              echo "### Módulos"
+              echo '```'
+              echo "$PIPELINE_RESUMO_MODULOS"
+              echo '```'
+            fi
+            if [ -n "$PIPELINE_AVISOS" ] && [ "$PIPELINE_AVISOS" != "Nenhum" ]; then
+              echo "### ⚠ Avisos"
+              echo '```'
+              echo "$PIPELINE_AVISOS"
+              echo '```'
+            fi
+            if [ -n "$PIPELINE_ERROS" ] && [ "$PIPELINE_ERROS" != "Nenhum" ]; then
+              echo "### 🚨 Erros"
+              echo '```'
+              echo "$PIPELINE_ERROS"
+              echo '```'
+            fi
+          } >> $GITHUB_STEP_SUMMARY
