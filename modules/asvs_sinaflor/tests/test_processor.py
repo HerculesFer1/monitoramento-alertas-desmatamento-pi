@@ -1,7 +1,4 @@
 """Testes unitários do módulo asvs_sinaflor."""
-import pytest
-import geopandas as gpd
-from shapely.geometry import Polygon
 
 from modules.asvs_sinaflor.processor import _FILE
 

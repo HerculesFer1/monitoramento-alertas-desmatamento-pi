@@ -1,7 +1,7 @@
 """Testes unitários do módulo deradsa_semarh."""
 import geopandas as gpd
 
-from modules.deradsa_semarh.processor import load, _FILES
+from modules.deradsa_semarh.processor import load
 
 
 def test_load_returns_empty_for_missing_year():

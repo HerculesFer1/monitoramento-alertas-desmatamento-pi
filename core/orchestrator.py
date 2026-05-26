@@ -23,8 +23,10 @@ _ROOT = Path(__file__).parent.parent
 def _status_geral(results: list[dict]) -> str:
     """Determina o status geral da execução a partir dos resultados individuais."""
     statuses = [r.get("status", "ok") for r in results]
-    if "error"   in statuses: return "error"
-    if "warning" in statuses: return "warning"
+    if "error" in statuses:
+        return "error"
+    if "warning" in statuses:
+        return "warning"
     return "ok"
 
 
@@ -37,6 +39,7 @@ def _registrar(results: list[dict], duracao_s: int, dry_run: bool) -> None:
         from dotenv import load_dotenv
         load_dotenv(_ROOT / ".env")
         from supabase import create_client
+
         from core.uploader import registrar_execucao
 
         url = os.environ.get("SUPABASE_URL")

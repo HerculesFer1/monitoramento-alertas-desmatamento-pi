@@ -1,9 +1,8 @@
 """Testes unitários do módulo alertas_mapbiomas."""
 import geopandas as gpd
-import pandas as pd
 from shapely.geometry import Polygon
 
-from modules.alertas_mapbiomas.processor import parse_alertas, build_asv_base
+from modules.alertas_mapbiomas.processor import build_asv_base, parse_alertas
 
 
 def _make_alert_gdf(n=3, crs="EPSG:5880"):

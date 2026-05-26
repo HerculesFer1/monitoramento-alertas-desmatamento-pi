@@ -23,9 +23,10 @@ MODULE_MANIFEST = {
 
 
 def run(config: dict) -> dict:
+    from core.uploader import upload_geodataframe
+
     from .downloader import download as dl_download
     from .processor import load_all
-    from core.uploader import upload_geodataframe
 
     dry_run = config.get("dry_run", False)
     anos = list(ANOS_DERADSA)

@@ -45,13 +45,17 @@ def run(config: dict) -> dict:
     from core.spatial_core import fix_geoms
     from core.uploader import upload_geodataframe, upload_json
 
+    from .aggregator import (
+        aggregate_monthly,
+        aggregate_municipal,
+        aggregate_resumo_estatico,
+    )
     from .classify import AlertClassifier
+    from .indicators import apply_indicators
     from .processor import build_asv_base, parse_alertas, parse_asvs, parse_deradsa
+    from .quality import run_all_tests
     from .readers import LocalGeoJSONReader
     from .validator import run_prodes_validation
-    from .indicators import apply_indicators
-    from .quality import run_all_tests
-    from .aggregator import aggregate_monthly, aggregate_municipal, aggregate_resumo_estatico
 
     dry_run = config.get("dry_run", False)
     ano_filter = config.get("ano")
@@ -63,7 +67,8 @@ def run(config: dict) -> dict:
     # ── 1. DOWNLOAD ──────────────────────────────────────────────────────────
     if not config.get("skip_download", False):
         log.info("  Etapa 1: Download MapBiomas")
-        from .downloader import download as dl_download, _OUT as _ALERTAS_OUT
+        from .downloader import _OUT as _ALERTAS_OUT
+        from .downloader import download as dl_download
         try:
             dl_download(anos=list(anos))
         except RuntimeError as exc:
@@ -222,7 +227,7 @@ def run(config: dict) -> dict:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _export(gdf_out, out_path: Path, crs_out: str, fix_geoms_fn) -> "gpd.GeoDataFrame":
+def _export(gdf_out, out_path: Path, crs_out: str, fix_geoms_fn):
     import pandas as pd
     gdf_out = gdf_out.to_crs(crs_out)
     gdf_out.geometry = gdf_out.geometry.simplify(tolerance=0.0001, preserve_topology=True)

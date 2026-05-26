@@ -2,7 +2,6 @@
 Testes template — substitua pelos testes reais do módulo.
 Consulte: docs/modules/COMO-CRIAR-MODULO.md (seção 6)
 """
-import pytest
 
 
 def test_placeholder():

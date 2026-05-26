@@ -8,7 +8,7 @@
  *
  * Tooltip expande com: n_alertas, n_municipios, testes, duração.
  */
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase, isSupabaseConfigured, type ExecucaoPipeline } from '../../core/lib/supabase'
 

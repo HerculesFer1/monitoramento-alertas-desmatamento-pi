@@ -1,6 +1,6 @@
 """Testes unitários do módulo municipios_ibge."""
-from modules.municipios_ibge.processor import _FILE
 from modules.municipios_ibge.downloader import _IBGE_URL
+from modules.municipios_ibge.processor import _FILE
 
 
 def test_processor_file_constant():

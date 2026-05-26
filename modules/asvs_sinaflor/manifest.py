@@ -21,9 +21,10 @@ MODULE_MANIFEST = {
 
 
 def run(config: dict) -> dict:
+    from core.uploader import upload_geodataframe
+
     from .downloader import main as download_main
     from .processor import load
-    from core.uploader import upload_geodataframe
 
     dry_run = config.get("dry_run", False)
 

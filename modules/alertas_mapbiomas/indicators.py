@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import logging
 
-import pandas as pd
 import geopandas as gpd
+import pandas as pd
 
 log = logging.getLogger(__name__)
 

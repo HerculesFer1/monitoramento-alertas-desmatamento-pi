@@ -1,6 +1,6 @@
 """Testes unitários do módulo prodes_cerrado."""
-from modules.prodes_cerrado.processor import process
 from modules.prodes_cerrado.downloader import _FILE
+from modules.prodes_cerrado.processor import process
 
 
 def test_process_none_returns_none():
