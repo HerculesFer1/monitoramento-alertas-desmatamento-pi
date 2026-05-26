@@ -109,7 +109,7 @@ jobs:
           python-version: '3.11'
 
       - name: Instalar dependências
-        run: pip install pytest geopandas shapely pandas numpy requests
+        run: pip install pytest geopandas shapely pandas numpy requests supabase python-dotenv
 
       - name: Executar testes unitários
         run: pytest tests/ -v --tb=short
