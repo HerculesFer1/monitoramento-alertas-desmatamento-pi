@@ -34,7 +34,7 @@ MANIFEST: dict[str, Any] = {
     # ── Orquestração ────────────────────────────────────────
     "schedule": None,           # manual — acionar via Prefect UI ou CLI
     "priority": 20,             # executa após módulos base (municipios_ibge=10)
-    "enabled":  False,          # False até validação completa de QA
+    "enabled":  True,           # Validado — 224 municípios carregados em ap_municipios_resumo
 
     # ── Outputs (tabelas Supabase que este módulo escreve) ──
     "outputs": [
