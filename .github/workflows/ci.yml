@@ -129,7 +129,9 @@ jobs:
             infra/supabase/migrations/002_matopiba_view.sql \
             infra/supabase/migrations/003_deradsa_management.sql \
             infra/supabase/migrations/004_prodes_rpc_fix.sql \
-            infra/supabase/migrations/005_security_hardening.sql; do
+            infra/supabase/migrations/005_security_hardening.sql \
+            infra/supabase/migrations/006_execucoes_pipeline_colunas.sql \
+            infra/supabase/migrations/007_index_execucoes_pipeline.sql; do
             if [ ! -f "$f" ]; then
               echo "ERRO: Migration ausente: $f"
               exit 1
