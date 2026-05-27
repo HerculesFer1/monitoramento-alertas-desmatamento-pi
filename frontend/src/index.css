@@ -112,7 +112,7 @@ body {
   background: rgba(34,34,34,.3);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
-  border-bottom: 1px solid rgba(255,255,255,.04);
+  border-bottom: none;
   display: flex; align-items: center; padding: 0 16px; gap: 12px;
   flex-shrink: 0; position: relative; z-index: 10;
 }
@@ -142,22 +142,32 @@ body {
 
 /* ── Primary Rail — flutuante preto, estilo Apple ─────────────────────────  */
 .rail {
-  width: 56px;
+  width: 72px;
   background: #000000;
   border-radius: 14px;
   margin: 8px 0 8px 8px;
   border: 1px solid rgba(255,255,255,.06);
-  box-shadow: var(--shadow-rail);
   display: flex; flex-direction: column; align-items: center;
   flex-shrink: 0; z-index: 200; overflow: hidden;
 }
-.rail-top    { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; flex: 1; }
-.rail-bottom { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 0; }
-.rail-sep    { width: 28px; height: 1px; background: rgba(255,255,255,.06); margin: 5px 0; }
-.rail-logo   { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+/* Logo — zona fixa no topo */
+.rail-logo-area { padding: 14px 0 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.rail-logo      { width: 64px; height: auto; display: flex; align-items: center; justify-content: center; }
+
+/* Módulos — zona central (cresce a partir do meio) */
+.rail-modules {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center;
+  gap: 3px; padding: 8px 0;
+}
+
+/* Bottom — zona fixa no rodapé */
+.rail-bottom { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 10px 0; }
+.rail-sep    { width: 36px; height: 1px; background: rgba(255,255,255,.06); margin: 4px 0; }
 
 .rail-btn {
-  position: relative; width: 40px; height: 40px; border-radius: 10px;
+  position: relative; width: 50px; height: 50px; border-radius: 13px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: all .18s var(--ease);
   color: var(--t3); border: 1px solid transparent; background: transparent;
@@ -182,12 +192,12 @@ body {
 
 /* Avatar rodapé rail */
 .rail-avatar {
-  width: 30px; height: 30px; border-radius: 50%;
+  width: 38px; height: 38px; border-radius: 50%;
   background: rgba(16,185,129,.15);
   border: 1.5px solid rgba(16,185,129,.25);
   display: flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: 700; color: var(--aut);
-  cursor: default; flex-shrink: 0; margin-top: 2px;
+  font-size: 11px; font-weight: 700; color: var(--aut);
+  cursor: default; flex-shrink: 0;
 }
 
 /* ── Topbar — brand + tabs + ano ──────────────────────────────────────────  */
@@ -250,7 +260,6 @@ body {
 .map-portrait-panel {
   width: 40%; min-width: 300px; max-width: 580px; flex-shrink: 0;
   border-radius: var(--r-lg); overflow: hidden;
-  box-shadow: var(--shadow-map);
 }
 
 /* ── View containers ──────────────────────────────────────────────────────  */
@@ -273,14 +282,11 @@ body {
   border: 1px solid rgba(255,255,255,.06);
   border-radius: var(--r);
   padding: 16px;
-  box-shadow: var(--shadow);
   transition:
-    box-shadow   .25s var(--ease),
-    transform    .25s var(--ease),
-    border-color .25s;
+    border-color .25s,
+    transform    .25s var(--ease);
 }
 .card:hover {
-  box-shadow: var(--shadow-h);
   transform: translateY(-2px);
   border-color: rgba(255,255,255,.09);
 }
@@ -292,14 +298,11 @@ body {
   border-radius: var(--r);
   padding: 16px 18px;
   display: flex; flex-direction: column; gap: 4px;
-  box-shadow: var(--shadow);
   transition:
-    box-shadow   .25s var(--ease),
-    transform    .25s var(--ease),
-    border-color .25s;
+    border-color .25s,
+    transform    .25s var(--ease);
 }
 .kpi-card:hover {
-  box-shadow: var(--shadow-h);
   transform: translateY(-2px);
   border-color: rgba(255,255,255,.09);
 }
@@ -325,14 +328,13 @@ body {
   border: 1px solid rgba(255,255,255,.06);
   border-radius: var(--r);
   padding: 14px 16px;
-  box-shadow: var(--shadow);
   transition:
-    box-shadow  .25s var(--ease),
-    transform   .25s var(--ease);
+    border-color .25s,
+    transform    .25s var(--ease);
 }
 .year-card:hover {
-  box-shadow: var(--shadow-h);
   transform: translateY(-2px);
+  border-color: rgba(255,255,255,.09);
 }
 .year-tag {
   display: inline-block;
