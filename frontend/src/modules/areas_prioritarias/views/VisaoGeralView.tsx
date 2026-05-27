@@ -10,11 +10,9 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAppStore }    from '../../../core/store/useAppStore'
 import { useVisaoGeral, useAreasGeoJson } from '../hooks/useAreasData'
 import { useMunicipioSelect }             from '../hooks/useMunicipioSelect'
-import { MunicipioCard }   from '../components/MunicipioCard'
 import { ClasseBarChart }  from '../components/ClasseBarChart'
 import {
   LAYER_IDS,
-  DEFAULT_VISIBLE_LAYERS,
   CLASSE_COLORS,
   type MunicipioFeatureProps,
 } from '../types'
@@ -113,16 +111,26 @@ export function VisaoGeralView() {
     return <div className="flex items-center justify-center h-full">Carregando...</div>
   }
 
-  const kpis = visaoGeral?.kpis
+  // RPC retorna kpis.prodes (INPE confirmado) e kpis.deter (alertas gap)
+  const kpis      = visaoGeral?.kpis?.prodes
+  const kipsDeter = visaoGeral?.kpis?.deter
 
   return (
     <div className="flex flex-col h-full gap-4 p-4">
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KpiCard label="Floresta remanescente" value={`${kpis?.area_floresta_total_ha?.toLocaleString('pt-BR')} ha`} />
-        <KpiCard label="Área desmatada"        value={`${kpis?.area_desmat_total_ha?.toLocaleString('pt-BR')} ha`} />
-        <KpiCard label="% Desmatamento PI"     value={`${kpis?.pct_desmat_estado?.toFixed(1)}%`} />
-        <KpiCard label="Municípios analisados" value={`${kpis?.total_municipios}`} />
+        <KpiCard label="Floresta remanescente"    value={`${kpis?.area_floresta_total_ha?.toLocaleString('pt-BR')} ha`} />
+        <KpiCard label="Desmatado (PRODES 2025)"  value={`${kpis?.area_desmat_total_ha?.toLocaleString('pt-BR')} ha`} />
+        <KpiCard label="% Desmatamento PI"        value={`${kpis?.pct_desmat_estado?.toFixed(1)}%`} />
+        <KpiCard
+          label="Alertas DETER gap"
+          value={kipsDeter?.disponivel
+            ? `${kipsDeter.area_alertas_ha?.toLocaleString('pt-BR')} ha`
+            : '—'}
+          sub={kipsDeter?.disponivel
+            ? `${kipsDeter.n_municipios_com_alerta} municípios`
+            : 'Não disponível'}
+        />
       </div>
 
       <div className="flex flex-1 gap-4 min-h-0">
@@ -156,11 +164,12 @@ export function VisaoGeralView() {
   )
 }
 
-function KpiCard({ label, value }: { label: string; value: string }) {
+function KpiCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-3">
       <div className="text-xs text-gray-500">{label}</div>
       <div className="text-lg font-semibold text-gray-800 mt-1">{value}</div>
+      {sub && <div className="text-xs text-gray-400 mt-0.5">{sub}</div>}
     </div>
   )
 }

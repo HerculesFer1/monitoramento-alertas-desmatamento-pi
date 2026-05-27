@@ -38,7 +38,7 @@ export function ProdesPrioridadeView() {
             : 'PRODES × Prioridade — Piauí (estado)'}
         </h2>
         <div className="text-xs text-gray-500">
-          Ano PRODES: {anoFiltro === 'all' ? '2024' : anoFiltro}
+          Ano PRODES: {anoFiltro === 'all' ? '2025' : anoFiltro}
         </div>
       </div>
 

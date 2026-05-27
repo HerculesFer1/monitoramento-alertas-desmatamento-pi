@@ -4,25 +4,20 @@
  * Consulta RPCs do Supabase. Padrão: staleTime 5min, retry 2.
  */
 import { useQuery } from '@tanstack/react-query'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '../../../core/lib/supabase'
 import type {
   VisaoGeralResponse,
   MunicipioDetalheResponse,
   MunicipioResumo,
 } from '../types'
 
-// Cliente Supabase (reutilizar instância do projeto se existir)
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY,
-)
-
 const STALE = 5 * 60 * 1000  // 5 minutos
+const ANO_DEFAULT = 2025      // único ano com dados disponíveis
 
 // ── Visão Geral ───────────────────────────────────────────────────────────────
 
-export function useVisaoGeral(ano: number | 'all' = 2024) {
-  const anoParam = ano === 'all' ? 2024 : ano
+export function useVisaoGeral(ano: number | 'all' = ANO_DEFAULT) {
+  const anoParam = ano === 'all' ? ANO_DEFAULT : ano
 
   return useQuery<VisaoGeralResponse>({
     queryKey: ['ap_visao_geral', anoParam],
@@ -42,9 +37,9 @@ export function useVisaoGeral(ano: number | 'all' = 2024) {
 
 export function useMunicipioDetalhe(
   cod:  string | null,
-  ano:  number | 'all' = 2024,
+  ano:  number | 'all' = ANO_DEFAULT,
 ) {
-  const anoParam = ano === 'all' ? 2024 : ano
+  const anoParam = ano === 'all' ? ANO_DEFAULT : ano
 
   return useQuery<MunicipioDetalheResponse>({
     queryKey: ['ap_municipio_detalhe', cod, anoParam],
@@ -56,7 +51,7 @@ export function useMunicipioDetalhe(
       if (error) throw error
       return data as MunicipioDetalheResponse
     },
-    enabled:   !!cod,   // só executa quando um município estiver selecionado
+    enabled:   !!cod,
     staleTime: STALE,
     retry:     2,
   })
@@ -65,11 +60,11 @@ export function useMunicipioDetalhe(
 // ── Ranking ───────────────────────────────────────────────────────────────────
 
 export function useRanking(
-  ano:     number | 'all' = 2024,
+  ano:     number | 'all' = ANO_DEFAULT,
   orderby: string = 'area_floresta_ha',
   limit:   number = 224,
 ) {
-  const anoParam = ano === 'all' ? 2024 : ano
+  const anoParam = ano === 'all' ? ANO_DEFAULT : ano
 
   return useQuery<MunicipioResumo[]>({
     queryKey: ['ap_ranking', anoParam, orderby, limit],
@@ -90,10 +85,10 @@ export function useRanking(
 // ── GeoJSON para mapa ─────────────────────────────────────────────────────────
 
 export function useAreasGeoJson(
-  ano: number | 'all' = 2024,
+  ano: number | 'all' = ANO_DEFAULT,
   cod: string | null  = null,
 ) {
-  const anoParam = ano === 'all' ? 2024 : ano
+  const anoParam = ano === 'all' ? ANO_DEFAULT : ano
 
   return useQuery({
     queryKey: ['ap_geojson', anoParam, cod],

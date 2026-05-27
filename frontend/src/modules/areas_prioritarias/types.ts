@@ -2,7 +2,7 @@
 /**
  * types.ts — Módulo areas_prioritarias
  * Tipos TypeScript para o cruzamento PRODES × Prioridade.
- * Espelha o schema Supabase (008_areas_prioritarias.sql).
+ * Espelha o schema Supabase (008_areas_prioritarias.sql v2).
  */
 
 // ── Tipos base ────────────────────────────────────────────────────────────────
@@ -34,13 +34,13 @@ export const DEFAULT_VISIBLE_LAYERS: LayerId[] = [
 
 /** Descrição de cada camada para o LayerTogglePanel */
 export const LAYER_CONFIG: Record<LayerId, { label: string; color: string }> = {
-  [LAYER_IDS.MUNICIPIOS_LINE]: { label: 'Limites municipais', color: '#374151' },
-  [LAYER_IDS.MUNICIPIOS_FILL]: { label: 'Municípios (fundo)',  color: '#f3f4f6' },
-  [LAYER_IDS.PRIORIDADE_FILL]: { label: 'Classes de prioridade', color: '#ef4444' },
-  [LAYER_IDS.FLORESTA_FILL]:   { label: 'Máscara florestal 2025', color: '#16a34a' },
-  [LAYER_IDS.PRODES_FILL]:     { label: 'Desmatamento PRODES 2024', color: '#dc2626' },
-  [LAYER_IDS.BIOMASSA_HEAT]:   { label: 'Biomassa AGB (tC/ha)', color: '#d97706' },
-  [LAYER_IDS.SELECTED_FILL]:   { label: 'Município selecionado', color: '#2563eb' },
+  [LAYER_IDS.MUNICIPIOS_LINE]: { label: 'Limites municipais',      color: '#374151' },
+  [LAYER_IDS.MUNICIPIOS_FILL]: { label: 'Municípios (fundo)',       color: '#f3f4f6' },
+  [LAYER_IDS.PRIORIDADE_FILL]: { label: 'Classes de prioridade',    color: '#ef4444' },
+  [LAYER_IDS.FLORESTA_FILL]:   { label: 'Máscara florestal 2025',   color: '#16a34a' },
+  [LAYER_IDS.PRODES_FILL]:     { label: 'Desmatamento PRODES 2025', color: '#dc2626' },
+  [LAYER_IDS.BIOMASSA_HEAT]:   { label: 'Biomassa AGB (tC/ha)',     color: '#d97706' },
+  [LAYER_IDS.SELECTED_FILL]:   { label: 'Município selecionado',    color: '#2563eb' },
 }
 
 // ── Município selecionado ─────────────────────────────────────────────────────
@@ -64,6 +64,7 @@ export interface ClasseMunicipio {
   area_nao_floresta_ha: number
   pct_floresta:         number
   pct_desmat:           number
+  ha_deter_recente:     number | null
   agb_medio_tc_ha:      number | null
   biomassa_total_tc:    number | null
   ano_prodes:           number
@@ -79,6 +80,7 @@ export interface MunicipioResumo {
   area_total_ha:          number
   area_floresta_ha:       number
   area_desmat_ha:         number
+  ha_deter_recente:       number | null
   pct_floresta_estado:    number
   biomassa_floresta_tc:   number | null
   bbox:                   BBox
@@ -87,7 +89,8 @@ export interface MunicipioResumo {
 
 // ── Respostas das RPCs ────────────────────────────────────────────────────────
 
-export interface KpisEstado {
+/** KPIs PRODES — desmatamento confirmado pelo INPE */
+export interface KpisProdes {
   area_floresta_total_ha: number
   area_desmat_total_ha:   number
   pct_desmat_estado:      number
@@ -95,17 +98,33 @@ export interface KpisEstado {
   biomassa_total_tc:      number | null
 }
 
+/** KPIs DETER — alertas provisórios do gap temporal pós-PRODES */
+export interface KpisDeter {
+  area_alertas_ha:          number
+  n_municipios_com_alerta:  number
+  disponivel:               boolean
+}
+
+/** @deprecated Use KpisProdes */
+export type KpisEstado = KpisProdes
+
 export interface ClasseResumo {
   classe_prioridade:   ClassePrioridade
   area_floresta_ha:    number
   area_desmat_ha:      number
   area_total_ha:       number
   pct_floresta_media:  number
+  ha_deter_recente:    number
   n_municipios:        number
 }
 
+/** Resposta completa de get_ap_visao_geral() */
 export interface VisaoGeralResponse {
-  kpis:       KpisEstado
+  periodo_cobertura: PeriodCoverage | null
+  kpis: {
+    prodes: KpisProdes
+    deter:  KpisDeter
+  }
   por_classe: ClasseResumo[]
 }
 
@@ -114,13 +133,14 @@ export interface MunicipioDetalheResponse {
   classes:   ClasseMunicipio[]
 }
 
-// GeoJSON feature properties (para PrioridadeMap)
+// GeoJSON feature properties — retornado por get_ap_geojson()
 export interface MunicipioFeatureProps {
   cod:                  string
   nome:                 string
   classe_max:           ClassePrioridade | null
   area_floresta_ha:     number
   area_desmat_ha:       number
+  ha_deter_recente:     number
   pct_floresta_estado:  number
   bbox:                 BBox
 }
@@ -138,8 +158,7 @@ export const CLASSE_COLORS: Record<ClassePrioridade, string> = {
 // ── Cobertura temporal (PeriodBadge) ─────────────────────────────────────────
 
 /**
- * Período de cobertura temporal retornado pela RPC get_ap_periodo_cobertura().
- * Alimenta o componente PeriodBadge exibido sobre o mapa.
+ * Período de cobertura temporal retornado por get_ap_periodo_cobertura().
  *
  * Distinção obrigatória (ESCOPO §1.2):
  *   PRODES = confirmado/institucional (image_date_min → image_date_max)
@@ -147,10 +166,10 @@ export const CLASSE_COLORS: Record<ClassePrioridade, string> = {
  */
 export interface PeriodCoverage {
   ano_prodes:             number
-  image_date_min:         string | null   // ISO date — início real das imagens PRODES
-  image_date_max:         string | null   // ISO date — fim real das imagens PRODES
-  data_referencia_prodes: string | null   // ISO date — data de publicação INPE
-  deter_gap_inicio:       string | null   // ISO date — início do gap coberto pelo DETER
-  deter_gap_fim:          string | null   // ISO date — fim do gap (tipicamente hoje)
-  fonte_complementar:     'DETER' | null  // indica se DETER está sendo usado
+  image_date_min:         string | null
+  image_date_max:         string | null
+  data_referencia_prodes: string | null
+  deter_gap_inicio:       string | null
+  deter_gap_fim:          string | null
+  fonte_complementar:     'DETER' | null
 }

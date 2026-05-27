@@ -23,7 +23,7 @@ interface Props {
   className?: string
 }
 
-export function PeriodBadge({ ano = 2024, className = '' }: Props) {
+export function PeriodBadge({ ano = 2025, className = '' }: Props) {
   const [expanded, setExpanded]  = useState(false)
   const { data: coverage, isLoading } = usePeriodCoverage(ano)
   const { prodes, deter } = formatPeriodLabel(coverage ?? null)

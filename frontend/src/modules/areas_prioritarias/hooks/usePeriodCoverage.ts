@@ -9,31 +9,15 @@
  */
 import { useEffect } from 'react'
 import { useQuery }  from '@tanstack/react-query'
-import { createClient } from '@supabase/supabase-js'
+import { supabase }  from '../../../core/lib/supabase'
 import { useAppStore }  from '../../../core/store/useAppStore'
 import type { PeriodCoverage } from '../types'
 
-// Reutiliza instância do projeto se disponível via env
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY,
-)
-
 const STALE = 10 * 60 * 1000  // 10 minutos — dado raramente muda durante sessão
+const ANO_DEFAULT = 2025
 
-/**
- * Busca o período de cobertura de dados do banco e sincroniza no store.
- *
- * @param ano  Ano PRODES a consultar (default: 2024)
- * @returns    Objeto com dados do período e estado da query
- *
- * @example
- * const { data, isLoading } = usePeriodCoverage(2024)
- * // data.image_date_min  → '2024-08-01'
- * // data.deter_gap_fim   → '2026-05-27' (data de hoje, se gap ativo)
- */
-export function usePeriodCoverage(ano: number | 'all' = 2024) {
-  const anoParam       = ano === 'all' ? 2024 : ano
+export function usePeriodCoverage(ano: number | 'all' = ANO_DEFAULT) {
+  const anoParam       = ano === 'all' ? ANO_DEFAULT : ano
   const setPeriodCoverage = useAppStore((s) => s.setPeriodCoverage)
 
   const query = useQuery<PeriodCoverage | null>({
@@ -44,7 +28,6 @@ export function usePeriodCoverage(ano: number | 'all' = 2024) {
       })
 
       if (error) {
-        // Log mas não propaga — PeriodBadge é informativo, não crítico
         console.warn('[usePeriodCoverage] RPC error:', error.message)
         return null
       }
@@ -52,10 +35,9 @@ export function usePeriodCoverage(ano: number | 'all' = 2024) {
       return data as PeriodCoverage | null
     },
     staleTime: STALE,
-    retry:     1,   // menos agressivo — dado informativo
+    retry:     1,
   })
 
-  // Sincronizar no store sempre que os dados mudarem
   useEffect(() => {
     if (query.data !== undefined) {
       setPeriodCoverage(query.data)

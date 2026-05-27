@@ -19,11 +19,11 @@ MANIFEST: dict[str, Any] = {
     # ── Identidade ──────────────────────────────────────────
     "id":          "areas_prioritarias",   # snake_case, igual ao nome da pasta
     "name":        "Áreas Prioritárias REDD+",
-    "version":     "0.1.0",
+    "version":     "0.2.0",
     "description": (
-        "Cruzamento PRODES 2024 × raster de 16 classes de prioridade AHP "
+        "Cruzamento PRODES 2025 × raster de 16 classes de prioridade AHP "
         "para quantificação de área de vegetação nativa e desmatamento "
-        "por município do Piauí."
+        "por município do Piauí. Inclui gap DETER Cerrado (ago/2025–presente)."
     ),
 
     # ── UI ──────────────────────────────────────────────────
@@ -34,7 +34,7 @@ MANIFEST: dict[str, Any] = {
     # ── Orquestração ────────────────────────────────────────
     "schedule": None,           # manual — acionar via Prefect UI ou CLI
     "priority": 20,             # executa após módulos base (municipios_ibge=10)
-    "enabled":  False,          # False até validação completa de QA
+    "enabled":  True,           # QA validado 2026-05-27 — dados 2025 populados
 
     # ── Outputs (tabelas Supabase que este módulo escreve) ──
     "outputs": [
@@ -71,7 +71,7 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
 
     t0 = time.perf_counter()
 
-    ano          = int(config.get("ano", 2024))
+    ano          = int(config.get("ano", 2025))
     dry_run      = bool(config.get("dry_run", False))
     verbose      = bool(config.get("verbose", False))
     skip_dl      = bool(config.get("skip_download", False))
