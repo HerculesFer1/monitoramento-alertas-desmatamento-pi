@@ -41,6 +41,16 @@ const ITEMS: RailItem[] = [
       </svg>
     ),
   },
+  {
+    module: 'areas_prioritarias',
+    label: 'Áreas Prioritárias',
+    icon: (
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 20A7 7 0 0114 9h4v2.5c0 3-4.1 6.3-7 8.5z"/>
+        <path d="M11 20a10 10 0 01-6-11 5 5 0 015-5 5 5 0 014 4"/>
+      </svg>
+    ),
+  },
 ]
 
 const FUTURE: { label: string; icon: React.ReactNode }[] = [

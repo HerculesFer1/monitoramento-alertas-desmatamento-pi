@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type Module = 'mapbiomas' | 'prodes' | 'matopiba' | 'dados'
+export type Module = 'mapbiomas' | 'prodes' | 'matopiba' | 'dados' | 'areas_prioritarias'
 export type AnoFiltro = number | 'all'
 export type Theme = 'dark' | 'light'
 
@@ -13,6 +13,25 @@ export type MapBiomasView = 'executiva' | 'temporal' | 'municipal' | 'comparativ
 export type ProdesView    = 'concordancia'
 export type MatopibaView  = 'territorial'
 export type DadosView     = 'gestao'
+export type AreasViewId   = 'visao_geral' | 'municipal' | 'prodes_prioridade' | 'ranking' | 'metodologia'
+
+/** Município selecionado — payload para fitBounds no MapLibre GL */
+export interface MunicipioSelecionado {
+  cod:  string
+  nome: string
+  bbox: [[number, number], [number, number]]  // [[minX,minY],[maxX,maxY]]
+}
+
+/** Período de cobertura temporal (PRODES/DETER) */
+export interface PeriodCoverage {
+  ano_prodes:             number
+  image_date_min:         string | null
+  image_date_max:         string | null
+  data_referencia_prodes: string | null
+  deter_gap_inicio:       string | null
+  deter_gap_fim:          string | null
+  fonte_complementar:     'DETER' | null
+}
 
 // Backward-compat: Tab ainda exportado para componentes que ainda o referenciam
 export type Tab = MapBiomasView | ProdesView | MatopibaView | DadosView
@@ -23,6 +42,16 @@ interface AppState {
 
   activeView: string
   setActiveView: (v: string) => void
+
+  selectedMunicipio: MunicipioSelecionado | null
+  setSelectedMunicipio: (m: MunicipioSelecionado | null) => void
+
+  activeLayerIds: string[]
+  setActiveLayerIds: (ids: string[]) => void
+  toggleLayer: (id: string) => void
+
+  periodCoverage: PeriodCoverage | null
+  setPeriodCoverage: (c: PeriodCoverage | null) => void
 
   anoFiltro: AnoFiltro
   setAnoFiltro: (v: AnoFiltro) => void
@@ -45,6 +74,21 @@ export const useAppStore = create<AppState>((set) => ({
 
   activeView: 'executiva',
   setActiveView: (v) => set({ activeView: v }),
+
+  selectedMunicipio: null,
+  setSelectedMunicipio: (m) => set({ selectedMunicipio: m }),
+
+  activeLayerIds: [],
+  setActiveLayerIds: (ids) => set({ activeLayerIds: ids }),
+  toggleLayer: (id) =>
+    set((state) => ({
+      activeLayerIds: state.activeLayerIds.includes(id)
+        ? state.activeLayerIds.filter((l) => l !== id)
+        : [...state.activeLayerIds, id],
+    })),
+
+  periodCoverage: null,
+  setPeriodCoverage: (c) => set({ periodCoverage: c }),
 
   anoFiltro: 'all',
   setAnoFiltro: (v) => set({ anoFiltro: v }),
@@ -70,5 +114,6 @@ function defaultView(m: Module): string {
     case 'prodes':    return 'concordancia'
     case 'matopiba':  return 'territorial'
     case 'dados':     return 'gestao'
+    case 'areas_prioritarias': return 'visao_geral'
   }
 }
