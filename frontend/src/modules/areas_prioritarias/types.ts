@@ -145,14 +145,20 @@ export interface MunicipioFeatureProps {
   bbox:                 BBox
 }
 
-// ── Paleta de cores para as 16 classes ───────────────────────────────────────
+// ── Paleta de cores para as 5 classes ────────────────────────────────────────
+// Dados reais têm apenas 5 classes. Classe 1 = baixa pressão (verde),
+// classe 5 = alta pressão/mais desmat. (vermelho). Classes 6-16 mantidas
+// como fallback caso o raster seja reprocessado com escala completa.
 
-/** Verde escuro (alta floresta, baixa pressão) → vermelho (alta pressão) */
+/** Verde (baixa pressão, baixo desmat.) → Vermelho (alta pressão, alto desmat.) */
 export const CLASSE_COLORS: Record<ClassePrioridade, string> = {
-  1:  '#006837', 2:  '#1a9850', 3:  '#66bd63', 4:  '#a6d96a',
-  5:  '#d9ef8b', 6:  '#ffffbf', 7:  '#fee08b', 8:  '#fdae61',
-  9:  '#f46d43', 10: '#d73027', 11: '#a50026', 12: '#7f0000',
-  13: '#5c0011', 14: '#3f000d', 15: '#260008', 16: '#1a0005',
+  1:  '#1a9850',  // verde — baixa pressão (3 ha desmat., 152 ha DETER)
+  2:  '#fee08b',  // amarelo — pressão leve (8 ha desmat., 2 k ha DETER)
+  3:  '#fdae61',  // laranja — pressão moderada (74 ha desmat., 4,5 k ha DETER)
+  4:  '#f46d43',  // laranja-vermelho — alta pressão (354 ha desmat., 4 k ha DETER)
+  5:  '#d73027',  // vermelho — muito alta pressão (2.319 ha desmat., 23 k ha DETER)
+  6:  '#a50026', 7:  '#7f0000', 8:  '#5c0011', 9:  '#3f000d', 10: '#260008',
+  11: '#1a0005', 12: '#111111', 13: '#111111', 14: '#111111', 15: '#111111', 16: '#111111',
 }
 
 // ── Cobertura temporal (PeriodBadge) ─────────────────────────────────────────

@@ -11,6 +11,7 @@ import { useAppStore }    from '../../../core/store/useAppStore'
 import { useVisaoGeral, useAreasGeoJson } from '../hooks/useAreasData'
 import { useMunicipioSelect }             from '../hooks/useMunicipioSelect'
 import { ClasseBarChart }  from '../components/ClasseBarChart'
+import { PeriodBadge }     from '../components/PeriodBadge'
 import {
   LAYER_IDS,
   CLASSE_COLORS,
@@ -107,10 +108,6 @@ export function VisaoGeralView() {
   }
 
   // ── Render ───────────────────────────────────────────────────────────────
-  if (loadingKpis || loadingMap) {
-    return <div className="flex items-center justify-center h-full">Carregando...</div>
-  }
-
   // RPC retorna kpis.prodes (INPE confirmado) e kpis.deter (alertas gap)
   const kpis      = visaoGeral?.kpis?.prodes
   const kipsDeter = visaoGeral?.kpis?.deter
@@ -119,24 +116,39 @@ export function VisaoGeralView() {
     <div className="flex flex-col h-full gap-4 p-4">
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KpiCard label="Floresta remanescente"    value={`${kpis?.area_floresta_total_ha?.toLocaleString('pt-BR')} ha`} />
-        <KpiCard label="Desmatado (PRODES 2025)"  value={`${kpis?.area_desmat_total_ha?.toLocaleString('pt-BR')} ha`} />
-        <KpiCard label="% Desmatamento PI"        value={`${kpis?.pct_desmat_estado?.toFixed(1)}%`} />
+        <KpiCard
+          label="Floresta remanescente"
+          value={loadingKpis ? '...' : `${kpis?.area_floresta_total_ha?.toLocaleString('pt-BR')} ha`}
+        />
+        <KpiCard
+          label="Desmatado (PRODES 2025)"
+          value={loadingKpis ? '...' : `${kpis?.area_desmat_total_ha?.toLocaleString('pt-BR')} ha`}
+        />
+        <KpiCard
+          label="% Desmatamento PI"
+          value={loadingKpis ? '...' : `${kpis?.pct_desmat_estado?.toFixed(2)}%`}
+          sub="do total de floresta"
+        />
         <KpiCard
           label="Alertas DETER gap"
-          value={kipsDeter?.disponivel
+          value={loadingKpis ? '...' : (kipsDeter?.disponivel
             ? `${kipsDeter.area_alertas_ha?.toLocaleString('pt-BR')} ha`
-            : '—'}
-          sub={kipsDeter?.disponivel
+            : '—')}
+          sub={loadingKpis ? undefined : (kipsDeter?.disponivel
             ? `${kipsDeter.n_municipios_com_alerta} municípios`
-            : 'Não disponível'}
+            : 'Não disponível')}
         />
       </div>
 
       <div className="flex flex-1 gap-4 min-h-0">
-        {/* Mapa */}
+        {/* Mapa — sempre renderizado para evitar tela preta */}
         <div className="flex-1 rounded-lg overflow-hidden border border-gray-200 relative">
           <div ref={mapContainer} className="w-full h-full" />
+          {loadingMap && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80 text-xs text-gray-500">
+              Carregando mapa…
+            </div>
+          )}
           {selectedMunicipio && (
             <button
               onClick={clear}
@@ -145,6 +157,7 @@ export function VisaoGeralView() {
               ← Voltar ao estado
             </button>
           )}
+          <PeriodBadge ano={anoFiltro} className="absolute bottom-4 right-4 z-10" />
         </div>
 
         {/* Gráfico por classe */}

@@ -15,6 +15,7 @@ import { useLayerToggle }        from '../hooks/useLayerToggle'
 import { LayerTogglePanel }      from '../components/LayerTogglePanel'
 import { MunicipioCard }         from '../components/MunicipioCard'
 import { ClasseBarChart }        from '../components/ClasseBarChart'
+import { PeriodBadge }           from '../components/PeriodBadge'
 import {
   LAYER_IDS,
   DEFAULT_VISIBLE_LAYERS,
@@ -139,6 +140,8 @@ export function MunicipalView() {
             Clique em um município para detalhar
           </div>
         )}
+
+        <PeriodBadge ano={anoFiltro} className="absolute bottom-4 right-4 z-10" />
       </div>
 
       {/* Painel lateral */}

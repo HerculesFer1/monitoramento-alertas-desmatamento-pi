@@ -108,6 +108,7 @@ function _adaptarClassesMunicipio(classes: ClasseMunicipio[]): ClasseResumo[] {
     area_desmat_ha:     c.area_desmat_ha,
     area_total_ha:      c.area_total_ha,
     pct_floresta_media: c.pct_floresta,
+    ha_deter_recente:   c.ha_deter_recente ?? 0,
     n_municipios:       1,
   }))
 }

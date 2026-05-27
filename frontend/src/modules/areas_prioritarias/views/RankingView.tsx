@@ -7,6 +7,7 @@
 import React, { useState } from 'react'
 import { useAppStore } from '../../../core/store/useAppStore'
 import { useRanking }   from '../hooks/useAreasData'
+import { CLASSE_COLORS } from '../types'
 import type { MunicipioResumo } from '../types'
 
 type OrderBy =
@@ -117,8 +118,14 @@ export function RankingView() {
                 </td>
                 <td className="p-2 text-right font-medium">
                   <span
-                    className="inline-block px-1.5 py-0.5 rounded text-white text-xs"
-                    style={{ backgroundColor: m.classe_max_prioridade ? `hsl(${(m.classe_max_prioridade / 16) * 120}, 70%, 40%)` : '#ccc' }}
+                    className="inline-block px-1.5 py-0.5 rounded text-white text-xs font-semibold"
+                    style={{
+                      backgroundColor: m.classe_max_prioridade
+                        ? CLASSE_COLORS[m.classe_max_prioridade]
+                        : '#ccc',
+                      // texto escuro apenas para classe 2 (amarelo claro)
+                      color: m.classe_max_prioridade === 2 ? '#374151' : 'white',
+                    }}
                   >
                     {m.classe_max_prioridade ?? '—'}
                   </span>
