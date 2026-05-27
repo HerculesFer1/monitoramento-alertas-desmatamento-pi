@@ -29,10 +29,18 @@ interface Props {
 }
 
 export function ChoroplethMap({ mode = 'ipi' }: Props) {
-  const { anoFiltro } = useAppStore()
+  const { anoFiltro, theme } = useAppStore()
   const { data: municipiosRaw } = useMunicipiosGeoJSON()
   const { data: agregado }      = useAgregado()
   const [hover, setHover]       = useState<HoverInfo | null>(null)
+  const mapStyle  = theme === 'light'
+    ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
+    : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+  const panelBg   = theme === 'light' ? 'rgba(255,255,255,.95)' : 'rgba(26,26,26,.92)'
+  const panelBorder = theme === 'light' ? 'rgba(0,0,0,.1)' : 'rgba(255,255,255,.08)'
+  const textMuted = theme === 'light' ? '#666' : '#ABABAB'
+  const textLabel = theme === 'light' ? '#888' : '#5A5A5A'
+  const textStrong = theme === 'light' ? '#1A1A1A' : '#F2F2F2'
 
   // Constrói mapa { nomeNormalizado → { ipi, haIrr, haTotal } }
   const statsMap = useMemo(() => {
@@ -123,7 +131,7 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
       <Map
         initialViewState={INITIAL_VIEW}
         style={{ width: '100%', height: '100%' }}
-        mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+        mapStyle={mapStyle}
         interactiveLayerIds={enriched ? ['mun-fill'] : []}
         onMouseMove={onMouseMove as unknown as (e: unknown) => void}
         onMouseLeave={() => setHover(null)}
@@ -152,17 +160,6 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
                 'line-width': 0.6,
               }}
             />
-            {/* Borda âmbar sobre municípios MATOPIBA */}
-            <Layer
-              id="mun-matopiba-border"
-              type="line"
-              filter={['==', ['get', '_matopiba'], true]}
-              paint={{
-                'line-color': '#F59E0B',
-                'line-width': 1.5,
-                'line-opacity': 0.7,
-              }}
-            />
           </Source>
         )}
       </Map>
@@ -170,27 +167,27 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
       {/* Legenda */}
       <div style={{
         position: 'absolute', bottom: 14, left: 14,
-        background: 'rgba(26,26,26,.92)', borderRadius: 8,
+        background: panelBg, borderRadius: 8,
         padding: '10px 12px', fontSize: 11,
-        border: '1px solid rgba(255,255,255,.08)',
+        border: `1px solid ${panelBorder}`,
       }}>
         {mode === 'ipi' ? (
           <>
-            <div style={{ color: '#5A5A5A', fontWeight: 600, marginBottom: 6, fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>IPI — Índice de Pressão</div>
+            <div style={{ color: textLabel, fontWeight: 600, marginBottom: 6, fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>IPI — Índice de Pressão</div>
             {[['#10B981','Baixo (0–30%)'],['#F59E0B','Médio (30–60%)'],['#F97316','Alto (60–80%)'],['#EF4444','Crítico (>80%)']].map(([c,l]) => (
               <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <span style={{ width: 12, height: 12, borderRadius: 2, background: c, flexShrink: 0, display: 'inline-block' }} />
-                <span style={{ color: '#ABABAB' }}>{l}</span>
+                <span style={{ color: textMuted }}>{l}</span>
               </div>
             ))}
           </>
         ) : (
           <>
-            <div style={{ color: '#5A5A5A', fontWeight: 600, marginBottom: 6, fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>Território</div>
-            {[['#F59E0B','MATOPIBA-PI'],['#2C2C2C','Demais municípios']].map(([c,l]) => (
+            <div style={{ color: textLabel, fontWeight: 600, marginBottom: 6, fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>Território</div>
+            {([['#F59E0B','MATOPIBA-PI'],[theme === 'light' ? '#CCCCCC' : '#2C2C2C','Demais municípios']] as [string,string][]).map(([c,l]) => (
               <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                <span style={{ width: 12, height: 12, borderRadius: 2, background: c, border: '1px solid rgba(255,255,255,.15)', flexShrink: 0, display: 'inline-block' }} />
-                <span style={{ color: '#ABABAB' }}>{l}</span>
+                <span style={{ width: 12, height: 12, borderRadius: 2, background: c, border: `1px solid ${panelBorder}`, flexShrink: 0, display: 'inline-block' }} />
+                <span style={{ color: textMuted }}>{l}</span>
               </div>
             ))}
           </>
@@ -203,25 +200,25 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
           position: 'absolute',
           left:  Math.min(hover.x + 12, window.innerWidth  - 180),
           top:   Math.max(hover.y - 60, 8),
-          background: 'rgba(26,26,26,.96)', borderRadius: 8,
+          background: panelBg, borderRadius: 8,
           padding: '8px 12px', fontSize: 11,
-          border: '1px solid rgba(255,255,255,.1)',
+          border: `1px solid ${panelBorder}`,
           pointerEvents: 'none', zIndex: 10,
-          boxShadow: '0 4px 16px rgba(0,0,0,.4)',
+          boxShadow: '0 4px 16px rgba(0,0,0,.2)',
         }}>
-          <div style={{ fontWeight: 700, color: '#F2F2F2', marginBottom: 4 }}>
+          <div style={{ fontWeight: 700, color: textStrong, marginBottom: 4 }}>
             {hover.municipio}
             {hover.matopiba && <span style={{ marginLeft: 6, color: '#F59E0B', fontSize: 10 }}>MATOPIBA</span>}
           </div>
           {hover.ipi !== null ? (
             <>
               <div style={{ color: ipiColor(hover.ipi), fontWeight: 700 }}>IPI {hover.ipi.toFixed(1)}%</div>
-              <div style={{ color: '#ABABAB', marginTop: 2 }}>
+              <div style={{ color: textMuted, marginTop: 2 }}>
                 {fmtHa(hover.haIrr)} irr. · {fmtHa(hover.haTotal)} total
               </div>
             </>
           ) : (
-            <div style={{ color: '#5A5A5A', fontStyle: 'italic' }}>Sem dados</div>
+            <div style={{ color: textLabel, fontStyle: 'italic' }}>Sem dados</div>
           )}
         </div>
       )}

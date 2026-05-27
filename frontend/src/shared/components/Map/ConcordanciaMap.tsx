@@ -25,8 +25,16 @@ const FLAG_LABELS: Record<string, string> = {
 interface HoverInfo { x: number; y: number; props: Record<string, unknown> }
 
 export function ConcordanciaMap() {
-  const { anoFiltro } = useAppStore()
+  const { anoFiltro, theme } = useAppStore()
   const [hover, setHover] = useState<HoverInfo | null>(null)
+  const mapStyle   = theme === 'light'
+    ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
+    : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+  const panelBg    = theme === 'light' ? 'rgba(255,255,255,.95)' : 'rgba(26,26,26,.92)'
+  const panelBorder = theme === 'light' ? 'rgba(0,0,0,.1)' : 'rgba(255,255,255,.08)'
+  const textMuted  = theme === 'light' ? '#666' : '#ABABAB'
+  const textLabel  = theme === 'light' ? '#888' : '#5A5A5A'
+  const textStrong = theme === 'light' ? '#1A1A1A' : '#F2F2F2'
 
   const { data: geojson, isLoading } = useAlertasGeoJson({
     ano:   anoFiltro === 'all' ? undefined : (anoFiltro as number),
@@ -50,7 +58,7 @@ export function ConcordanciaMap() {
       <Map
         initialViewState={INITIAL_VIEW}
         style={{ width: '100%', height: '100%' }}
-        mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+        mapStyle={mapStyle}
         interactiveLayerIds={geojson ? ['alertas-fill'] : []}
         onMouseMove={onMouseMove as unknown as (e: unknown) => void}
         onMouseLeave={() => setHover(null)}
@@ -90,15 +98,15 @@ export function ConcordanciaMap() {
       {/* Legenda */}
       <div style={{
         position: 'absolute', bottom: 14, left: 14,
-        background: 'rgba(26,26,26,.92)', borderRadius: 8,
+        background: panelBg, borderRadius: 8,
         padding: '10px 12px', fontSize: 11,
-        border: '1px solid rgba(255,255,255,.08)',
+        border: `1px solid ${panelBorder}`,
       }}>
-        <div style={{ color: '#5A5A5A', fontWeight: 600, marginBottom: 6, fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>Validação PRODES</div>
+        <div style={{ color: textLabel, fontWeight: 600, marginBottom: 6, fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>Validação PRODES</div>
         {Object.entries(FLAG_LABELS).map(([flag, label]) => (
           <div key={flag} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
             <span style={{ width: 12, height: 12, borderRadius: 2, background: FLAG_COLORS[flag], flexShrink: 0, display: 'inline-block' }} />
-            <span style={{ color: '#ABABAB' }}>{label}</span>
+            <span style={{ color: textMuted }}>{label}</span>
           </div>
         ))}
       </div>
@@ -109,23 +117,23 @@ export function ConcordanciaMap() {
           position: 'absolute',
           left:  Math.min(hover.x + 12, window.innerWidth - 200),
           top:   Math.max(hover.y - 70, 8),
-          background: 'rgba(26,26,26,.96)', borderRadius: 8,
+          background: panelBg, borderRadius: 8,
           padding: '8px 12px', fontSize: 11,
-          border: '1px solid rgba(255,255,255,.1)',
+          border: `1px solid ${panelBorder}`,
           pointerEvents: 'none', zIndex: 10,
-          boxShadow: '0 4px 16px rgba(0,0,0,.4)',
+          boxShadow: '0 4px 16px rgba(0,0,0,.2)',
         }}>
-          <div style={{ fontWeight: 700, color: '#F2F2F2', marginBottom: 4 }}>
+          <div style={{ fontWeight: 700, color: textStrong, marginBottom: 4 }}>
             {String(hover.props.municipio ?? '')}
           </div>
           <div style={{ color: flagColor(String(hover.props.flag_validacao_externa ?? '')), fontWeight: 600, marginBottom: 2 }}>
             {FLAG_LABELS[String(hover.props.flag_validacao_externa ?? '')] ?? String(hover.props.flag_validacao_externa ?? '—')}
           </div>
-          <div style={{ color: '#ABABAB' }}>
+          <div style={{ color: textMuted }}>
             {fmtHa(hover.props.area_ha as number)} · {String(hover.props.classificacao ?? '')}
           </div>
           {hover.props.concordancia_prodes_pct !== null && (
-            <div style={{ color: '#5A5A5A', marginTop: 2 }}>
+            <div style={{ color: textLabel, marginTop: 2 }}>
               Cobertura PRODES: {Number(hover.props.concordancia_prodes_pct ?? 0).toFixed(1)}%
             </div>
           )}

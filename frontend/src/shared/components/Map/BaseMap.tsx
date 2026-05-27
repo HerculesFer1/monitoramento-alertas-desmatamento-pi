@@ -24,8 +24,14 @@ const INITIAL_VIEW = { longitude: -42.8, latitude: -7.0, zoom: 5.8 }
 interface HoverInfo { x: number; y: number; props: Record<string, unknown> }
 
 export function MapView() {
-  const { anoFiltro } = useAppStore()
+  const { anoFiltro, theme } = useAppStore()
   const [hover, setHover] = useState<HoverInfo | null>(null)
+  const mapStyle = theme === 'light'
+    ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
+    : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+  const panelBg  = theme === 'light' ? 'rgba(255,255,255,.95)' : 'rgba(26,26,26,.92)'
+  const textMuted = theme === 'light' ? '#666' : '#ABABAB'
+  const textLabel = theme === 'light' ? '#888' : '#5A5A5A'
 
   // Quando "Todos", exibe 2025 (ano mais recente) com label indicativo
   const anoQuery = anoFiltro === 'all' ? 2025 : (anoFiltro as number)
@@ -62,7 +68,7 @@ export function MapView() {
       <Map
         initialViewState={INITIAL_VIEW}
         style={{ width: '100%', height: '100%' }}
-        mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+        mapStyle={mapStyle}
         interactiveLayerIds={geojson ? ['alertas-fill'] : []}
         onMouseMove={onMouseMove as unknown as (e: unknown) => void}
         onMouseLeave={() => setHover(null)}
@@ -107,14 +113,14 @@ export function MapView() {
       {/* Legenda */}
       <div style={{
         position: 'absolute', bottom: 14, left: 14,
-        background: 'rgba(26,26,26,.92)', borderRadius: 8,
+        background: panelBg, borderRadius: 8,
         padding: '10px 12px', fontSize: 11,
-        border: '1px solid rgba(255,255,255,.08)',
+        border: `1px solid ${theme === 'light' ? 'rgba(0,0,0,.1)' : 'rgba(255,255,255,.08)'}`,
       }}>
         {Object.entries(COR_CLASSE).map(([cls, cor]) => (
           <div key={cls} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
             <span style={{ width: 12, height: 12, borderRadius: 2, background: cor, display: 'inline-block', flexShrink: 0 }} />
-            <span style={{ color: '#ABABAB' }}>{LABEL_CLASSE[cls]}</span>
+            <span style={{ color: textMuted }}>{LABEL_CLASSE[cls]}</span>
           </div>
         ))}
       </div>
@@ -125,23 +131,23 @@ export function MapView() {
           position: 'absolute',
           left:  Math.min(hover.x + 12, window.innerWidth - 220),
           top:   Math.max(hover.y - 70, 8),
-          background: 'rgba(26,26,26,.96)', borderRadius: 8,
+          background: panelBg, borderRadius: 8,
           padding: '8px 12px', fontSize: 11,
-          border: '1px solid rgba(255,255,255,.1)',
+          border: `1px solid ${theme === 'light' ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.1)'}`,
           pointerEvents: 'none', zIndex: 10,
-          boxShadow: '0 4px 16px rgba(0,0,0,.4)',
+          boxShadow: '0 4px 16px rgba(0,0,0,.2)',
         }}>
-          <div style={{ fontWeight: 700, color: '#F2F2F2', marginBottom: 4 }}>
+          <div style={{ fontWeight: 700, color: theme === 'light' ? '#1A1A1A' : '#F2F2F2', marginBottom: 4 }}>
             {String(hover.props.municipio ?? '')}
           </div>
-          <div style={{ color: COR_CLASSE[String(hover.props.classificacao ?? '')] ?? '#ABABAB', fontWeight: 600, marginBottom: 2 }}>
+          <div style={{ color: COR_CLASSE[String(hover.props.classificacao ?? '')] ?? textMuted, fontWeight: 600, marginBottom: 2 }}>
             {LABEL_CLASSE[String(hover.props.classificacao ?? '')] ?? String(hover.props.classificacao ?? '—')}
           </div>
-          <div style={{ color: '#ABABAB' }}>
+          <div style={{ color: textMuted }}>
             {fmtHa(hover.props.area_ha as number)} · {String(hover.props.bioma ?? '')}
           </div>
           {hover.props.codealerta != null && (
-            <div style={{ color: '#5A5A5A', marginTop: 2, fontSize: 10 }}>
+            <div style={{ color: textLabel, marginTop: 2, fontSize: 10 }}>
               {String(hover.props.codealerta)}
             </div>
           )}

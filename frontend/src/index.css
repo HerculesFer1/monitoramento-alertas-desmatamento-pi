@@ -410,3 +410,149 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.18); }
+
+/* ── Topbar separator ─────────────────────────────────────────────────────  */
+.topbar-sep { width: 1px; height: 22px; background: rgba(0,0,0,.18); flex-shrink: 0; }
+
+/* ── Theme toggle button ──────────────────────────────────────────────────  */
+.theme-toggle-btn {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .15s var(--ease);
+  border: 1px solid transparent; background: transparent;
+  color: var(--t3);
+}
+.theme-toggle-btn:hover { background: rgba(255,255,255,.08); color: var(--t2); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIGHT MODE — [data-theme="light"]
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg1: #ECECEC;
+  --bg2: #FAFAFA;
+  --bg3: #FFFFFF;
+  --bg4: #F5F5F5;
+  --bg5: #EBEBEB;
+  --sep: rgba(0,0,0,.08);
+  --t1:  #1A1A1A;
+  --t2:  #555555;
+  --t3:  #AAAAAA;
+  --shadow:
+    inset 0 -1px 0 rgba(0,0,0,.04),
+    0 1px 3px  rgba(0,0,0,.09),
+    0 4px 12px rgba(0,0,0,.06),
+    0 8px 24px rgba(0,0,0,.04);
+  --shadow-h:
+    inset 0 -1px 0 rgba(0,0,0,.06),
+    0 2px 6px  rgba(0,0,0,.12),
+    0 8px 24px rgba(0,0,0,.09),
+    0 16px 40px rgba(0,0,0,.05);
+  --shadow-map:
+    0 4px 16px rgba(0,0,0,.12),
+    0 12px 36px rgba(0,0,0,.08),
+    0 24px 56px rgba(0,0,0,.05);
+  --shadow-rail:
+    1px 0 0 rgba(0,0,0,.06),
+    0 4px 20px rgba(0,0,0,.1),
+    0 12px 40px rgba(0,0,0,.06);
+}
+
+/* ── Light: body & shell ──────────────────────────────────────────────────  */
+[data-theme="light"] body { background: var(--bg1); color: var(--t1); }
+
+/* ── Light: topbar ────────────────────────────────────────────────────────  */
+[data-theme="light"] .app-topbar {
+  background: rgba(240,240,240,.82);
+  border-bottom: 1px solid rgba(0,0,0,.07);
+}
+[data-theme="light"] .topbar-sep { background: rgba(0,0,0,.14); }
+[data-theme="light"] .topbar-tab { color: var(--t2); }
+[data-theme="light"] .topbar-tab:hover  { background: rgba(0,0,0,.07); color: var(--t1); }
+[data-theme="light"] .topbar-tab.active {
+  background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.28); color: var(--aut);
+}
+[data-theme="light"] .theme-toggle-btn:hover { background: rgba(0,0,0,.07); color: var(--t2); }
+
+/* ── Light: ano dropdown ──────────────────────────────────────────────────  */
+[data-theme="light"] .ano-btn {
+  background: rgba(0,0,0,.07); border-color: rgba(0,0,0,.14); color: var(--t2);
+}
+[data-theme="light"] .ano-btn:hover { background: rgba(0,0,0,.12); color: var(--t1); }
+[data-theme="light"] .ano-btn.has-filter {
+  border-color: rgba(16,185,129,.35); background: rgba(16,185,129,.08);
+}
+[data-theme="light"] .ano-panel {
+  background: #FFFFFF; border-color: rgba(0,0,0,.1);
+  box-shadow: 0 4px 16px rgba(0,0,0,.12), 0 16px 48px rgba(0,0,0,.08),
+    inset 0 1px 0 rgba(255,255,255,.8);
+}
+[data-theme="light"] .ano-panel-label { color: var(--t3); border-color: var(--sep); }
+[data-theme="light"] .ano-option { color: var(--t2); }
+[data-theme="light"] .ano-option:hover  { background: rgba(0,0,0,.05); color: var(--t1); }
+[data-theme="light"] .ano-option.active {
+  background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.22); color: var(--aut);
+}
+
+/* ── Light: rail ──────────────────────────────────────────────────────────  */
+[data-theme="light"] .rail {
+  background: #FFFFFF;
+  border-color: rgba(0,0,0,.09);
+  box-shadow: 2px 0 12px rgba(0,0,0,.07);
+}
+[data-theme="light"] .rail-sep { background: rgba(0,0,0,.07); }
+[data-theme="light"] .rail-btn { color: var(--t3); }
+[data-theme="light"] .rail-btn:hover:not(.disabled) {
+  background: rgba(0,0,0,.06); color: var(--t2);
+}
+[data-theme="light"] .rail-btn.active {
+  background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.2); color: var(--aut);
+}
+[data-theme="light"] .rail-btn.active::before { background: var(--aut); }
+[data-theme="light"] .rail-avatar {
+  background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.28);
+}
+
+/* ── Light: cards ─────────────────────────────────────────────────────────  */
+[data-theme="light"] .card {
+  background: var(--bg3); border-color: rgba(0,0,0,.08);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+}
+[data-theme="light"] .card:hover { border-color: rgba(0,0,0,.13); transform: translateY(-2px); }
+[data-theme="light"] .kpi-card {
+  background: var(--bg3); border-color: rgba(0,0,0,.08);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+}
+[data-theme="light"] .kpi-card:hover { border-color: rgba(0,0,0,.13); }
+[data-theme="light"] .kpi-value  { color: var(--t1); }
+[data-theme="light"] .kpi-label  { color: var(--t2); }
+[data-theme="light"] .kpi-sub    { color: var(--t2); }
+[data-theme="light"] .year-card {
+  background: var(--bg3); border-color: rgba(0,0,0,.08);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+}
+[data-theme="light"] .year-card:hover { border-color: rgba(0,0,0,.13); }
+[data-theme="light"] .year-tag  { background: var(--bg4); border-color: rgba(0,0,0,.08); color: var(--t2); }
+
+/* ── Light: tabelas ───────────────────────────────────────────────────────  */
+[data-theme="light"] .data-table th { color: var(--t2); border-color: var(--sep); }
+[data-theme="light"] .data-table td { border-color: rgba(0,0,0,.05); color: var(--t1); }
+[data-theme="light"] .data-table tr:hover td { background: rgba(0,0,0,.025); }
+
+/* ── Light: barras ────────────────────────────────────────────────────────  */
+[data-theme="light"] .bar-track { background: rgba(0,0,0,.08); }
+
+/* ── Light: recharts ──────────────────────────────────────────────────────  */
+[data-theme="light"] .recharts-cartesian-grid-horizontal line,
+[data-theme="light"] .recharts-cartesian-grid-vertical line {
+  stroke: rgba(0,0,0,.07) !important;
+}
+[data-theme="light"] .recharts-legend-item-text { color: var(--t2) !important; }
+
+/* ── Light: tags bioma ────────────────────────────────────────────────────  */
+[data-theme="light"] .tag-cerrado  { background: rgba(230,81,0,.12);   color: #C75000; }
+[data-theme="light"] .tag-caatinga { background: rgba(21,101,192,.12); color: #1565C0; }
+
+/* ── Light: scrollbar ─────────────────────────────────────────────────────  */
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.14); }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.22); }

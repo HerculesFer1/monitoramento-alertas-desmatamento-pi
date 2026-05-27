@@ -2,6 +2,11 @@ import { create } from 'zustand'
 
 export type Module = 'mapbiomas' | 'prodes' | 'matopiba' | 'dados'
 export type AnoFiltro = number | 'all'
+export type Theme = 'dark' | 'light'
+
+function loadTheme(): Theme {
+  try { return (localStorage.getItem('cgeo-theme') as Theme) ?? 'dark' } catch { return 'dark' }
+}
 
 // Sub-views por módulo
 export type MapBiomasView = 'executiva' | 'temporal' | 'municipal' | 'comparativa'
@@ -22,11 +27,12 @@ interface AppState {
   anoFiltro: AnoFiltro
   setAnoFiltro: (v: AnoFiltro) => void
 
-  // resetFiltros mantido para compatibilidade
   resetFiltros: () => void
 
+  theme: Theme
+  toggleTheme: () => void
+
   // Deprecated — removidos da UI, mantidos como null para compatibilidade
-  // durante migração gradual das views
   biomaFiltro:     null
   municipioFiltro: null
   vpressaoFiltro:  null
@@ -45,7 +51,13 @@ export const useAppStore = create<AppState>((set) => ({
 
   resetFiltros: () => set({ anoFiltro: 'all' }),
 
-  // Filtros removidos — sempre null
+  theme: loadTheme(),
+  toggleTheme: () => set(s => {
+    const next: Theme = s.theme === 'dark' ? 'light' : 'dark'
+    try { localStorage.setItem('cgeo-theme', next) } catch { /* noop */ }
+    return { theme: next }
+  }),
+
   biomaFiltro:     null,
   municipioFiltro: null,
   vpressaoFiltro:  null,
