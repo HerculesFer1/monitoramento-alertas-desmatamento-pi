@@ -78,37 +78,11 @@ export function MapView() {
             id="alertas"
             type="geojson"
             data={geojson}
-            cluster={true}
-            clusterMaxZoom={9}
-            clusterRadius={40}
           >
-            {/* Clusters */}
-            <Layer
-              id="clusters"
-              type="circle"
-              filter={['has', 'point_count']}
-              paint={{
-                'circle-color': '#374151',
-                'circle-radius': ['step', ['get', 'point_count'], 14, 10, 18, 50, 24],
-                'circle-opacity': 0.85,
-              }}
-            />
-            <Layer
-              id="cluster-count"
-              type="symbol"
-              filter={['has', 'point_count']}
-              layout={{
-                'text-field': '{point_count_abbreviated}',
-                'text-size':  11,
-              }}
-              paint={{ 'text-color': '#ABABAB' }}
-            />
-
-            {/* Alertas individuais */}
+            {/* Alertas — polígonos */}
             <Layer
               id="alertas-fill"
               type="fill"
-              filter={['!', ['has', 'point_count']]}
               paint={{
                 'fill-color': [
                   'match', ['get', 'classificacao'],
@@ -124,7 +98,6 @@ export function MapView() {
             <Layer
               id="alertas-outline"
               type="line"
-              filter={['!', ['has', 'point_count']]}
               paint={{ 'line-color': '#111111', 'line-width': 0.5 }}
             />
           </Source>
