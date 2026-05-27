@@ -1,5 +1,32 @@
 @import "tailwindcss";
 
+/* ── SF Compact — fonte do projeto ───────────────────────────────────────── */
+@font-face {
+  font-family: 'SF Compact';
+  src: url('/fonts/SF-Compact-Text-Regular.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'SF Compact';
+  src: url('/fonts/SF-Compact-Text-Medium.otf') format('opentype');
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'SF Compact';
+  src: url('/fonts/SF-Compact-Display-Semibold.otf') format('opentype');
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'SF Compact';
+  src: url('/fonts/SF-Compact-Text-Bold.otf') format('opentype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'SF Compact';
+  src: url('/fonts/SF-Compact-Text-Heavy.otf') format('opentype');
+  font-weight: 800; font-style: normal; font-display: swap;
+}
+
 /* ── Design system — CGEO Desmatamento PI ─────────────────────────────── */
 :root {
   /* Semântica — cores preservadas */
@@ -14,8 +41,8 @@
   --autp:   rgba(16,185,129,.5);
 
   /* Fundo — corpo ↔ cards invertidos */
-  --bg1: #222222;   /* corpo do app  (era cor dos cards) */
-  --bg2: #181818;   /* topbar · footer · rail */
+  --bg1: #222222;   /* corpo do app */
+  --bg2: #181818;   /* rail */
   --bg3: #000000;   /* cards / KPIs — preto absoluto */
   --bg4: #0D0D0D;   /* elementos internos de cards */
   --bg5: #1C1C1C;   /* hover dentro de cards */
@@ -42,6 +69,11 @@
     0 8px 32px  rgba(0,0,0,.7),
     0 24px 64px rgba(0,0,0,.5),
     0 40px 80px rgba(0,0,0,.25);
+  --shadow-rail:
+    inset 1px 0 0 rgba(255,255,255,.05),
+    0 4px 24px rgba(0,0,0,.7),
+    0 16px 48px rgba(0,0,0,.5),
+    0 32px 64px rgba(0,0,0,.3);
 
   /* Bordas */
   --r:    12px;
@@ -56,64 +88,73 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+  font-family: 'SF Compact', -apple-system, 'SF Pro Text', 'Inter', system-ui, sans-serif;
   background: var(--bg1);
   color: var(--t1);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
 /* ── App Shell ────────────────────────────────────────────────────────────  */
-.app-shell   { display: flex; height: 100vh; overflow: hidden; background: var(--bg1); }
+.app-shell   {
+  display: flex; height: 100vh; overflow: hidden;
+  background: var(--bg1);
+}
 .app-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
-/* Topbar — glassmorphism estilo Apple */
+/* Topbar — glass near-transparent, integrado ao corpo */
 .app-topbar {
   height: 52px;
-  background: rgba(24,24,24,.82);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid rgba(255,255,255,.05);
+  background: rgba(34,34,34,.3);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border-bottom: 1px solid rgba(255,255,255,.04);
   display: flex; align-items: center; padding: 0 16px; gap: 12px;
   flex-shrink: 0; position: relative; z-index: 10;
 }
 
 .app-main { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
 
-/* Footer — glass */
+/* Footer — mesmo fundo do corpo, integrado */
 .app-footer {
-  background: rgba(24,24,24,.82);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-top: 1px solid rgba(255,255,255,.04);
+  background: transparent;
+  border-top: none;
   padding: 8px 16px; flex-shrink: 0;
 }
 
-/* ── Primary Rail — estilo Apple sidebar ─────────────────────────────────  */
+/* ── Transição lateral de views ───────────────────────────────────────────  */
+@keyframes slide-enter {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.view-slide {
+  animation: slide-enter .28s var(--ease) both;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Primary Rail — flutuante preto, estilo Apple ─────────────────────────  */
 .rail {
   width: 56px;
-  background: var(--bg2);
-  border-right: 1px solid rgba(255,255,255,.04);
+  background: #000000;
+  border-radius: 14px;
+  margin: 8px 0 8px 8px;
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: var(--shadow-rail);
   display: flex; flex-direction: column; align-items: center;
   flex-shrink: 0; z-index: 200; overflow: hidden;
 }
 .rail-top    { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; flex: 1; }
 .rail-bottom { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 0; }
 .rail-sep    { width: 28px; height: 1px; background: rgba(255,255,255,.06); margin: 5px 0; }
-.rail-logo   { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; margin-bottom: 2px; }
-
-/* Hamburger */
-.rail-hamburger {
-  width: 40px; height: 36px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; border: none; background: transparent;
-  color: var(--t3); transition: color .15s, background .15s;
-  margin-bottom: 4px; flex-shrink: 0;
-}
-.rail-hamburger:hover { color: var(--t2); background: rgba(255,255,255,.05); }
+.rail-logo   { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
 
 .rail-btn {
   position: relative; width: 40px; height: 40px; border-radius: 10px;
@@ -152,7 +193,7 @@ body {
 /* ── Topbar — brand + tabs + ano ──────────────────────────────────────────  */
 .topbar-brand { display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; }
 
-/* Tabs de sub-visão — centro do topbar */
+/* Tabs — visíveis sobre o fundo claro */
 .topbar-tabs {
   flex: 1; display: flex; justify-content: center; align-items: center;
   gap: 2px; overflow: hidden; min-width: 0;
@@ -160,11 +201,11 @@ body {
 .topbar-tab {
   padding: 5px 14px; border-radius: 7px; font-size: 12px; font-weight: 500;
   cursor: pointer; transition: all .15s var(--ease); white-space: nowrap;
-  border: 1px solid transparent; background: transparent; color: var(--t3);
+  border: 1px solid transparent; background: transparent; color: var(--t2);
 }
-.topbar-tab:hover  { background: rgba(255,255,255,.06); color: var(--t2); }
+.topbar-tab:hover  { background: rgba(0,0,0,.2); color: var(--t1); }
 .topbar-tab.active {
-  background: rgba(16,185,129,.10); border-color: rgba(16,185,129,.22);
+  background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.25);
   color: var(--aut); font-weight: 600;
 }
 
@@ -174,9 +215,9 @@ body {
   display: flex; align-items: center; gap: 6px;
   padding: 5px 11px; border-radius: 7px; font-size: 12px; font-weight: 600;
   cursor: pointer; transition: all .15s;
-  border: 1px solid var(--sep); background: rgba(0,0,0,.35); color: var(--t2);
+  border: 1px solid rgba(0,0,0,.25); background: rgba(0,0,0,.2); color: var(--t2);
 }
-.ano-btn:hover { background: rgba(0,0,0,.55); color: var(--t1); }
+.ano-btn:hover { background: rgba(0,0,0,.35); color: var(--t1); }
 .ano-btn.has-filter {
   border-color: rgba(16,185,129,.35); background: rgba(16,185,129,.08); color: var(--aut);
 }
@@ -323,6 +364,7 @@ body {
   .grid-6, .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
   .topbar-tabs { display: none; }
   .card:hover, .kpi-card:hover, .year-card:hover { transform: none; }
+  .rail { margin: 4px 0 4px 4px; border-radius: 10px; }
 }
 
 /* ── Tags bioma ───────────────────────────────────────────────────────────  */
@@ -343,6 +385,23 @@ body {
   font-size: 11px !important;
 }
 .recharts-bar-rectangle:hover { filter: brightness(1.15); }
+
+/* ── MapLibre attribution — colapsar ao carregar ─────────────────────────  */
+.maplibregl-ctrl-attrib-inner {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width .35s var(--ease), opacity .25s var(--ease);
+  white-space: nowrap;
+}
+.maplibregl-ctrl-attrib:hover .maplibregl-ctrl-attrib-inner,
+.maplibregl-ctrl-attrib.maplibregl-compact-show:hover .maplibregl-ctrl-attrib-inner {
+  max-width: 400px;
+  opacity: 1;
+}
+.maplibregl-ctrl-attrib.maplibregl-compact-show {
+  padding-right: 24px !important;
+}
 
 /* ── Scrollbar ────────────────────────────────────────────────────────────  */
 ::-webkit-scrollbar { width: 5px; height: 5px; }

@@ -66,6 +66,10 @@ export function MapView() {
         interactiveLayerIds={geojson ? ['alertas-fill'] : []}
         onMouseMove={onMouseMove as unknown as (e: unknown) => void}
         onMouseLeave={() => setHover(null)}
+        onLoad={e => {
+          const el = e.target.getContainer().querySelector('.maplibregl-ctrl-attrib') as HTMLElement | null
+          if (el) el.classList.remove('maplibregl-compact-show')
+        }}
       >
         <NavigationControl position="top-right" />
 

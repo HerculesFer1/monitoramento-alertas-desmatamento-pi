@@ -35,7 +35,7 @@ const MODULE_VIEWS: Record<Module, { id: string; label: string }[]> = {
 
 const ANOS: AnoFiltro[] = ['all', 2022, 2023, 2024, 2025]
 
-// ── Dropdown de ano suspenso ───────────────────────────────────────────────
+// ── Dropdown de ano ────────────────────────────────────────────────────────
 function AnoDropdown() {
   const { anoFiltro, setAnoFiltro } = useAppStore()
   const [open, setOpen] = useState(false)
@@ -59,7 +59,6 @@ function AnoDropdown() {
         onClick={() => setOpen(o => !o)}
         title="Filtrar por ano"
       >
-        {/* Ícone calendário */}
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
           <rect x="1" y="2" width="10" height="9" rx="1.5"/>
           <path d="M4 1v2M8 1v2M1 5h10"/>
@@ -94,11 +93,6 @@ function AnoDropdown() {
   )
 }
 
-// ── Separador vertical topbar ──────────────────────────────────────────────
-function VSep() {
-  return <div style={{ width: 1, height: 22, background: 'rgba(255,255,255,.07)', flexShrink: 0 }} />
-}
-
 // ── AppShell ───────────────────────────────────────────────────────────────
 export function AppShell() {
   const { activeModule, activeView, setActiveView } = useAppStore()
@@ -118,12 +112,12 @@ export function AppShell() {
               Monitoramento de Alertas de{' '}
               <span style={{ color: '#F59E0B' }}>Desmatamento</span>
             </div>
-            <div style={{ fontSize: 10, color: '#5A5A5A', fontWeight: 500, letterSpacing: '.02em' }}>
+            <div style={{ fontSize: 10, color: '#888888', fontWeight: 500, letterSpacing: '.02em' }}>
               CGEO / SEMARH-PI
             </div>
           </div>
 
-          <VSep />
+          <div style={{ width: 1, height: 22, background: 'rgba(0,0,0,.2)', flexShrink: 0 }} />
 
           {/* Centro: tabs do módulo ativo */}
           <nav className="topbar-tabs">
@@ -140,29 +134,31 @@ export function AppShell() {
 
           {/* Direita: dropdown de ano + status */}
           <AnoDropdown />
-          <VSep />
+          <div style={{ width: 1, height: 22, background: 'rgba(0,0,0,.2)', flexShrink: 0 }} />
           <DataStatusBadge />
         </header>
 
-        {/* ── Conteúdo ────────────────────────────────────────────────── */}
+        {/* ── Conteúdo com transição lateral ──────────────────────── */}
         <main className="app-main">
           <Suspense fallback={<ViewFallback />}>
-            {activeModule === 'mapbiomas' && activeView === 'executiva'   && <ExecutivaView />}
-            {activeModule === 'mapbiomas' && activeView === 'temporal'    && <TemporalView />}
-            {activeModule === 'mapbiomas' && activeView === 'municipal'   && <MunicipalView />}
-            {activeModule === 'mapbiomas' && activeView === 'comparativa' && <ComparativaView />}
-            {activeModule === 'prodes'    && <ProdesView />}
-            {activeModule === 'matopiba'  && <MatopibaView />}
-            {activeModule === 'dados'     && <DadosView />}
+            <div key={`${activeModule}-${activeView}`} className="view-slide">
+              {activeModule === 'mapbiomas' && activeView === 'executiva'   && <ExecutivaView />}
+              {activeModule === 'mapbiomas' && activeView === 'temporal'    && <TemporalView />}
+              {activeModule === 'mapbiomas' && activeView === 'municipal'   && <MunicipalView />}
+              {activeModule === 'mapbiomas' && activeView === 'comparativa' && <ComparativaView />}
+              {activeModule === 'prodes'    && <ProdesView />}
+              {activeModule === 'matopiba'  && <MatopibaView />}
+              {activeModule === 'dados'     && <DadosView />}
+            </div>
           </Suspense>
         </main>
 
-        {/* ── Footer ──────────────────────────────────────────────────── */}
+        {/* ── Footer — integrado ao corpo, sem separador ──────────── */}
         <footer className="app-footer">
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, justifyContent: 'center', maxWidth: 860, margin: '0 auto' }}>
             <span style={{ color: '#F59E0B', fontSize: 13, flexShrink: 0, marginTop: 1 }}>⚠</span>
-            <span style={{ fontSize: 11, color: '#5A5A5A', lineHeight: 1.5 }}>
-              DERADSAs indisponíveis para 2022–2023. Fontes: MapBiomas Alerta · SINAFLOR+/IBAMA · SEMARH-PI · IBGE · INPE.{' '}
+            <span style={{ fontSize: 11, color: '#888888', lineHeight: 1.6 }}>
+              DERADSAs indisponíveis para 2022–2023. Fontes: MapBiomas Alerta SINAFLOR+/IBAMA SEMARH-PI IBGE INPE.<br />
               <strong style={{ color: '#ABABAB' }}>Estimativa exploratória — não substitui autuação ambiental.</strong>
             </span>
           </div>
