@@ -321,12 +321,12 @@ AS $$
     FROM (
         SELECT
             ano_prodes,
-            image_date_min,
-            image_date_max,
-            data_referencia_prodes,
-            deter_gap_inicio,
-            deter_gap_fim,
-            fonte_complementar
+            detalhes->>'image_date_min'         AS image_date_min,
+            detalhes->>'image_date_max'         AS image_date_max,
+            detalhes->>'data_referencia_prodes' AS data_referencia_prodes,
+            detalhes->>'deter_gap_inicio'       AS deter_gap_inicio,
+            detalhes->>'deter_gap_fim'          AS deter_gap_fim,
+            detalhes->>'fonte_complementar'     AS fonte_complementar
         FROM ap_execucoes
         WHERE ano_prodes = p_ano
           AND status     IN ('sucesso', 'dry_run')
