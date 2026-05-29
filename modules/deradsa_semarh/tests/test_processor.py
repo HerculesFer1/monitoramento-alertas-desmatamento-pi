@@ -16,4 +16,4 @@ def test_manifest_fields():
     required = {"id", "name", "version", "description", "enabled", "outputs"}
     assert required <= set(MODULE_MANIFEST)
     assert MODULE_MANIFEST["id"] == "deradsa_semarh"
-    assert "deradsa_semarh" in MODULE_MANIFEST["outputs"]
+    assert "deradsa" in MODULE_MANIFEST["outputs"]
