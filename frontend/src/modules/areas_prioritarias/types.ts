@@ -2,13 +2,13 @@
 /**
  * types.ts — Módulo areas_prioritarias
  * Tipos TypeScript para o cruzamento PRODES × Prioridade.
- * Espelha o schema Supabase (008_areas_prioritarias.sql v2).
+ * Espelha o schema Supabase (008_areas_prioritarias.sql v3).
  */
 
 // ── Tipos base ────────────────────────────────────────────────────────────────
 
-/** Classe de prioridade AHP: 1 (mais urgente) a 16 (menos urgente) */
-export type ClassePrioridade = 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16
+/** Classe de prioridade: 1 (Muito Baixo) a 5 (Muito Alto) */
+export type ClassePrioridade = 1 | 2 | 3 | 4 | 5
 
 /** Bounding box para MapLibre GL fitBounds: [[minX,minY],[maxX,maxY]] */
 export type BBox = [[number, number], [number, number]]
@@ -58,6 +58,7 @@ export interface ClasseMunicipio {
   municipio_nome:       string
   uf:                   string
   classe_prioridade:    ClassePrioridade
+  prioridade_label:     string | null
   area_total_ha:        number
   area_floresta_ha:     number
   area_desmat_ha:       number
@@ -83,6 +84,7 @@ export interface MunicipioResumo {
   ha_deter_recente:       number | null
   pct_floresta_estado:    number
   biomassa_floresta_tc:   number | null
+  agb_medio_tc_ha:        number | null
   bbox:                   BBox
   ano_prodes:             number
 }
@@ -91,11 +93,12 @@ export interface MunicipioResumo {
 
 /** KPIs PRODES — desmatamento confirmado pelo INPE */
 export interface KpisProdes {
-  area_floresta_total_ha: number
-  area_desmat_total_ha:   number
-  pct_desmat_estado:      number
-  total_municipios:       number
-  biomassa_total_tc:      number | null
+  area_floresta_total_ha:  number
+  area_desmat_total_ha:    number
+  pct_desmat_estado:       number
+  total_municipios:        number
+  biomassa_total_tc:       number | null
+  n_municipios_classe_max: number
 }
 
 /** KPIs DETER — alertas provisórios do gap temporal pós-PRODES */
@@ -110,6 +113,7 @@ export type KpisEstado = KpisProdes
 
 export interface ClasseResumo {
   classe_prioridade:   ClassePrioridade
+  prioridade_label:    string | null
   area_floresta_ha:    number
   area_desmat_ha:      number
   area_total_ha:       number
@@ -142,33 +146,36 @@ export interface MunicipioFeatureProps {
   area_desmat_ha:       number
   ha_deter_recente:     number
   pct_floresta_estado:  number
+  agb_medio_tc_ha:      number
+  biomassa_total_tc:    number
   bbox:                 BBox
 }
 
-// ── Paleta de cores para as 5 classes ────────────────────────────────────────
-// Dados reais têm apenas 5 classes. Classe 1 = baixa pressão (verde),
-// classe 5 = alta pressão/mais desmat. (vermelho). Classes 6-16 mantidas
-// como fallback caso o raster seja reprocessado com escala completa.
+// ── Paleta de cores — 5 classes de prioridade ─────────────────────────────────
+// Classe 1 = Muito Baixo (verde, baixa pressão)
+// Classe 5 = Muito Alto  (vermelho, alta pressão / maior urgência)
 
-/** Verde (baixa pressão, baixo desmat.) → Vermelho (alta pressão, alto desmat.) */
 export const CLASSE_COLORS: Record<ClassePrioridade, string> = {
-  1:  '#1a9850',  // verde — baixa pressão (3 ha desmat., 152 ha DETER)
-  2:  '#fee08b',  // amarelo — pressão leve (8 ha desmat., 2 k ha DETER)
-  3:  '#fdae61',  // laranja — pressão moderada (74 ha desmat., 4,5 k ha DETER)
-  4:  '#f46d43',  // laranja-vermelho — alta pressão (354 ha desmat., 4 k ha DETER)
-  5:  '#d73027',  // vermelho — muito alta pressão (2.319 ha desmat., 23 k ha DETER)
-  6:  '#a50026', 7:  '#7f0000', 8:  '#5c0011', 9:  '#3f000d', 10: '#260008',
-  11: '#1a0005', 12: '#111111', 13: '#111111', 14: '#111111', 15: '#111111', 16: '#111111',
+  1: '#1a9850',  // verde      — Muito Baixo
+  2: '#fee08b',  // amarelo    — Baixo
+  3: '#fdae61',  // laranja    — Médio
+  4: '#f46d43',  // lrj-verm   — Alto
+  5: '#d73027',  // vermelho   — Muito Alto
+}
+
+export const CLASSE_LABELS: Record<ClassePrioridade, string> = {
+  1: 'Muito Baixo',
+  2: 'Baixo',
+  3: 'Médio',
+  4: 'Alto',
+  5: 'Muito Alto',
 }
 
 // ── Cobertura temporal (PeriodBadge) ─────────────────────────────────────────
 
 /**
  * Período de cobertura temporal retornado por get_ap_periodo_cobertura().
- *
- * Distinção obrigatória (ESCOPO §1.2):
- *   PRODES = confirmado/institucional (image_date_min → image_date_max)
- *   DETER  = alerta/provisional cobrindo o gap (deter_gap_inicio → deter_gap_fim)
+ * PRODES = confirmado/institucional | DETER = alerta/provisional (gap)
  */
 export interface PeriodCoverage {
   ano_prodes:             number

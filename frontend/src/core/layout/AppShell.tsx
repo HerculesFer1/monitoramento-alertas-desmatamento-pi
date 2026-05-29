@@ -49,7 +49,7 @@ const VisaoGeralView       = React.lazy(() => import('../../modules/areas_priori
 const MunicipalView_AP     = React.lazy(() => import('../../modules/areas_prioritarias').then(m => ({ default: m.MunicipalView })))
 const ProdesPrioridadeView = React.lazy(() => import('../../modules/areas_prioritarias').then(m => ({ default: m.ProdesPrioridadeView })))
 const RankingView_AP       = React.lazy(() => import('../../modules/areas_prioritarias').then(m => ({ default: m.RankingView })))
-const MetodologiaView      = React.lazy(() => import('../../modules/areas_prioritarias').then(m => ({ default: m.MetodologiaView })))
+const BiomassaView_AP      = React.lazy(() => import('../../modules/areas_prioritarias').then(m => ({ default: m.BiomassaView })))
 
 function ViewFallback() {
   return (
@@ -75,7 +75,7 @@ const MODULE_VIEWS: Record<Module, { id: string; label: string }[]> = {
     { id: 'municipal',         label: 'Municipal' },
     { id: 'prodes_prioridade', label: 'PRODES × Prioridade' },
     { id: 'ranking',           label: 'Ranking' },
-    { id: 'metodologia',       label: 'Metodologia' },
+    { id: 'biomassa',          label: 'Biomassa' },
   ],
 }
 
@@ -201,7 +201,7 @@ export function AppShell() {
               {activeModule === 'areas_prioritarias' && activeView === 'municipal'         && <MunicipalView_AP />}
               {activeModule === 'areas_prioritarias' && activeView === 'prodes_prioridade' && <ProdesPrioridadeView />}
               {activeModule === 'areas_prioritarias' && activeView === 'ranking'           && <RankingView_AP />}
-              {activeModule === 'areas_prioritarias' && activeView === 'metodologia'       && <MetodologiaView />}
+              {activeModule === 'areas_prioritarias' && activeView === 'biomassa'           && <BiomassaView_AP />}
             </div>
           </Suspense>
         </main>

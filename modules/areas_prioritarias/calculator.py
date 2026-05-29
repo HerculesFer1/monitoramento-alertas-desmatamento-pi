@@ -1,12 +1,13 @@
 """
-calculator.py — Módulo areas_prioritarias
-Enriquecimento com biomassa + cálculo de pct_floresta_estado + upload Supabase.
+calculator.py — Módulo areas_prioritarias v2
+Enriquecimento com biomassa + pct_floresta_estado + upload Supabase.
 
 Responsabilidades:
-  1. Zonal stats de biomassa (AGB+BGB+DW+litter) por município × classe
-  2. Calcular pct_floresta_estado (% da floresta total do PI)
-  3. Preparar geometrias para upload (EPSG:4326)
-  4. Upload para Supabase via core/uploader.py
+  1. Zonal stats de AGB sobre geometrias de interseção (classe × município)
+  2. Calcular biomassa_total_tc = agb_medio × area_floresta_ha (por classe)
+  3. Agregar agb_medio_tc_ha e biomassa_floresta_tc por município
+  4. Calcular pct_floresta_estado (% da floresta total do PI)
+  5. Upload para Supabase via core/uploader.py
 
 Stateless — sem efeitos colaterais além do upload ao Supabase.
 """
@@ -16,7 +17,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import geopandas as gpd
 import pandas as pd
 
@@ -29,13 +29,12 @@ def calculate_and_upload(
     gdf_classes:  gpd.GeoDataFrame,
     gdf_resumo:   gpd.GeoDataFrame,
     biomass_dir:  Path,
-    ano:          int  = 2024,
+    ano:          int  = 2025,
     dry_run:      bool = False,
     verbose:      bool = False,
 ) -> int:
     """
     Enriquece com biomassa, calcula pct_floresta_estado e faz upload.
-
     Retorna total de registros inseridos em ap_classes_municipio.
     """
     biomass_dir = Path(biomass_dir)
@@ -46,32 +45,33 @@ def calculate_and_upload(
     )
 
     # ── 2. pct_floresta_estado ───────────────────────────────────────────────
-    total_floresta_estado = gdf_resumo["area_floresta_ha"].sum()
-    if total_floresta_estado > 0:
+    total_floresta = gdf_resumo["area_floresta_ha"].sum()
+    if total_floresta > 0:
+        gdf_resumo = gdf_resumo.copy()
         gdf_resumo["pct_floresta_estado"] = (
-            gdf_resumo["area_floresta_ha"] / total_floresta_estado * 100
+            gdf_resumo["area_floresta_ha"] / total_floresta * 100
         ).round(2)
     else:
         gdf_resumo["pct_floresta_estado"] = 0.0
 
     log.info(
         "Floresta total Piauí: %.2f ha | Municípios: %d",
-        total_floresta_estado, len(gdf_resumo),
+        total_floresta, len(gdf_resumo),
     )
 
     # ── 3. Preparar para upload ──────────────────────────────────────────────
-    df_classes = _prepare_classes_for_upload(gdf_classes)
+    df_classes        = _prepare_classes_for_upload(gdf_classes)
     gdf_resumo_upload = _prepare_resumo_for_upload(gdf_resumo)
 
     if dry_run:
         log.info(
-            "DRY RUN — sem upload. Registros prontos: classes=%d, resumo=%d",
+            "DRY RUN — sem upload. Prontos: classes=%d, resumo=%d",
             len(df_classes), len(gdf_resumo_upload),
         )
         return len(df_classes)
 
     # ── 4. Upload Supabase ───────────────────────────────────────────────────
-    from core.uploader import upload_json, upload_geodataframe, registrar_execucao
+    from core.uploader import upload_json, upload_geodataframe
 
     log.info("Enviando ap_classes_municipio (%d registros)...", len(df_classes))
     upload_json(
@@ -100,10 +100,15 @@ def _enrich_biomass(
     verbose:     bool,
 ) -> tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """
-    Calcula médias de AGB por (municipio_cod, classe_prioridade)
-    e biomassa total por município usando rasterstats.
+    Calcula AGB médio por (municipio_cod × classe_prioridade) usando geometrias
+    de interseção (mais preciso que média municipal) com rasterstats.
 
-    Se rasters de biomassa não estiverem disponíveis, mantém colunas como None.
+    Estratégia:
+      - zonal_stats(gdf_classes.geometry, agb.tif) → agb_medio_tc_ha por célula
+      - biomassa_total_tc = agb_medio × area_floresta_ha
+      - Para resumo: agb_medio ponderado por area_floresta + biomassa_floresta_tc = soma
+
+    Se rasters indisponíveis, mantém colunas como None (sem erro).
     """
     try:
         from rasterstats import zonal_stats
@@ -117,96 +122,123 @@ def _enrich_biomass(
         log.warning("agb.tif não encontrado em %s — biomassa será None.", biomass_dir)
         return gdf_classes, gdf_resumo
 
-    # Biomassa total = AGB + BGB + DW + litter (tC/ha médio por pixel floresta)
-    biomass_files = {
-        "agb":    biomass_dir / "agb.tif",
-        "bgb":    biomass_dir / "bgb.tif",
-        "dw":     biomass_dir / "dw.tif",
-        "litter": biomass_dir / "litter.tif",
-    }
+    # Verificar todos os rasters disponíveis
+    biomass_files: dict[str, Path] = {}
+    for key in ("agb", "bgb", "dw", "litter"):
+        p = biomass_dir / f"{key}.tif"
+        if p.exists():
+            biomass_files[key] = p
 
-    # Verificar quais rasters existem
-    available = {k: v for k, v in biomass_files.items() if v.exists()}
-    if not available:
+    if not biomass_files:
         log.warning("Nenhum raster de biomassa disponível.")
         return gdf_classes, gdf_resumo
 
     if verbose:
-        log.info("Calculando zonal stats de biomassa para %d municípios...", len(gdf_resumo))
+        log.info(
+            "Zonal stats sobre %d geometrias de interseção | rasters: %s",
+            len(gdf_classes), list(biomass_files),
+        )
 
-    # Reprojetar resumo para CRS do raster de biomassa
-    with rasterio.open(agb_path) as src:
-        bio_crs = src.crs.to_epsg()
+    # Reprojetar para CRS do raster de biomassa (geralmente EPSG:4326)
+    with rasterio.open(str(agb_path)) as src:
+        bio_epsg = src.crs.to_epsg()
 
-    gdf_work = gdf_resumo.copy()
-    if gdf_work.crs.to_epsg() != bio_crs:
-        gdf_work = gdf_work.to_crs(bio_crs)
+    gdf_work = gdf_classes.copy()
+    if gdf_work.crs.to_epsg() != bio_epsg:
+        gdf_work = gdf_work.to_crs(bio_epsg)
 
-    # AGB médio por município (sobre todos os pixels dentro do polígono)
+    # AGB médio por célula (interseção classe × município)
     stats_agb = zonal_stats(
-        vectors  = gdf_work.geometry,
-        raster   = str(agb_path),
-        stats    = ["mean"],
-        nodata   = -9999,
+        vectors = gdf_work.geometry.tolist(),
+        raster  = str(agb_path),
+        stats   = ["mean"],
+        nodata  = -9999,
     )
+    agb_values = [s.get("mean") or 0.0 for s in stats_agb]
 
-    agb_by_mun = {
-        gdf_work.iloc[i]["municipio_cod"]: (s["mean"] or 0.0)
-        for i, s in enumerate(stats_agb)
-    }
-
-    # Somar todos os reservatórios para biomassa total
-    total_by_mun: dict[str, float] = {k: v for k, v in agb_by_mun.items()}
-    for key, path in available.items():
+    # Somar todos os reservatórios (AGB+BGB+DW+Litter) para biomassa total
+    total_values = list(agb_values)  # começa com AGB
+    for key, path in biomass_files.items():
         if key == "agb":
             continue
         stats = zonal_stats(
-            vectors = gdf_work.geometry,
+            vectors = gdf_work.geometry.tolist(),
             raster  = str(path),
             stats   = ["mean"],
             nodata  = -9999,
         )
         for i, s in enumerate(stats):
-            cod = gdf_work.iloc[i]["municipio_cod"]
-            total_by_mun[cod] = total_by_mun.get(cod, 0.0) + (s["mean"] or 0.0)
+            total_values[i] += (s.get("mean") or 0.0)
 
-    # Aplicar na tabela de classes (agb_medio = média do município para a classe)
+    # Aplicar na tabela de classes
     gdf_classes = gdf_classes.copy()
-    gdf_classes["agb_medio_tc_ha"] = gdf_classes["municipio_cod"].map(
-        lambda cod: round(agb_by_mun.get(cod, 0.0), 3)
-    )
-    gdf_classes["biomassa_total_tc"] = gdf_classes.apply(
-        lambda row: round(
-            total_by_mun.get(row["municipio_cod"], 0.0) * row["area_floresta_ha"], 4
-        ),
-        axis=1,
+    gdf_classes["agb_medio_tc_ha"] = [round(v, 3) for v in agb_values]
+    gdf_classes["biomassa_total_tc"] = [
+        round(total_values[i] * float(row["area_floresta_ha"]), 4)
+        for i, (_, row) in enumerate(gdf_classes.iterrows())
+    ]
+
+    # Agregar para o resumo municipal
+    # AGB médio ponderado por area_floresta_ha
+    agg_bio = (
+        gdf_classes[gdf_classes["area_floresta_ha"] > 0]
+        .groupby("municipio_cod")
+        .apply(
+            lambda df: pd.Series({
+                "biomassa_floresta_tc": round(df["biomassa_total_tc"].sum(), 4),
+                "agb_medio_tc_ha": round(
+                    (df["agb_medio_tc_ha"] * df["area_floresta_ha"]).sum()
+                    / df["area_floresta_ha"].sum(),
+                    3,
+                ) if df["area_floresta_ha"].sum() > 0 else 0.0,
+            })
+        )
+        .reset_index()
     )
 
-    # Aplicar no resumo
     gdf_resumo = gdf_resumo.copy()
-    gdf_resumo["biomassa_floresta_tc"] = gdf_resumo["municipio_cod"].map(
-        lambda cod: round(total_by_mun.get(cod, 0.0) * agb_by_mun.get(cod, 0.0), 4)
+    gdf_resumo = gdf_resumo.drop(
+        columns=["biomassa_floresta_tc", "agb_medio_tc_ha"], errors="ignore"
     )
+    gdf_resumo = gdf_resumo.merge(agg_bio, on="municipio_cod", how="left")
+    gdf_resumo["biomassa_floresta_tc"] = gdf_resumo["biomassa_floresta_tc"].fillna(0.0)
+    gdf_resumo["agb_medio_tc_ha"]      = gdf_resumo["agb_medio_tc_ha"].fillna(0.0)
 
-    log.info("Biomassa calculada para %d municípios.", len(agb_by_mun))
+    log.info(
+        "Biomassa calculada: %d células | biomassa total PI: %.0f tC",
+        len(gdf_classes),
+        gdf_resumo["biomassa_floresta_tc"].sum(),
+    )
     return gdf_classes, gdf_resumo
 
 
 # ── Preparação para upload ────────────────────────────────────────────────────
 
 def _prepare_classes_for_upload(gdf: gpd.GeoDataFrame) -> pd.DataFrame:
-    """Remove geometria (não necessária nesta tabela) e limpa tipos."""
+    """
+    Remove geometria (não necessária nesta tabela) e normaliza tipos.
+    Inclui prioridade_label para tabela Supabase.
+    """
     df = pd.DataFrame(gdf.drop(columns=["geometry"], errors="ignore"))
 
-    # Garantir tipos corretos
+    # Colunas numéricas
     numeric_cols = [
         "area_total_ha", "area_floresta_ha", "area_desmat_ha",
         "area_nao_floresta_ha", "pct_floresta", "pct_desmat",
-        "agb_medio_tc_ha", "biomassa_total_tc",
+        "ha_deter_recente", "agb_medio_tc_ha", "biomassa_total_tc",
     ]
     for col in numeric_cols:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").round(4)
+
+    # Garantir prioridade_label
+    if "prioridade_label" not in df.columns:
+        _LABELS = {1: "Muito Baixo", 2: "Baixo", 3: "Médio", 4: "Alto", 5: "Muito Alto"}
+        df["prioridade_label"] = df["classe_prioridade"].map(_LABELS)
+
+    # Coluna uf (garantir)
+    if "uf" not in df.columns:
+        df["uf"] = "PI"
 
     # None onde NaN
     df = df.where(pd.notnull(df), other=None)
@@ -214,7 +246,7 @@ def _prepare_classes_for_upload(gdf: gpd.GeoDataFrame) -> pd.DataFrame:
 
 
 def _prepare_resumo_for_upload(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    """Reprojetar para EPSG:4326 e serializar bbox como lista JSON."""
+    """Reprojetar para EPSG:4326, serializar bbox, normalizar tipos."""
     gdf = gdf.copy()
 
     if gdf.crs and gdf.crs.to_epsg() != 4326:
@@ -223,16 +255,22 @@ def _prepare_resumo_for_upload(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     # bbox como lista para JSONB do Supabase
     gdf["bbox"] = gdf.geometry.apply(
         lambda g: [[g.bounds[0], g.bounds[1]], [g.bounds[2], g.bounds[3]]]
-        if g is not None else None
+        if g is not None and not g.is_empty else None
     )
 
-    # Limpar NaN
+    # Normalizar colunas numéricas
     float_cols = [
         "area_total_ha", "area_floresta_ha", "area_desmat_ha",
-        "pct_floresta_estado", "biomassa_floresta_tc",
+        "pct_floresta_estado", "biomassa_floresta_tc", "agb_medio_tc_ha",
+        "ha_deter_recente",
     ]
     for col in float_cols:
         if col in gdf.columns:
             gdf[col] = pd.to_numeric(gdf[col], errors="coerce").round(4)
+
+    # None onde NaN (include="object" + "string" — Pandas 4 compat)
+    for col in gdf.select_dtypes(include=["object", "string"]).columns:
+        if col != "geometry":
+            gdf[col] = gdf[col].where(pd.notnull(gdf[col]), other=None)
 
     return gdf

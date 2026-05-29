@@ -2,8 +2,9 @@
 Módulo: areas_prioritarias
 Programa Jurisdicional REDD+ Piauí
 
-Cruzamento PRODES 2024 × 16 classes de prioridade AHP
+Cruzamento PRODES 2025 × 5 classes de prioridade (GPKG vetorial)
 → quantificação de área (ha) por município × classe.
+Enriquecido com biomassa AGB via rasterstats.
 
 Segue contrato ADR-003 (_template/manifest.py).
 """
@@ -15,26 +16,27 @@ from typing import Any
 # Caminho absoluto raiz do repositório (independente do cwd)
 _ROOT = Path(__file__).resolve().parent.parent.parent
 
-MANIFEST: dict[str, Any] = {
+MODULE_MANIFEST: dict[str, Any] = {
     # ── Identidade ──────────────────────────────────────────
-    "id":          "areas_prioritarias",   # snake_case, igual ao nome da pasta
+    "id":          "areas_prioritarias",
     "name":        "Áreas Prioritárias REDD+",
-    "version":     "0.2.0",
+    "version":     "1.0.0",
     "description": (
-        "Cruzamento PRODES 2025 × raster de 16 classes de prioridade AHP "
-        "para quantificação de área de vegetação nativa e desmatamento "
-        "por município do Piauí. Inclui gap DETER Cerrado (ago/2025–presente)."
+        "Cruzamento vetorial PRODES 2025 × 5 classes de prioridade (GPKG) "
+        "para quantificação de área de floresta remanescente e desmatamento "
+        "por município do Piauí. Enriquecido com biomassa AGB (tC/ha) via "
+        "rasterstats. Pipeline: gpd.overlay() em vez de pixel-counting."
     ),
 
     # ── UI ──────────────────────────────────────────────────
-    "icon":           "🌿",
+    "icon":            "🌿",
     "frontend_module": "areas_prioritarias",
-    "tags":           ["redd+", "prioridade", "desmatamento", "cerrado", "piaui"],
+    "tags":            ["redd+", "prioridade", "desmatamento", "cerrado", "piaui"],
 
     # ── Orquestração ────────────────────────────────────────
-    "schedule": None,           # manual — acionar via Prefect UI ou CLI
-    "priority": 20,             # executa após módulos base (municipios_ibge=10)
-    "enabled":  True,           # QA validado 2026-05-27 — dados 2025 populados
+    "schedule": None,   # manual — acionar via Prefect UI ou CLI
+    "priority": 20,     # executa após módulos base (municipios_ibge=10)
+    "enabled":  True,
 
     # ── Outputs (tabelas Supabase que este módulo escreve) ──
     "outputs": [
@@ -44,10 +46,27 @@ MANIFEST: dict[str, Any] = {
     ],
 
     # ── Dados locais necessários ────────────────────────────
+    # Todos os caminhos são absolutos e independentes do cwd.
+    # Executar vectorize_forest.py antes da primeira execução do pipeline.
     "local_data": {
-        "priority_raster": _ROOT / "data" / "raw" / "areas_prioritarias" / "16_prioridade_classes_final.tif",
-        "forest_mask":     _ROOT / "data" / "raw" / "areas_prioritarias" / "Mascara_de_floresta_2025.tif",
-        "biomass_dir":     _ROOT / "data" / "raw" / "areas_prioritarias" / "biomass",
+        # 5 classes de prioridade AHP (MultiPolygon, ESRI:102033)
+        "priority_classes": Path(
+            "C:/11. REDD+/16_prioridade_classes_final/classes_prioritarias.gpkg"
+        ),
+        # Máscara florestal 2025 — TIF original (valor 100 = floresta)
+        # Usado via rasterstats — NÃO precisa vetorizar antes
+        "forest_mask_tif": Path(
+            "C:/11. REDD+/Forest_mask/Forest_mask/Mascara_de_floresta_2025.tif"
+        ),
+        # Rasters de biomassa (AGB, BGB, DW, Litter) — usados via rasterstats
+        "biomass_dir": Path(
+            "C:/11. REDD+/Biomass_rasters/Biomass_rasters"
+        ),
+        # PRODES 2022-2025 pré-classificado (local — não baixar via WFS)
+        "prodes_geojson": Path(
+            "C:/9.1 Monitoramento de Alertas de Desmatamento"
+            "/PRODES/Resultado/prodes_classificados.geojson"
+        ),
     },
 }
 
@@ -57,10 +76,10 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
     Entry point do módulo. Chamado pelo Orchestrator.
 
     Parâmetros esperados em config:
-        dry_run  (bool)  : se True, processa mas não faz upload. Default False.
-        ano      (int)   : ano PRODES a baixar e processar. Default 2024.
-        verbose  (bool)  : log detalhado. Default False.
-        skip_download (bool): pula download se dados já existem. Default False.
+        dry_run       (bool): se True, processa mas não faz upload. Default False.
+        ano           (int) : ano PRODES a processar. Default 2025.
+        verbose       (bool): log detalhado. Default False.
+        skip_download (bool): pula download de municípios se já existirem. Default False.
 
     Retorna dict com status da execução.
     """
@@ -71,20 +90,37 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
 
     t0 = time.perf_counter()
 
-    ano          = int(config.get("ano", 2025))
-    dry_run      = bool(config.get("dry_run", False))
-    verbose      = bool(config.get("verbose", False))
-    skip_dl      = bool(config.get("skip_download", False))
+    ano     = int(config.get("ano", 2025))
+    dry_run = bool(config.get("dry_run", False))
+    verbose = bool(config.get("verbose", False))
+    skip_dl = bool(config.get("skip_download", False))
 
-    dest_dir = _ROOT / "data" / "raw" / "areas_prioritarias"
+    dest_dir   = _ROOT / "data" / "raw" / "areas_prioritarias"
+    local_data = MODULE_MANIFEST["local_data"]
+
+    # Validar dados locais obrigatórios
+    prodes_path = local_data["prodes_geojson"]
+    if not prodes_path.exists():
+        return {
+            "status": "erro",
+            "erro":   f"PRODES local não encontrado: {prodes_path}",
+            "duracao_segundos": 0,
+        }
+
+    if not local_data["forest_mask_tif"].exists():
+        return {
+            "status": "erro",
+            "erro": (
+                f"Máscara florestal TIF não encontrada: {local_data['forest_mask_tif']}"
+            ),
+            "duracao_segundos": 0,
+        }
 
     try:
-        # Fase 1 — Download
+        # Fase 1 — Download de municípios IBGE (PRODES, classes e biomassa são locais)
         if not skip_dl:
-            prodes_path, municipios_path = download(dest_dir, {"ano": ano, "verbose": verbose})
+            municipios_path = download(dest_dir, {"verbose": verbose})
         else:
-            prodes_path = dest_dir / f"prodes_{ano}_piaui.geojson"
-            # Aceita gpkg ou shapefile (dependendo do que o IBGE disponibiliza no zip)
             for _mun in [
                 dest_dir / "municipios_piaui_ibge2022.gpkg",
                 dest_dir / "PI_Municipios_2022.shp",
@@ -94,14 +130,13 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
                     break
             else:
                 raise FileNotFoundError(
-                    "Dados de municípios não encontrados. Execute sem skip_download."
+                    "Dados de municípios não encontrados. Execute sem --skip_download."
                 )
 
-        # Fase 2 — Processamento espacial
+        # Fase 2 — Processamento espacial (vector overlay)
         gdf_classes, gdf_resumo = process(
-            prodes_path     = prodes_path,
             municipios_path = municipios_path,
-            config          = MANIFEST["local_data"],
+            config          = local_data,
             ano             = ano,
             verbose         = verbose,
         )
@@ -110,7 +145,7 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
         total_registros = calculate_and_upload(
             gdf_classes  = gdf_classes,
             gdf_resumo   = gdf_resumo,
-            biomass_dir  = MANIFEST["local_data"]["biomass_dir"],
+            biomass_dir  = local_data["biomass_dir"],
             ano          = ano,
             dry_run      = dry_run,
             verbose      = verbose,

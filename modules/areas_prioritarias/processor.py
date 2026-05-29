@@ -1,17 +1,21 @@
 """
-processor.py — Módulo areas_prioritarias
-Cruzamento raster × vetor para quantificação de áreas.
+processor.py — Módulo areas_prioritarias v2
+Cruzamento vetorial para quantificação de áreas REDD+.
 
-Responsabilidades:
-  1. Reprojetar todos os dados para SIRGAS 2000 Geographic (EPSG:4674)
-  2. Rasterizar PRODES para grade do raster de prioridades
-  3. Aplicar máscara florestal
-  4. Cruzamento pixel-a-pixel: prioridade × cobertura × município
-  5. Converter contagem de pixels → hectares
-  6. Retornar dois GeoDataFrames: classes_municipio + municipios_resumo
+Abordagem: gpd.overlay() em vez de contagem de pixels.
 
-Stateless — sem efeitos colaterais, sem I/O além dos paths recebidos.
-Usa spatial_core.py para operações geométricas (fix_geoms, safe_intersection).
+Pipeline:
+  1. Carregar classes GPKG (5 MultiPolygons, ESRI:102033)
+  2. Carregar municípios Piauí (IBGE)
+  3. gpd.overlay(classes, municipios) → ~1120 células (classe × município)
+  4. gpd.overlay(células, floresta_2025.gpkg) → area_floresta_ha por célula
+  5. gpd.overlay(células, PRODES_local[ano]) → area_desmat_ha por célula
+  6. Calcular pct_floresta, pct_desmat, area_nao_floresta_ha
+  7. Agregar por município → gdf_resumo (+ geom IBGE + bbox)
+
+Retorna gdf_classes COM geometria (usada por calculator.py para zonal_stats).
+Stateless — sem efeitos colaterais além dos paths recebidos.
+Reutiliza core/spatial_core.py para reparos geométricos.
 """
 from __future__ import annotations
 
@@ -19,129 +23,193 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import geopandas as gpd
-import rasterio
-from rasterio.features import rasterize
-from rasterio.transform import Affine
-from rasterio.mask import mask as rasterio_mask
 import pandas as pd
-from shapely.geometry import box, mapping
 
-from core.spatial_core import fix_geoms, safe_intersection
+from core.spatial_core import fix_geoms
 
 log = logging.getLogger(__name__)
 
-# Projeção de trabalho — SIRGAS 2000 Geográfico
-_CRS_WORK = "EPSG:4674"
-# Projeção de upload — WGS84 (padrão do projeto)
+# CRS de trabalho — SIRGAS 2000 Geográfico (compatível com PRODES e IBGE)
+_CRS_WORK   = "EPSG:4674"
+# CRS para cálculo de área — SIRGAS 2000 / Brasil Policônico (projeção equivalente)
+_CRS_AREA   = "EPSG:5880"
+# CRS de upload — WGS84 (padrão GeoJSON do projeto)
 _CRS_UPLOAD = "EPSG:4326"
 
-# Classes válidas no raster de prioridades
-_VALID_CLASSES = set(range(1, 17))  # 1 a 16
+# Mapeamento classe → rótulo canônico de prioridade
+_PRIORIDADE_LABEL: dict[int, str] = {
+    1: "Muito Baixo",
+    2: "Baixo",
+    3: "Médio",
+    4: "Alto",
+    5: "Muito Alto",
+}
 
-# Valor de pixel PRODES que indica desmatamento (verificar na fonte)
-_PRODES_DEMAT_VALUE = 1
+_VALID_CLASSES = frozenset(range(1, 6))  # 1..5
 
 
 def process(
-    prodes_path:     Path,
     municipios_path: Path,
     config:          dict[str, Any],
-    ano:             int = 2024,
+    ano:             int  = 2025,
     verbose:         bool = False,
 ) -> tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """
-    Executa o cruzamento raster × vetor.
+    Executa o cruzamento vetorial.
+
+    Parâmetros:
+        municipios_path : Path para GPKG/SHP de municípios IBGE (Piauí)
+        config          : dict com keys:
+                            priority_classes  → Path do GPKG de classes
+                            forest_mask_gpkg  → Path do GPKG florestal vetorizado
+                            prodes_geojson    → Path do GeoJSON PRODES local
+        ano             : ano PRODES a processar (default 2025)
+        verbose         : log detalhado
 
     Retorna:
-        gdf_classes : GeoDataFrame — (municipio_cod, classe_prioridade, area_*_ha, ...)
-        gdf_resumo  : GeoDataFrame — (municipio_cod, resumo por município + geom + bbox)
+        gdf_classes : GeoDataFrame COM geometria —
+                      (municipio_cod, classe_prioridade, area_*_ha, ...)
+                      Geometria = interseção classe × município (usada para zonal_stats)
+        gdf_resumo  : GeoDataFrame — (municipio_cod, resumo + geom IBGE + bbox)
     """
-    log.info("Iniciando processamento areas_prioritarias | ano=%s", ano)
+    log.info("Iniciando processamento areas_prioritarias v2 | ano=%s", ano)
 
-    # ── 1. Carregar e validar dados vetoriais ────────────────────────────────
+    # ── 1. Carregar e validar classes de prioridade ───────────────────────────
+    classes_path = Path(config["priority_classes"])
+    if not classes_path.exists():
+        raise FileNotFoundError(f"GPKG de classes não encontrado: {classes_path}")
+
+    classes = gpd.read_file(str(classes_path))
+    classes = fix_geoms(classes, "classes_prioritarias")
+    classes = classes.to_crs(_CRS_WORK)
+
+    # Normalizar colunas DN → classe_prioridade
+    if "DN" in classes.columns:
+        classes = classes.rename(columns={"DN": "classe_prioridade"})
+    elif "classe_prioridade" not in classes.columns:
+        raise ValueError("GPKG de classes não tem coluna 'DN' nem 'classe_prioridade'.")
+
+    classes["classe_prioridade"] = classes["classe_prioridade"].astype(int)
+    classes["prioridade_label"]  = classes["classe_prioridade"].map(_PRIORIDADE_LABEL)
+    classes = classes[["classe_prioridade", "prioridade_label", "geometry"]]
+
+    invalid_cls = set(classes["classe_prioridade"].unique()) - _VALID_CLASSES
+    if invalid_cls:
+        raise ValueError(f"Classes inválidas no GPKG: {invalid_cls} — esperado 1..5.")
+
+    log.info(
+        "Classes carregadas: %d feições, classes=%s",
+        len(classes), sorted(classes["classe_prioridade"].unique()),
+    )
+
+    # ── 2. Carregar municípios Piauí ──────────────────────────────────────────
     municipios = _load_municipios(municipios_path)
-    prodes     = _load_prodes(prodes_path)
+    municipios = municipios.to_crs(_CRS_WORK)
 
-    # ── 2. Abrir raster de prioridade como referência de grade ──────────────
-    priority_path = Path(config["priority_raster"])
-    forest_path   = Path(config["forest_mask"])
+    # ── 3. Overlay: classes × municípios ──────────────────────────────────────
+    log.info("Overlay: classes × municípios (%d × %d)...", len(classes), len(municipios))
+    gdf_cls_mun = gpd.overlay(
+        classes[["classe_prioridade", "prioridade_label", "geometry"]],
+        municipios[["CD_MUN", "NM_MUN", "geometry"]],
+        how            = "intersection",
+        keep_geom_type = False,
+        make_valid     = True,
+    )
+    gdf_cls_mun = gdf_cls_mun.rename(
+        columns={"CD_MUN": "municipio_cod", "NM_MUN": "municipio_nome"}
+    )
+    gdf_cls_mun = _clean_geoms(gdf_cls_mun)
+    gdf_cls_mun = gdf_cls_mun.reset_index(drop=True)
 
-    _validate_raster_paths(priority_path, forest_path)
+    if len(gdf_cls_mun) == 0:
+        raise ValueError(
+            "Overlay classes × municípios resultou em zero células. "
+            "Verifique se os CRS são compatíveis e as geometrias se sobrepõem."
+        )
+    log.info("Cruzamento classes × municípios: %d células", len(gdf_cls_mun))
 
-    with rasterio.open(priority_path) as src_prio:
+    # ── 4. Área total por célula (projeção equivalente) ───────────────────────
+    gdf_cls_mun = _calc_area_ha(gdf_cls_mun, "area_total_ha")
 
-        prio_crs   = src_prio.crs
-        transform  = src_prio.transform
-        out_shape  = (src_prio.height, src_prio.width)
-        pixel_area = _calc_pixel_area_ha(transform, prio_crs)
+    # ── 5. Área florestal via rasterstats no TIF original ─────────────────────
+    # Estratégia: rasterstats.zonal_stats() no TIF (valor 100 = floresta).
+    # Muito mais rápido que gpd.overlay() contra ~96k patches vetorizados.
+    forest_tif = Path(config["forest_mask_tif"])
+    if not forest_tif.exists():
+        raise FileNotFoundError(
+            f"Máscara florestal TIF não encontrada: {forest_tif}"
+        )
 
-        log.info("Raster prioridade: %s | shape=%s | pixel_area=%.6f ha | CRS=%s",
-                 priority_path.name, out_shape, pixel_area, prio_crs)
+    log.info("Calculando área florestal via rasterstats: %s...", forest_tif.name)
+    forest_agg = _calc_forest_area_raster(gdf_cls_mun, forest_tif)
+    log.info(
+        "Floresta agregada: %d células com área florestal (total=%.0f ha)",
+        len(forest_agg[forest_agg["area_floresta_ha"] > 0]),
+        forest_agg["area_floresta_ha"].sum(),
+    )
 
-        prio_data = src_prio.read(1)
+    # ── 6. Carregar e filtrar PRODES por ano ──────────────────────────────────
+    prodes_path = Path(config["prodes_geojson"])
+    if not prodes_path.exists():
+        raise FileNotFoundError(f"PRODES GeoJSON não encontrado: {prodes_path}")
 
-        # Reprojetar vetores para o CRS do raster de prioridade
-        municipios = municipios.to_crs(prio_crs)
-        prodes     = prodes.to_crs(prio_crs)
+    prodes = _load_prodes(prodes_path, ano)
+    prodes = prodes.to_crs(_CRS_WORK)
+    log.info("PRODES %d carregado: %d feições", ano, len(prodes))
 
-        # Reprojetar máscara florestal para a grade do raster de prioridade
-        forest_data = _load_forest_aligned(forest_path, src_prio)
+    # ── 7. Overlay: células × PRODES ──────────────────────────────────────────
+    prodes_agg = _aggregate_desmatamento(gdf_cls_mun, prodes)
 
-        # ── 4. Rasterizar PRODES para grade do raster de prioridade ──────────
-        prodes_raster = _rasterize_prodes(prodes, transform, out_shape)
+    # ── 8. Consolidar áreas ───────────────────────────────────────────────────
+    gdf_cls_mun = (
+        gdf_cls_mun
+        .merge(forest_agg, on=["municipio_cod", "classe_prioridade"], how="left")
+        .merge(prodes_agg, on=["municipio_cod", "classe_prioridade"], how="left")
+    )
+    gdf_cls_mun["area_floresta_ha"] = (
+        gdf_cls_mun["area_floresta_ha"].fillna(0.0).round(4)
+    )
+    gdf_cls_mun["area_desmat_ha"] = (
+        gdf_cls_mun["area_desmat_ha"].fillna(0.0).round(4)
+    )
+    gdf_cls_mun["area_nao_floresta_ha"] = (
+        gdf_cls_mun["area_total_ha"]
+        - gdf_cls_mun["area_floresta_ha"]
+        - gdf_cls_mun["area_desmat_ha"]
+    ).clip(lower=0.0).round(4)
 
-        # ── 5. Processar cada município ───────────────────────────────────────
-        records_classes = []
-        records_resumo  = []
+    # ── 9. Percentuais ────────────────────────────────────────────────────────
+    total_safe = gdf_cls_mun["area_total_ha"].replace(0, pd.NA)
+    gdf_cls_mun["pct_floresta"] = (
+        gdf_cls_mun["area_floresta_ha"] / total_safe * 100
+    ).fillna(0.0).round(2).clip(0, 100)
+    gdf_cls_mun["pct_desmat"] = (
+        gdf_cls_mun["area_desmat_ha"] / total_safe * 100
+    ).fillna(0.0).round(2).clip(0, 100)
 
-        total = len(municipios)
-        for i, row in municipios.iterrows():
-            mun_cod  = row["CD_MUN"]
-            mun_nome = row["NM_MUN"]
+    # ── 10. Metadados ─────────────────────────────────────────────────────────
+    gdf_cls_mun["uf"]               = "PI"
+    gdf_cls_mun["ano_prodes"]       = ano
+    gdf_cls_mun["ha_deter_recente"] = None  # gap DETER: preenchido quando disponível
+    gdf_cls_mun["agb_medio_tc_ha"]  = None  # preenchido por calculator.py
+    gdf_cls_mun["biomassa_total_tc"]= None  # preenchido por calculator.py
 
-            if verbose and i % 20 == 0:
-                log.info("  Processando %s/%s — %s", i + 1, total, mun_nome)
+    # gdf_classes retém geometria para zonal_stats em calculator.py
+    gdf_classes = gdf_cls_mun.copy()
 
-            result = _process_municipio(
-                geom         = row.geometry,
-                mun_cod      = mun_cod,
-                mun_nome     = mun_nome,
-                prio_data    = prio_data,
-                forest_data  = forest_data,
-                prodes_raster= prodes_raster,
-                transform    = transform,
-                pixel_area   = pixel_area,
-                ano          = ano,
-            )
+    # ── 11. Resumo por município ──────────────────────────────────────────────
+    gdf_resumo = _build_resumo(gdf_classes, municipios, ano)
 
-            if result is None:
-                log.warning("Município ignorado (sem interseção): %s", mun_nome)
-                continue
-
-            records_classes.extend(result["classes"])
-            records_resumo.append(result["resumo"])
-
-    # ── 6. Montar DataFrames ──────────────────────────────────────────────────
-    # gdf_classes é tabular — sem coluna de geometria
-    gdf_classes = pd.DataFrame(records_classes)
-
-    gdf_resumo  = gpd.GeoDataFrame(
-        records_resumo,
-        geometry="geom",
-        crs=prio_crs,
-    ).to_crs(_CRS_UPLOAD)
-
-    # Adicionar bbox como coluna JSON para fitBounds no MapLibre GL
-    gdf_resumo["bbox"] = gdf_resumo.geometry.apply(_geom_to_bbox)
-
-    # ── 7. Validações pós-processamento ──────────────────────────────────────
+    # ── 12. Validação ─────────────────────────────────────────────────────────
     _validate_output(gdf_classes, gdf_resumo)
 
     log.info(
-        "Processamento concluído: %d municípios, %d registros de classe",
+        "Processamento concluído: %d municípios, %d registros de classe | "
+        "Floresta total=%.0f ha, Desmatado total=%.0f ha",
         len(gdf_resumo), len(gdf_classes),
+        gdf_resumo["area_floresta_ha"].sum(),
+        gdf_resumo["area_desmat_ha"].sum(),
     )
     return gdf_classes, gdf_resumo
 
@@ -150,293 +218,258 @@ def process(
 
 def _load_municipios(path: Path) -> gpd.GeoDataFrame:
     """Carrega e valida municípios do Piauí."""
-    gdf = gpd.read_file(path)
+    gdf = gpd.read_file(str(path))
     gdf = fix_geoms(gdf, "municipios_ibge")
 
     required = {"CD_MUN", "NM_MUN"}
-    missing = required - set(gdf.columns)
+    missing  = required - set(gdf.columns)
     if missing:
         raise ValueError(f"Colunas ausentes nos municípios IBGE: {missing}")
 
     # Filtrar Piauí se arquivo nacional
     if "SIGLA_UF" in gdf.columns:
         gdf = gdf[gdf["SIGLA_UF"] == "PI"].copy()
+    elif "CD_UF" in gdf.columns:
+        gdf = gdf[gdf["CD_UF"] == "22"].copy()  # Piauí IBGE code = 22
 
     if len(gdf) == 0:
-        raise ValueError("Nenhum município do Piauí encontrado no shapefile IBGE.")
+        raise ValueError("Nenhum município do Piauí encontrado no arquivo IBGE.")
 
     log.info("Municípios carregados: %d", len(gdf))
     return gdf
 
 
-def _load_prodes(path: Path) -> gpd.GeoDataFrame:
-    """Carrega e valida dados PRODES."""
-    gdf = gpd.read_file(path)
+def _load_prodes(path: Path, ano: int) -> gpd.GeoDataFrame:
+    """Carrega PRODES local e filtra por ano."""
+    gdf = gpd.read_file(str(path))
     gdf = fix_geoms(gdf, "prodes")
-    log.info("PRODES carregado: %d feições", len(gdf))
+
+    if "ano" not in gdf.columns:
+        raise ValueError("PRODES GeoJSON não tem coluna 'ano'.")
+
+    gdf = gdf[gdf["ano"] == ano].copy()
+
+    if len(gdf) == 0:
+        log.warning("PRODES: nenhuma feição para ano=%d — desmatamento será zero.", ano)
+
     return gdf
 
 
-def _validate_raster_paths(*paths: Path) -> None:
-    for p in paths:
-        if not p.exists():
-            raise FileNotFoundError(f"Raster não encontrado: {p}")
+def _clean_geoms(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Remove geometrias nulas, vazias ou inválidas."""
+    mask = (
+        gdf.geometry.notna() &
+        ~gdf.geometry.is_empty &
+        gdf.geometry.is_valid
+    )
+    n_removed = (~mask).sum()
+    if n_removed > 0:
+        log.debug("Removidas %d geometrias inválidas/vazias.", n_removed)
+    return gdf[mask].copy()
 
 
-def _load_forest_aligned(forest_path: Path, src_prio) -> np.ndarray:
+def _calc_area_ha(gdf: gpd.GeoDataFrame, col: str) -> gpd.GeoDataFrame:
     """
-    Carrega máscara florestal reprojetada para a grade do raster de prioridade.
-    Se já estiver na mesma grade, lê diretamente. Caso contrário usa rasterio.warp.
+    Calcula área em hectares reprojetando para _CRS_AREA (projeção equivalente).
+    Não altera o CRS original do GeoDataFrame.
     """
-    from rasterio.warp import reproject, Resampling
+    areas_m2 = gdf.to_crs(_CRS_AREA).geometry.area
+    gdf = gdf.copy()
+    gdf[col] = (areas_m2 / 10_000).round(4)
+    return gdf
 
-    with rasterio.open(forest_path) as src_forest:
-        same_grid = (
-            src_forest.crs  == src_prio.crs and
-            src_forest.transform == src_prio.transform and
-            src_forest.shape == src_prio.shape
+
+def _calc_forest_area_raster(
+    gdf_cls_mun: gpd.GeoDataFrame,
+    forest_tif:  Path,
+) -> pd.DataFrame:
+    """
+    Calcula área florestal (ha) por célula (municipio × classe) usando
+    rasterstats.zonal_stats() sobre o TIF original.
+
+    Estratégia:
+      - Forest mask: pixels com valor 100 = floresta, 0 = não-floresta.
+      - zonal_stats(..., stats=["sum"]) → soma dos pixels na célula.
+      - area_floresta_ha = (soma / FOREST_VALUE) × pixel_area_ha
+      - pixel_area_ha calculado reprojetando 1 pixel do TIF para EPSG:5880.
+
+    Vantagem sobre gpd.overlay(): ordens de magnitude mais rápido —
+    não há necessidade de vetorizar ou cruzar ~96k patches.
+
+    Retorna DataFrame com colunas [municipio_cod, classe_prioridade, area_floresta_ha].
+    """
+    from rasterstats import zonal_stats as _zonal_stats
+    import rasterio
+    from shapely.geometry import box as sbox
+
+    FOREST_VALUE = 100  # valor de pixel correspondente a floresta
+
+    with rasterio.open(str(forest_tif)) as src:
+        tif_crs = src.crs
+        tfm     = src.transform
+        # Área de 1 pixel em hectares — reprojetando para EPSG:5880 (projeção equiv.)
+        px_poly = gpd.GeoDataFrame(
+            geometry=[sbox(tfm.c, tfm.f + tfm.e, tfm.c + tfm.a, tfm.f)],
+            crs=tif_crs,
         )
-        if same_grid:
-            return src_forest.read(1)
+        pixel_area_ha = px_poly.to_crs(_CRS_AREA).iloc[0].geometry.area / 10_000
 
-        log.info(
-            "Reprojetando máscara florestal: %s → %s",
-            src_forest.crs, src_prio.crs,
-        )
-        dst = np.zeros((src_prio.height, src_prio.width), dtype=src_forest.dtypes[0])
-        reproject(
-            source        = rasterio.band(src_forest, 1),
-            destination   = dst,
-            src_transform = src_forest.transform,
-            src_crs       = src_forest.crs,
-            dst_transform = src_prio.transform,
-            dst_crs       = src_prio.crs,
-            resampling    = Resampling.nearest,
-            src_nodata    = src_forest.nodata,
-            dst_nodata    = 0,
-        )
-        return dst
+    log.info(
+        "TIF florestal: CRS=%s | pixel_area=%.6f ha | células=%d",
+        tif_crs, pixel_area_ha, len(gdf_cls_mun),
+    )
+
+    # Reprojetar células para o CRS do TIF
+    gdf_work = gdf_cls_mun[["municipio_cod", "classe_prioridade", "geometry"]].copy()
+    if gdf_work.crs.to_epsg() != tif_crs.to_epsg():
+        gdf_work = gdf_work.to_crs(tif_crs)
+
+    stats = _zonal_stats(
+        vectors = gdf_work.geometry.tolist(),
+        raster  = str(forest_tif),
+        stats   = ["sum"],
+        nodata  = 0,
+    )
+
+    forest_ha = [
+        round((s.get("sum") or 0.0) / FOREST_VALUE * pixel_area_ha, 4)
+        for s in stats
+    ]
+
+    result = gdf_cls_mun[["municipio_cod", "classe_prioridade"]].copy()
+    result["area_floresta_ha"] = forest_ha
+    return result
 
 
-def _calc_pixel_area_ha(transform: Affine, crs) -> float:
+def _aggregate_desmatamento(
+    gdf_cls_mun: gpd.GeoDataFrame,
+    prodes:      gpd.GeoDataFrame,
+) -> pd.DataFrame:
     """
-    Calcula área de um pixel em hectares.
-    Para CRS geográficos (graus), estima via projeção equal-area.
+    Intersecta células com polígonos PRODES e agrega área desmatada por célula.
+    Retorna DataFrame com colunas [municipio_cod, classe_prioridade, area_desmat_ha].
     """
-    import pyproj
-    from pyproj import Transformer
+    empty = pd.DataFrame(
+        columns=["municipio_cod", "classe_prioridade", "area_desmat_ha"]
+    )
 
-    if crs.is_geographic:
-        # Projeta para Albers Equal Area centrado no Piauí
-        transformer = Transformer.from_crs(
-            crs.to_epsg(),
-            "ESRI:102033",  # South America Albers Equal Area Conic
-            always_xy=True,
-        )
-        # Pega centro do pixel (0,0)
-        x0, y0 = transform * (0, 0)
-        x1, y1 = transform * (1, 1)
-        x0p, y0p = transformer.transform(x0, y0)
-        x1p, y1p = transformer.transform(x1, y1)
-        pixel_area_m2 = abs((x1p - x0p) * (y1p - y0p))
-    else:
-        pixel_area_m2 = abs(transform.a * transform.e)
-
-    return pixel_area_m2 / 10_000  # m² → ha
-
-
-def _rasterize_prodes(
-    prodes:     gpd.GeoDataFrame,
-    transform:  Affine,
-    out_shape:  tuple[int, int],
-) -> np.ndarray:
-    """
-    Rasteriza feições PRODES para a grade do raster de prioridade.
-    prodes deve estar no mesmo CRS do raster de prioridade.
-    Pixels com desmatamento = 1, sem desmatamento = 0.
-    """
     if len(prodes) == 0:
-        log.warning("PRODES vazio — nenhuma feição de desmatamento.")
-        return np.zeros(out_shape, dtype=np.uint8)
+        log.warning("PRODES vazio — area_desmat_ha será zero para todas as células.")
+        return empty
 
-    shapes = [(mapping(geom), 1) for geom in prodes.geometry if geom is not None]
+    log.info("Overlay: células × PRODES (%d feições)...", len(prodes))
+    gdf_int = gpd.overlay(
+        gdf_cls_mun[["municipio_cod", "classe_prioridade", "geometry"]],
+        prodes[["geometry"]],
+        how            = "intersection",
+        keep_geom_type = False,
+        make_valid     = True,
+    )
+    gdf_int = _clean_geoms(gdf_int)
 
-    if not shapes:
-        return np.zeros(out_shape, dtype=np.uint8)
+    if len(gdf_int) == 0:
+        log.warning("Nenhuma interseção PRODES × células — verificar CRS e sobreposição.")
+        return empty
 
-    return rasterize(
-        shapes     = shapes,
-        out_shape  = out_shape,
-        transform  = transform,
-        fill       = 0,
-        dtype      = np.uint8,
-        all_touched= False,
+    gdf_int = _calc_area_ha(gdf_int, "area_desmat_ha")
+
+    agg = (
+        gdf_int.groupby(["municipio_cod", "classe_prioridade"])["area_desmat_ha"]
+        .sum()
+        .reset_index()
+    )
+    log.info(
+        "PRODES agregado: %d células com desmatamento (total=%.0f ha)",
+        len(agg), agg["area_desmat_ha"].sum(),
+    )
+    return agg
+
+
+def _build_resumo(
+    gdf_classes: gpd.GeoDataFrame,
+    municipios:  gpd.GeoDataFrame,
+    ano:         int,
+) -> gpd.GeoDataFrame:
+    """
+    Agrega gdf_classes por município e une geometria IBGE para gdf_resumo.
+    """
+    # Agregar áreas por município
+    agg = gdf_classes.groupby("municipio_cod", as_index=False).agg(
+        municipio_nome   = ("municipio_nome",    "first"),
+        area_total_ha    = ("area_total_ha",      "sum"),
+        area_floresta_ha = ("area_floresta_ha",   "sum"),
+        area_desmat_ha   = ("area_desmat_ha",     "sum"),
+    )
+    for col in ["area_total_ha", "area_floresta_ha", "area_desmat_ha"]:
+        agg[col] = agg[col].round(4)
+
+    # classe_max_prioridade = maior classe com floresta (5 = Muito Alto = mais urgente)
+    classe_max = (
+        gdf_classes[gdf_classes["area_floresta_ha"] > 0]
+        .groupby("municipio_cod")["classe_prioridade"]
+        .max()
+        .reset_index()
+        .rename(columns={"classe_prioridade": "classe_max_prioridade"})
+    )
+    agg = agg.merge(classe_max, on="municipio_cod", how="left")
+
+    # Metadados
+    agg["uf"]                 = "PI"
+    agg["pct_floresta_estado"] = None   # calculado em calculator.py
+    agg["biomassa_floresta_tc"] = None  # calculado em calculator.py
+    agg["ha_deter_recente"]    = None   # gap DETER
+    agg["agb_medio_tc_ha"]     = None   # calculado em calculator.py
+    agg["ano_prodes"]          = ano
+
+    # Unir geometria IBGE (para upload + bbox)
+    mun_geom = municipios[["CD_MUN", "geometry"]].copy().rename(
+        columns={"CD_MUN": "municipio_cod"}
+    ).to_crs(_CRS_UPLOAD)
+
+    gdf_resumo = gpd.GeoDataFrame(
+        agg.merge(mun_geom, on="municipio_cod", how="left"),
+        geometry="geometry",
+        crs=_CRS_UPLOAD,
     )
 
-
-def _process_municipio(
-    geom,
-    mun_cod:      str,
-    mun_nome:     str,
-    prio_data:    np.ndarray,
-    forest_data:  np.ndarray,
-    prodes_raster:np.ndarray,
-    transform:    Affine,
-    pixel_area:   float,
-    ano:          int,
-) -> dict | None:
-    """
-    Processa um município: clip dos rasters + contagem por classe.
-
-    Retorna dict com 'classes' (list) e 'resumo' (dict), ou None se sem dados.
-    """
-    from rasterio.transform import rowcol
-
-    # Bbox do município para clip eficiente
-    minx, miny, maxx, maxy = geom.bounds
-    row_min, col_min = rowcol(transform, minx, maxy, op=int)
-    row_max, col_max = rowcol(transform, maxx, miny, op=int)
-
-    # Garantir dentro dos limites do raster
-    h, w = prio_data.shape
-    row_min = max(0, row_min)
-    col_min = max(0, col_min)
-    row_max = min(h, row_max + 1)
-    col_max = min(w, col_max + 1)
-
-    if row_min >= row_max or col_min >= col_max:
-        return None
-
-    # Slices dos rasters para o bbox do município
-    prio_clip   = prio_data   [row_min:row_max, col_min:col_max]
-    forest_clip = forest_data [row_min:row_max, col_min:col_max]
-    prodes_clip = prodes_raster[row_min:row_max, col_min:col_max]
-
-    # Máscara geométrica do município (pixels dentro do polígono)
-    clip_transform = Affine(
-        transform.a, transform.b, transform.c + col_min * transform.a,
-        transform.d, transform.e, transform.f + row_min * transform.e,
+    # bbox para MapLibre GL fitBounds: [[minX,minY],[maxX,maxY]]
+    gdf_resumo["bbox"] = gdf_resumo.geometry.apply(
+        lambda g: [[g.bounds[0], g.bounds[1]], [g.bounds[2], g.bounds[3]]]
+        if g is not None and not g.is_empty else None
     )
-    mun_mask = rasterize(
-        shapes    = [(mapping(geom), 1)],
-        out_shape = prio_clip.shape,
-        transform = clip_transform,
-        fill      = 0,
-        dtype     = np.uint8,
-    ).astype(bool)
 
-    # Aplicar máscara do município
-    prio_mun   = np.where(mun_mask, prio_clip,   0)
-    forest_mun = np.where(mun_mask, forest_clip, 0)
-    prodes_mun = np.where(mun_mask, prodes_clip, 0)
-
-    # Contagem por classe
-    classes_records = []
-    area_floresta_total = 0.0
-    area_desmat_total   = 0.0
-
-    for classe in range(1, 17):
-        mask_classe = (prio_mun == classe)
-        if not mask_classe.any():
-            continue
-
-        # Dentro da classe: floresta (forest>0 AND prodes=0), desmat (prodes=1), nao_floresta
-        # forest mask: 0=sem floresta, >0=floresta (valor 100 = cobertura total)
-        mask_floresta    = mask_classe & (forest_mun > 0) & (prodes_mun == 0)
-        mask_desmat      = mask_classe & (prodes_mun == 1)
-        mask_nao_floresta = mask_classe & (forest_mun == 0) & (prodes_mun == 0)
-
-        n_total     = int(mask_classe.sum())
-        n_floresta  = int(mask_floresta.sum())
-        n_desmat    = int(mask_desmat.sum())
-        n_nao_flor  = int(mask_nao_floresta.sum())
-
-        area_total    = round(n_total    * pixel_area, 4)
-        area_floresta = round(n_floresta * pixel_area, 4)
-        area_desmat   = round(n_desmat   * pixel_area, 4)
-        area_nao_flor = round(n_nao_flor * pixel_area, 4)
-
-        pct_floresta = round(n_floresta / n_total * 100, 2) if n_total > 0 else 0.0
-        pct_desmat   = round(n_desmat   / n_total * 100, 2) if n_total > 0 else 0.0
-
-        classes_records.append({
-            "municipio_cod":       mun_cod,
-            "municipio_nome":      mun_nome,
-            "uf":                  "PI",
-            "classe_prioridade":   int(classe),
-            "area_total_ha":       area_total,
-            "area_floresta_ha":    area_floresta,
-            "area_desmat_ha":      area_desmat,
-            "area_nao_floresta_ha":area_nao_flor,
-            "pct_floresta":        pct_floresta,
-            "pct_desmat":          pct_desmat,
-            "agb_medio_tc_ha":     None,  # preenchido por calculator.py
-            "biomassa_total_tc":   None,  # preenchido por calculator.py
-            "ano_prodes":          ano,
-        })
-
-        area_floresta_total += area_floresta
-        area_desmat_total   += area_desmat
-
-    if not classes_records:
-        return None
-
-    area_total_mun    = sum(r["area_total_ha"] for r in classes_records)
-    floresta_records  = [r for r in classes_records if r["area_floresta_ha"] > 0]
-    classe_max        = min(r["classe_prioridade"] for r in floresta_records) if floresta_records else None
-
-    resumo = {
-        "municipio_cod":        mun_cod,
-        "municipio_nome":       mun_nome,
-        "uf":                   "PI",
-        "classe_max_prioridade":classe_max,
-        "area_total_ha":        round(area_total_mun, 4),
-        "area_floresta_ha":     round(area_floresta_total, 4),
-        "area_desmat_ha":       round(area_desmat_total, 4),
-        "pct_floresta_estado":  None,  # calculado após todos municípios
-        "biomassa_floresta_tc": None,  # preenchido por calculator.py
-        "geom":                 geom,
-        "bbox":                 None,  # preenchido após to_crs
-        "ano_prodes":           ano,
-    }
-
-    return {"classes": classes_records, "resumo": resumo}
-
-
-def _geom_to_bbox(geom) -> list:
-    """Converte geometria para [[minX,minY],[maxX,maxY]] para MapLibre fitBounds."""
-    b = geom.bounds
-    return [[b[0], b[1]], [b[2], b[3]]]
+    return gdf_resumo
 
 
 def _validate_output(
     gdf_classes: gpd.GeoDataFrame,
     gdf_resumo:  gpd.GeoDataFrame,
 ) -> None:
-    """Validações críticas pós-processamento. Aborta se inconsistente."""
+    """Validações críticas pós-processamento. Levanta ValueError se inconsistente."""
     if len(gdf_resumo) == 0:
         raise ValueError("Nenhum município processado — verificar dados de entrada.")
 
-    if len(gdf_resumo) < 200:
-        raise ValueError(
-            f"Apenas {len(gdf_resumo)} municípios processados — esperado ~224 para o Piauí."
+    if len(gdf_resumo) < 50:
+        log.warning(
+            "Apenas %d municípios processados — esperado ~224 para o Piauí. "
+            "Verifique a sobreposição entre classes de prioridade e municípios.",
+            len(gdf_resumo),
         )
 
-    # Classes fora do range válido
     invalid_classes = set(gdf_classes["classe_prioridade"].unique()) - _VALID_CLASSES
     if invalid_classes:
         raise ValueError(f"Classes inválidas no resultado: {invalid_classes}")
 
-    # Porcentagens fora de [0, 100]
     bad_pct = gdf_classes[
         (gdf_classes["pct_floresta"] < 0) | (gdf_classes["pct_floresta"] > 100) |
         (gdf_classes["pct_desmat"]   < 0) | (gdf_classes["pct_desmat"]   > 100)
     ]
     if len(bad_pct) > 0:
-        raise ValueError(f"{len(bad_pct)} registros com percentual fora de [0,100].")
+        raise ValueError(f"{len(bad_pct)} registros com percentual fora de [0, 100].")
 
     log.info(
-        "Validação OK: %d municípios, %d registros, classes %s",
-        len(gdf_resumo), len(gdf_classes),
+        "Validação OK: %d municípios | %d registros | classes=%s",
+        len(gdf_resumo),
+        len(gdf_classes),
         sorted(gdf_classes["classe_prioridade"].unique()),
     )

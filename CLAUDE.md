@@ -24,42 +24,45 @@
 ### Ambiente Python (Miniconda — OBRIGATÓRIO)
 
 ```
-Gerenciador  : Miniconda (C:\miniconda3)
-Ambiente     : geo          ← nome correto do ambiente ativo
-Python       : 3.12.7
+Gerenciador  : Miniconda (C:\Users\MARCO\miniconda3)
+Ambiente     : desmatamento ← nome correto do ambiente ativo
+Python       : 3.11
 ```
 
 | Pacote | Versão | Função |
 |--------|--------|--------|
-| geopandas | 1.1.1 | Operações espaciais |
-| shapely | 2.0.7 | Geometrias vetoriais |
-| fiona | 1.10.1 | Leitura/escrita GeoJSON |
-| pandas | 2.3.3 | Atributos tabulares |
-| numpy | 2.3.4 | Operações numéricas |
-| requests | 2.32.5 | Download IBGE API |
-| supabase | 2.30.0 | Upload Supabase (instalado via pip) |
-| python-dotenv | ok | Leitura do .env |
+| geopandas | 1.1.3 | Operações espaciais + overlay vetorial |
+| shapely | 2.1.2 | Geometrias vetoriais |
+| fiona | 1.10.1 | Leitura/escrita GeoJSON e GPKG |
+| pandas | 3.0.3 | Atributos tabulares |
+| numpy | 2.4.5 | Operações numéricas |
+| rasterio | ≥1.3 | Leitura de rasters (biomassa, vetorização floresta) |
+| rasterstats | ≥0.19 | Zonal stats de biomassa sobre polígonos |
+| requests | 2.34.2 | Download IBGE API |
+| supabase | ≥2.9.0 | Upload Supabase |
+| python-dotenv | ≥1.0.0 | Leitura do .env |
 
 ### Variáveis de ambiente obrigatórias no PowerShell
 ```powershell
 $env:PYTHONUTF8 = "1"   # OBRIGATÓRIO — evita UnicodeEncodeError no console Windows
-$env:GDAL_DATA  = "C:\miniconda3\envs\geo\Library\share\gdal"
-$env:PROJ_LIB   = "C:\miniconda3\envs\geo\Library\share\proj"
+$env:GDAL_DATA  = "C:\Users\MARCO\miniconda3\envs\desmatamento\Library\share\gdal"
+$env:PROJ_LIB   = "C:\Users\MARCO\miniconda3\envs\desmatamento\Library\share\proj"
 ```
 
 ### Execução do pipeline
 ```powershell
-# Opção 1 (recomendada): duplo clique
-rodar_pipeline.ps1
+# Python direto (recomendado no Windows sem conda no PATH):
+$env:PYTHONUTF8="1"
+C:\Users\MARCO\miniconda3\envs\desmatamento\python.exe -m pipeline
 
-# Opção 2 (linha de comando):
-conda activate geo
+# Ou com conda ativado:
+conda activate desmatamento
 python -m pipeline
 ```
 
 **Regra de instalação de pacotes:**
-- Pacotes geoespaciais → `conda install -n geo -c conda-forge <pacote>`
-- supabase-py → `pip install "supabase>=2.9.0" "websockets>=11,<16"` (não disponível no conda-forge com versão compatível)
+- Pacotes geoespaciais → `conda install -n desmatamento -c conda-forge <pacote>`
+- supabase-py → `pip install "supabase>=2.9.0" "websockets>=11,<16"`
 
 ---
 
@@ -407,10 +410,12 @@ export function calcAutTotal(e: { autorizado: number; autorizado_p: number }): n
 | 32 | Módulo `areas_prioritarias` — frontend (5 views + hooks + components) integrado no AppShell/PrimaryRail/Store | **CONCLUÍDO** (2026-05-26) |
 | 33 | Migration 008 v2 corrigida: DETER gap, 5 RPCs, `geom GEOMETRY(GEOMETRY,4326)` | **CONCLUÍDO** (2026-05-27) |
 | 34 | Hooks corrigidos: singleton supabase de `core/lib/supabase.ts`, ano default 2025 | **CONCLUÍDO** (2026-05-27) |
-| 35 | Aplicar migration 008 no Supabase SQL Editor | **PENDENTE** — próximo passo |
-| 36 | Popular banco: executar batch SQLs `_batch_ap_*.sql` no SQL Editor | **PENDENTE** — após tarefa 35 |
-| 37 | QA pós-upload: testar 5 views, EXPLAIN ANALYZE nas RPCs, validar mapa coroplético | **PENDENTE** |
-| 38 | Setar `manifest.enabled = True` + commit + PR feature/areas-prioritarias → main | **PENDENTE** |
+| 35 | Migration 010_areas_prioritarias_v3_upgrade aplicada: constraints 1..5, prioridade_label, agb_medio_tc_ha, 5 RPCs v3 | **CONCLUÍDO** (2026-05-29) |
+| 36 | rasterio 1.4.4 + rasterstats 0.21.0 já instalados no env desmatamento | **CONCLUÍDO** (2026-05-29) |
+| 37 | floresta_2025.gpkg gerado com dissolve (96k patches → ~1k polígonos contíguos) | **CONCLUÍDO** (2026-05-29) |
+| 38 | Executar pipeline: `python -m core.orchestrator --module areas_prioritarias --ano 2025` | **PENDENTE** |
+| 39 | QA pós-upload: testar 5 tabs (incl. BiomassaView), EXPLAIN ANALYZE nas RPCs | **PENDENTE** |
+| 40 | Commit + PR feature/areas-prioritarias-v3 → main | **PENDENTE** |
 
 ---
 
@@ -592,43 +597,51 @@ Gerados de `Resultado/alertas_classificados.geojson` em 2026-05-21. Regenerar vi
 ## 18. MÓDULO ÁREAS PRIORITÁRIAS — DECISÕES TÉCNICAS
 
 ### Stack e localização
-- **Backend**: `modules/areas_prioritarias/` — manifest, downloader, processor, calculator
-- **Frontend**: `frontend/src/modules/areas_prioritarias/` — 5 views, 4 hooks, 4 components
-- **Migration**: `infra/supabase/migrations/008_areas_prioritarias.sql` (v2)
+- **Backend**: `modules/areas_prioritarias/` — manifest, downloader, processor, calculator, vectorize_forest
+- **Frontend**: `frontend/src/modules/areas_prioritarias/` — 5 views (incl. BiomassaView), hooks, components
+- **Migration**: `infra/supabase/migrations/008_areas_prioritarias.sql` (v3 — 5 classes)
 
-### Raster de entrada (local — não versionado)
-- `16_prioridade_classes_final.tif` — CRS ESRI:102033, valores 1–5 (não 16), nodata=0
-- `Mascara_de_floresta_2025.tif` — CRS EPSG:4674, valores 0 e 100 (comparar com `> 0`)
+### Dados locais (não versionados — caminhos absolutos)
+```
+C:/11. REDD+/16_prioridade_classes_final/classes_prioritarias.gpkg  ← 5 classes GPKG (DN 1–5)
+C:/11. REDD+/Forest_mask/floresta_2025.gpkg                         ← vetorizado (gerar uma vez)
+C:/11. REDD+/Biomass_rasters/Biomass_rasters/{agb,bgb,dw,litter}.tif ← biomassa via rasterstats
+C:/9.1 Monitoramento.../PRODES/Resultado/prodes_classificados.geojson ← PRODES local (não WFS)
+```
+Para gerar `floresta_2025.gpkg`: `python -m modules.areas_prioritarias.vectorize_forest`
 
-### Estrutura da RPC `get_ap_visao_geral`
+### Pipeline vetorial (v3 — não pixel-counting)
+```
+gpd.overlay(classes_gpkg, municipios) → ~1120 células
+gpd.overlay(células, floresta_gpkg)   → area_floresta_ha
+gpd.overlay(células, prodes[ano])     → area_desmat_ha
+rasterstats.zonal_stats(células.geom, agb.tif) → agb_medio_tc_ha
+```
+
+### Estrutura da RPC `get_ap_visao_geral` (v3)
 ```json
 {
-  "periodo_cobertura": { ... },
   "kpis": {
-    "prodes": { "area_floresta_total_ha", "area_desmat_total_ha", "pct_desmat_estado", "total_municipios", "biomassa_total_tc" },
+    "prodes": { "...", "biomassa_total_tc", "n_municipios_classe_max" },
     "deter":  { "area_alertas_ha", "n_municipios_com_alerta", "disponivel" }
   },
-  "por_classe": [ { "classe_prioridade", "area_floresta_ha", "area_desmat_ha", "ha_deter_recente", ... } ]
+  "por_classe": [ { "classe_prioridade", "prioridade_label", "area_floresta_ha", ... } ]
 }
 ```
-**NUNCA** acessar `kpis.area_floresta_total_ha` diretamente — acesso correto: `kpis.prodes.area_floresta_total_ha`.
+Acesso correto: `kpis.prodes.area_floresta_total_ha` (NUNCA `kpis.area_floresta_total_ha`).
 
 ### Coluna geom
-- `ap_municipios_resumo.geom` é `GEOMETRY(GEOMETRY, 4326)` (não MULTIPOLYGON)
-- Aceita tanto POLYGON quanto MULTIPOLYGON — municípios do PI são majoritariamente simples (POLYGON)
+`ap_municipios_resumo.geom` = `GEOMETRY(GEOMETRY, 4326)` — aceita POLYGON e MULTIPOLYGON.
 
-### Dados disponíveis
-- `ano_prodes = 2025` — único ano com dados (dry_run executado em 2026-05-26)
-- 224 municípios, 1097 registros em `ap_classes_municipio`
-- Batch SQLs pré-gerados em `C:\11. REDD+\_batch_ap_*.sql` (17 arquivos)
-
-### Passos para popular o Supabase (quando executar)
-1. Supabase SQL Editor → Executar `infra/supabase/migrations/008_areas_prioritarias.sql`
-2. Executar na ordem: `_batch_ap_classes_municipio_00.sql` … `_10.sql` (11 arquivos)
-3. Executar: `_batch_ap_municipios_resumo_00.sql` … `_04.sql` (5 arquivos)
-4. Executar: `_batch_ap_execucoes_00.sql` (1 arquivo)
-5. Verificar: `SELECT COUNT(*) FROM ap_classes_municipio` → esperado ~1097
+### Passos para popular o Supabase
+1. ~~Supabase SQL Editor → Aplicar migration v3~~ **CONCLUÍDO** via migration 010 (2026-05-29)
+   - Tabelas truncadas, constraints 1..5, colunas v3 adicionadas, 5 RPCs atualizadas
+2. Instalar rasterio + rasterstats: `conda install -n desmatamento -c conda-forge rasterio rasterstats`
+3. Gerar floresta vetorial: `python -m modules.areas_prioritarias.vectorize_forest` (uma vez)
+4. Executar pipeline: `python -m pipeline` (com config `ano=2025`)
+5. Verificar: `SELECT COUNT(*) FROM ap_classes_municipio` → esperado ~1000–1120
+Os antigos batch SQLs `_batch_ap_*.sql` em `C:\11. REDD+\` são obsoletos (baseados no raster antigo).
 
 ---
 
-*Última atualização: 2026-05-27 | Pipeline v2 | 9/9 testes OK | 6 abas + áreas prioritárias AO VIVO (pendente Supabase) | Migration 008 v2 pronta | CI/CD 5 workflows OK | Prefect 3 deployments | repo GitHub publicado | dados brutos em MARCO*
+*Última atualização: 2026-05-29 | Pipeline v3 | 20/20 testes OK | 6 abas + áreas prioritárias 5 tabs | Migration 010 aplicada ao Supabase | floresta_2025.gpkg gerado (dissolve: 96k→~1k polígonos) | Frontend build OK (906 módulos, 0 erros) | env: desmatamento (Python 3.11) | Próximo: python -m core.orchestrator --module areas_prioritarias --ano 2025 (upload real)*

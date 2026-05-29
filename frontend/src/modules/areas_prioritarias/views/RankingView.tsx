@@ -1,8 +1,10 @@
 // @ts-nocheck
 /**
- * RankingView.tsx
- * Tabela de ranking de municípios ordenável por qualquer coluna.
- * Clique na linha navega para MunicipalView com o município selecionado.
+ * RankingView.tsx — Tab Ranking (areas_prioritarias)
+ * Tabela de ranking municipal ordenável. Clique na linha → Tab Municipal.
+ *
+ * Responde à Questão 4: "Quais municípios priorizar primeiro?"
+ * Colunas: Município | Área Total | Floresta | Desmatado | AGB Médio | % Floresta | Classe máx.
  */
 import React, { useState } from 'react'
 import { useAppStore } from '../../../core/store/useAppStore'
@@ -15,6 +17,9 @@ type OrderBy =
   | 'area_desmat_ha'
   | 'pct_floresta_estado'
   | 'classe_max_prioridade'
+  | 'biomassa_floresta_tc'
+  | 'agb_medio_tc_ha'
+  | 'ha_deter_recente'
   | 'municipio_nome'
 
 const COL_LABELS: Record<OrderBy, string> = {
@@ -22,6 +27,9 @@ const COL_LABELS: Record<OrderBy, string> = {
   area_desmat_ha:         'Desmatado (ha)',
   pct_floresta_estado:    '% Floresta PI',
   classe_max_prioridade:  'Classe máx.',
+  biomassa_floresta_tc:   'Biomassa (tC)',
+  agb_medio_tc_ha:        'AGB Médio',
+  ha_deter_recente:       'DETER (ha)',
   municipio_nome:         'Município',
 }
 
@@ -29,9 +37,9 @@ export function RankingView() {
   const [orderBy, setOrderBy] = useState<OrderBy>('area_floresta_ha')
   const [search,  setSearch]  = useState('')
 
-  const anoFiltro          = useAppStore((s) => s.anoFiltro)
+  const anoFiltro            = useAppStore((s) => s.anoFiltro)
   const setSelectedMunicipio = useAppStore((s) => s.setSelectedMunicipio)
-  const setActiveView      = useAppStore((s) => s.setActiveView)
+  const setActiveView        = useAppStore((s) => s.setActiveView)
 
   const { data: ranking, isLoading } = useRanking(anoFiltro, orderBy)
 
@@ -41,18 +49,31 @@ export function RankingView() {
 
   function handleRowClick(m: MunicipioResumo) {
     setSelectedMunicipio({ cod: m.municipio_cod, nome: m.municipio_nome, bbox: m.bbox })
-    setActiveView('municipal')  // navegar para o mapa municipal
+    setActiveView('municipal')
   }
 
-  if (isLoading) return <div className="p-4">Carregando ranking...</div>
+  function SortTh({
+    col, children,
+  }: { col: OrderBy; children: React.ReactNode }) {
+    return (
+      <th
+        className="text-right p-2 font-medium cursor-pointer hover:text-blue-600 whitespace-nowrap"
+        onClick={() => setOrderBy(col)}
+      >
+        {children} {orderBy === col && '↓'}
+      </th>
+    )
+  }
+
+  if (isLoading) return <div className="p-4 text-sm text-gray-500">Carregando ranking…</div>
 
   return (
     <div className="flex flex-col h-full p-4 gap-3">
       {/* Controles */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <input
           type="text"
-          placeholder="Buscar município..."
+          placeholder="Buscar município…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="border border-gray-200 rounded px-2 py-1 text-sm flex-1 max-w-xs"
@@ -86,15 +107,13 @@ export function RankingView() {
               >
                 Município {orderBy === 'municipio_nome' && '↑'}
               </th>
-              {(['area_floresta_ha', 'area_desmat_ha', 'pct_floresta_estado', 'classe_max_prioridade'] as OrderBy[]).map((col) => (
-                <th
-                  key={col}
-                  className="text-right p-2 font-medium cursor-pointer hover:text-blue-600 whitespace-nowrap"
-                  onClick={() => setOrderBy(col)}
-                >
-                  {COL_LABELS[col]} {orderBy === col && '↓'}
-                </th>
-              ))}
+              <SortTh col="area_floresta_ha">Floresta (ha)</SortTh>
+              <SortTh col="area_desmat_ha">Desmatado (ha)</SortTh>
+              <SortTh col="agb_medio_tc_ha">AGB (tC/ha)</SortTh>
+              <SortTh col="biomassa_floresta_tc">Biomassa (tC)</SortTh>
+              <SortTh col="ha_deter_recente">DETER (ha)</SortTh>
+              <SortTh col="pct_floresta_estado">% Floresta PI</SortTh>
+              <SortTh col="classe_max_prioridade">Classe máx.</SortTh>
             </tr>
           </thead>
           <tbody>
@@ -103,27 +122,41 @@ export function RankingView() {
                 key={m.municipio_cod}
                 className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer"
                 onClick={() => handleRowClick(m)}
-                title="Clique para ver no mapa"
+                title="Clique para ver no mapa municipal"
               >
                 <td className="p-2 text-gray-400">{i + 1}</td>
                 <td className="p-2 font-medium text-blue-700">{m.municipio_nome}</td>
                 <td className="p-2 text-right text-green-700">
-                  {m.area_floresta_ha.toLocaleString('pt-BR')}
+                  {m.area_floresta_ha?.toLocaleString('pt-BR')}
                 </td>
                 <td className="p-2 text-right text-red-700">
-                  {m.area_desmat_ha.toLocaleString('pt-BR')}
+                  {m.area_desmat_ha?.toLocaleString('pt-BR')}
+                </td>
+                <td className="p-2 text-right text-amber-700">
+                  {m.agb_medio_tc_ha != null
+                    ? `${Number(m.agb_medio_tc_ha).toFixed(1)}`
+                    : '—'}
+                </td>
+                <td className="p-2 text-right text-emerald-700">
+                  {m.biomassa_floresta_tc != null
+                    ? Number(m.biomassa_floresta_tc).toLocaleString('pt-BR')
+                    : '—'}
+                </td>
+                <td className="p-2 text-right text-orange-600">
+                  {m.ha_deter_recente
+                    ? Number(m.ha_deter_recente).toLocaleString('pt-BR')
+                    : '—'}
                 </td>
                 <td className="p-2 text-right">
-                  {m.pct_floresta_estado.toFixed(2)}%
+                  {m.pct_floresta_estado?.toFixed(2)}%
                 </td>
-                <td className="p-2 text-right font-medium">
+                <td className="p-2 text-right">
                   <span
                     className="inline-block px-1.5 py-0.5 rounded text-white text-xs font-semibold"
                     style={{
                       backgroundColor: m.classe_max_prioridade
                         ? CLASSE_COLORS[m.classe_max_prioridade]
                         : '#ccc',
-                      // texto escuro apenas para classe 2 (amarelo claro)
                       color: m.classe_max_prioridade === 2 ? '#374151' : 'white',
                     }}
                   >

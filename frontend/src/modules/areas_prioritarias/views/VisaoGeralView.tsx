@@ -1,7 +1,7 @@
 // @ts-nocheck
 /**
  * VisaoGeralView.tsx
- * Panorama do estado: mapa coroplético das 16 classes por município + KPIs.
+ * Panorama do estado: mapa coroplético das 5 classes de prioridade por município + KPIs.
  * Mapa leve — sem rasters, só GeoJSON municipal simplificado.
  */
 import React, { useRef, useEffect } from 'react'
@@ -115,7 +115,7 @@ export function VisaoGeralView() {
   return (
     <div className="flex flex-col h-full gap-4 p-4">
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <KpiCard
           label="Floresta remanescente"
           value={loadingKpis ? '...' : `${kpis?.area_floresta_total_ha?.toLocaleString('pt-BR')} ha`}
@@ -128,6 +128,11 @@ export function VisaoGeralView() {
           label="% Desmatamento PI"
           value={loadingKpis ? '...' : `${kpis?.pct_desmat_estado?.toFixed(2)}%`}
           sub="do total de floresta"
+        />
+        <KpiCard
+          label="Municípios Classe 5"
+          value={loadingKpis ? '...' : `${kpis?.n_municipios_classe_max ?? '—'}`}
+          sub="com floresta em área muito alta"
         />
         <KpiCard
           label="Alertas DETER gap"

@@ -1,149 +1,111 @@
--- Migration 008 — Módulo areas_prioritarias v3
--- Programa Jurisdicional REDD+ Piauí
--- v3: 5 classes (não 16), prioridade_label, agb_medio_tc_ha em resumo,
---     n_municipios_classe_max em visao_geral, biomassa em geojson.
--- Segue padrões de 001_schema_inicial.sql
+-- Migration 010 — areas_prioritarias v3 upgrade
+-- Upgrade from v2 (raster pixel-counting, <=16 classes) to v3 (vector overlay, 5 classes).
+-- Applied: 2026-05-29
+-- Safe to re-run: uses IF EXISTS / IF NOT EXISTS guards throughout.
+--
+-- Changes applied:
+--   1. TRUNCATE old raster data (incompatible with 5-class constraint)
+--   2. Fix constraint chk_classe_prioridade: <= 16 → BETWEEN 1 AND 5
+--   3. Fix constraint chk_resumo_classe: <= 16 → BETWEEN 1 AND 5
+--   4. ADD COLUMN prioridade_label to ap_classes_municipio
+--   5. ADD COLUMN agb_medio_tc_ha, biomassa_total_tc to ap_classes_municipio (if missing)
+--   6. ADD COLUMN agb_medio_tc_ha, biomassa_floresta_tc to ap_municipios_resumo (if missing)
+--   7. ADD sanity constraints for new AGB columns (guarded via DO block)
+--   8. CREATE INDEX for biomassa and deter (IF NOT EXISTS)
+--   9. CREATE OR REPLACE all 5 RPC functions (v3)
+--  10. Update COMMENTs
 
 -- ============================================================
--- TABELA PRINCIPAL: cruzamento município × classe × área
+-- 1. TRUNCATE old v2 raster data
 -- ============================================================
-CREATE TABLE IF NOT EXISTS ap_classes_municipio (
-    municipio_cod        TEXT          NOT NULL,
-    municipio_nome       TEXT          NOT NULL,
-    uf                   TEXT          NOT NULL DEFAULT 'PI',
-    classe_prioridade    SMALLINT      NOT NULL,
-    prioridade_label     TEXT,                   -- 'Muito Baixo'..'Muito Alto'
-    area_total_ha        NUMERIC(12,4) NOT NULL,
-    area_floresta_ha     NUMERIC(12,4) NOT NULL,
-    area_desmat_ha       NUMERIC(12,4) NOT NULL,
-    area_nao_floresta_ha NUMERIC(12,4) NOT NULL,
-    pct_floresta         NUMERIC(6,2),
-    pct_desmat           NUMERIC(6,2),
-    ha_deter_recente     NUMERIC(12,4),           -- alertas DETER gap pós-PRODES, nullable
-    agb_medio_tc_ha      NUMERIC(8,3),            -- AGB médio na interseção classe×município
-    biomassa_total_tc    NUMERIC(12,4),           -- agb_medio × area_floresta_ha
-    ano_prodes           SMALLINT      NOT NULL,
-    created_at           TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-
-    CONSTRAINT ap_classes_municipio_pkey
-        PRIMARY KEY (municipio_cod, classe_prioridade, ano_prodes),
-
-    CONSTRAINT chk_classe_prioridade
-        CHECK (classe_prioridade BETWEEN 1 AND 5),
-
-    CONSTRAINT chk_ano_prodes
-        CHECK (ano_prodes BETWEEN 2000 AND 2099),
-
-    CONSTRAINT chk_areas_positivas
-        CHECK (
-            area_total_ha        >= 0
-            AND area_floresta_ha     >= 0
-            AND area_desmat_ha       >= 0
-            AND area_nao_floresta_ha >= 0
-        ),
-
-    CONSTRAINT chk_pct_floresta
-        CHECK (pct_floresta IS NULL OR pct_floresta BETWEEN 0 AND 100),
-
-    CONSTRAINT chk_pct_desmat
-        CHECK (pct_desmat IS NULL OR pct_desmat BETWEEN 0 AND 100),
-
-    CONSTRAINT chk_ha_deter_positivo
-        CHECK (ha_deter_recente IS NULL OR ha_deter_recente >= 0),
-
-    CONSTRAINT chk_agb_sanidade
-        CHECK (agb_medio_tc_ha IS NULL OR agb_medio_tc_ha BETWEEN 0 AND 1000)
-);
+TRUNCATE ap_classes_municipio, ap_municipios_resumo, ap_execucoes CASCADE;
 
 -- ============================================================
--- TABELA RESUMO: uma linha por município (mapa + ranking)
--- Usa GEOMETRY(GEOMETRY) para aceitar POLYGON e MULTIPOLYGON.
+-- 2. Fix ap_classes_municipio: constraint 1..5
 -- ============================================================
-CREATE TABLE IF NOT EXISTS ap_municipios_resumo (
-    municipio_cod         TEXT          PRIMARY KEY,
-    municipio_nome        TEXT          NOT NULL,
-    uf                    TEXT          NOT NULL DEFAULT 'PI',
-    classe_max_prioridade SMALLINT,
-    area_total_ha         NUMERIC(12,4),
-    area_floresta_ha      NUMERIC(12,4),
-    area_desmat_ha        NUMERIC(12,4),
-    ha_deter_recente      NUMERIC(12,4),           -- soma alertas DETER gap, nullable
-    pct_floresta_estado   NUMERIC(6,2),            -- % da floresta total do PI
-    biomassa_floresta_tc  NUMERIC(12,4),           -- soma biomassa_total_tc das classes
-    agb_medio_tc_ha       NUMERIC(8,3),            -- AGB médio ponderado (nova — Tab Biomassa)
-    geom                  GEOMETRY(GEOMETRY, 4326), -- POLYGON ou MULTIPOLYGON
-    bbox                  JSONB,                   -- [[minX,minY],[maxX,maxY]] MapLibre
-    ano_prodes            SMALLINT      NOT NULL,
-    created_at            TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+ALTER TABLE ap_classes_municipio
+    DROP CONSTRAINT IF EXISTS chk_classe_prioridade;
 
-    CONSTRAINT chk_resumo_classe
-        CHECK (classe_max_prioridade IS NULL OR classe_max_prioridade BETWEEN 1 AND 5),
-
-    CONSTRAINT chk_resumo_pct
-        CHECK (pct_floresta_estado IS NULL OR pct_floresta_estado BETWEEN 0 AND 100),
-
-    CONSTRAINT chk_resumo_ha_deter
-        CHECK (ha_deter_recente IS NULL OR ha_deter_recente >= 0),
-
-    CONSTRAINT chk_resumo_agb
-        CHECK (agb_medio_tc_ha IS NULL OR agb_medio_tc_ha BETWEEN 0 AND 1000)
-);
+ALTER TABLE ap_classes_municipio
+    ADD CONSTRAINT chk_classe_prioridade
+        CHECK (classe_prioridade BETWEEN 1 AND 5);
 
 -- ============================================================
--- TABELA AUDITORIA: log de execuções + rastreabilidade temporal
+-- 3. Fix ap_municipios_resumo: constraint 1..5
 -- ============================================================
-CREATE TABLE IF NOT EXISTS ap_execucoes (
-    id                     UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
-    modulo                 TEXT          NOT NULL DEFAULT 'areas_prioritarias',
-    status                 TEXT          NOT NULL,
-    ano_prodes             SMALLINT,
-    total_municipios       INTEGER,
-    total_registros        INTEGER,
-    duracao_segundos       NUMERIC(10,2),
-    -- Rastreabilidade PRODES
-    image_date_min         DATE,
-    image_date_max         DATE,
-    data_referencia_prodes DATE,
-    -- Cobertura DETER gap
-    deter_gap_inicio       DATE,
-    deter_gap_fim          DATE,
-    fonte_complementar     TEXT,
-    detalhes               JSONB,
-    executado_em           TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+ALTER TABLE ap_municipios_resumo
+    DROP CONSTRAINT IF EXISTS chk_resumo_classe;
 
-    CONSTRAINT chk_execucao_status
-        CHECK (status IN ('sucesso', 'erro', 'parcial', 'dry_run')),
-
-    CONSTRAINT chk_fonte_complementar
-        CHECK (fonte_complementar IS NULL OR fonte_complementar IN ('DETER'))
-);
+ALTER TABLE ap_municipios_resumo
+    ADD CONSTRAINT chk_resumo_classe
+        CHECK (classe_max_prioridade IS NULL OR classe_max_prioridade BETWEEN 1 AND 5);
 
 -- ============================================================
--- ÍNDICES
+-- 4-6. ADD new columns (IF NOT EXISTS — safe to re-run)
 -- ============================================================
 
-CREATE INDEX IF NOT EXISTS idx_ap_classes_municipio_cod
-    ON ap_classes_municipio (municipio_cod);
+-- ap_classes_municipio
+ALTER TABLE ap_classes_municipio
+    ADD COLUMN IF NOT EXISTS prioridade_label  TEXT,
+    ADD COLUMN IF NOT EXISTS agb_medio_tc_ha   NUMERIC(8,3),
+    ADD COLUMN IF NOT EXISTS biomassa_total_tc  NUMERIC(12,4),
+    ADD COLUMN IF NOT EXISTS ha_deter_recente   NUMERIC(12,4);
 
-CREATE INDEX IF NOT EXISTS idx_ap_classes_ano
-    ON ap_classes_municipio (ano_prodes);
+-- ap_municipios_resumo
+ALTER TABLE ap_municipios_resumo
+    ADD COLUMN IF NOT EXISTS agb_medio_tc_ha      NUMERIC(8,3),
+    ADD COLUMN IF NOT EXISTS biomassa_floresta_tc  NUMERIC(12,4),
+    ADD COLUMN IF NOT EXISTS ha_deter_recente      NUMERIC(12,4);
 
-CREATE INDEX IF NOT EXISTS idx_ap_classes_classe
-    ON ap_classes_municipio (classe_prioridade);
+-- ============================================================
+-- 7. Sanity constraints for new columns (guarded via DO block)
+-- ============================================================
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE table_name = 'ap_classes_municipio'
+          AND constraint_name = 'chk_agb_sanidade'
+    ) THEN
+        ALTER TABLE ap_classes_municipio
+            ADD CONSTRAINT chk_agb_sanidade
+                CHECK (agb_medio_tc_ha IS NULL OR agb_medio_tc_ha BETWEEN 0 AND 1000);
+    END IF;
 
-CREATE INDEX IF NOT EXISTS idx_ap_classes_composto
-    ON ap_classes_municipio (ano_prodes, classe_prioridade);
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE table_name = 'ap_classes_municipio'
+          AND constraint_name = 'chk_ha_deter_positivo'
+    ) THEN
+        ALTER TABLE ap_classes_municipio
+            ADD CONSTRAINT chk_ha_deter_positivo
+                CHECK (ha_deter_recente IS NULL OR ha_deter_recente >= 0);
+    END IF;
 
-CREATE INDEX IF NOT EXISTS idx_ap_classes_deter_ativo
-    ON ap_classes_municipio (ano_prodes, municipio_cod)
-    WHERE ha_deter_recente IS NOT NULL AND ha_deter_recente > 0;
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE table_name = 'ap_municipios_resumo'
+          AND constraint_name = 'chk_resumo_agb'
+    ) THEN
+        ALTER TABLE ap_municipios_resumo
+            ADD CONSTRAINT chk_resumo_agb
+                CHECK (agb_medio_tc_ha IS NULL OR agb_medio_tc_ha BETWEEN 0 AND 1000);
+    END IF;
 
-CREATE INDEX IF NOT EXISTS idx_ap_resumo_geom
-    ON ap_municipios_resumo USING GIST (geom);
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE table_name = 'ap_municipios_resumo'
+          AND constraint_name = 'chk_resumo_ha_deter'
+    ) THEN
+        ALTER TABLE ap_municipios_resumo
+            ADD CONSTRAINT chk_resumo_ha_deter
+                CHECK (ha_deter_recente IS NULL OR ha_deter_recente >= 0);
+    END IF;
+END $$;
 
-CREATE INDEX IF NOT EXISTS idx_ap_resumo_classe_max
-    ON ap_municipios_resumo (classe_max_prioridade);
-
+-- ============================================================
+-- 8. Índices (IF NOT EXISTS — idempotente)
+-- ============================================================
 CREATE INDEX IF NOT EXISTS idx_ap_resumo_biomassa
     ON ap_municipios_resumo (biomassa_floresta_tc DESC NULLS LAST);
 
@@ -151,28 +113,12 @@ CREATE INDEX IF NOT EXISTS idx_ap_resumo_deter_ativo
     ON ap_municipios_resumo (ano_prodes, ha_deter_recente DESC NULLS LAST)
     WHERE ha_deter_recente IS NOT NULL AND ha_deter_recente > 0;
 
-CREATE INDEX IF NOT EXISTS idx_ap_execucoes_ano_status
-    ON ap_execucoes (ano_prodes, status, executado_em DESC);
+CREATE INDEX IF NOT EXISTS idx_ap_classes_deter_ativo
+    ON ap_classes_municipio (ano_prodes, municipio_cod)
+    WHERE ha_deter_recente IS NOT NULL AND ha_deter_recente > 0;
 
 -- ============================================================
--- ROW LEVEL SECURITY
--- ============================================================
-
-ALTER TABLE ap_classes_municipio   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ap_municipios_resumo   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ap_execucoes           ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "leitura_publica_ap_classes"
-    ON ap_classes_municipio FOR SELECT USING (true);
-
-CREATE POLICY "leitura_publica_ap_resumo"
-    ON ap_municipios_resumo FOR SELECT USING (true);
-
-CREATE POLICY "leitura_publica_ap_execucoes"
-    ON ap_execucoes FOR SELECT USING (true);
-
--- ============================================================
--- RPC: get_ap_periodo_cobertura
+-- 9. RPC v3: get_ap_periodo_cobertura
 -- ============================================================
 CREATE OR REPLACE FUNCTION get_ap_periodo_cobertura(p_ano SMALLINT DEFAULT 2025)
 RETURNS JSON
@@ -198,7 +144,7 @@ AS $$
 $$;
 
 -- ============================================================
--- RPC: get_ap_visao_geral — KPIs estado + distribuição por classe
+-- RPC v3: get_ap_visao_geral — KPIs estado + distribuição por classe
 -- Inclui n_municipios_classe_max (classe 5 = Muito Alto).
 -- ============================================================
 CREATE OR REPLACE FUNCTION get_ap_visao_geral(p_ano SMALLINT DEFAULT 2025)
@@ -263,7 +209,7 @@ AS $$
 $$;
 
 -- ============================================================
--- RPC: get_ap_municipio_detalhe
+-- RPC v3: get_ap_municipio_detalhe
 -- ============================================================
 CREATE OR REPLACE FUNCTION get_ap_municipio_detalhe(
     p_cod TEXT,
@@ -303,7 +249,7 @@ AS $$
 $$;
 
 -- ============================================================
--- RPC: get_ap_ranking — ranking de municípios ordenável
+-- RPC v3: get_ap_ranking — ranking de municípios ordenável
 -- ============================================================
 CREATE OR REPLACE FUNCTION get_ap_ranking(
     p_limit   INTEGER  DEFAULT 224,
@@ -359,7 +305,7 @@ END;
 $$;
 
 -- ============================================================
--- RPC: get_ap_geojson — GeoJSON para PrioridadeMap e BiomassaMap
+-- RPC v3: get_ap_geojson — GeoJSON para PrioridadeMap e BiomassaMap
 -- Inclui agb_medio_tc_ha e biomassa_total_tc para Tab Biomassa.
 -- ============================================================
 CREATE OR REPLACE FUNCTION get_ap_geojson(
@@ -401,7 +347,7 @@ AS $$
 $$;
 
 -- ============================================================
--- COMENTÁRIOS
+-- 10. COMMENTs v3
 -- ============================================================
 COMMENT ON TABLE ap_classes_municipio IS
     'Cruzamento PRODES × 5 classes de prioridade por município — REDD+ Piauí v3.
