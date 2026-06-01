@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * useMunicipioSelect.ts
  * Encapsula a lógica de seleção de município:
@@ -6,13 +5,14 @@
  *   - Aciona fitBounds no mapa MapLibre GL
  *   - Filtra features para mostrar só o selecionado
  */
-import { useCallback, useRef } from 'react'
-import type { Map as MapLibreMap } from 'maplibre-gl'
+import { useCallback } from 'react'
+import type { RefObject } from 'react'
+import type { Map as MapLibreMap, LngLatBoundsLike } from 'maplibre-gl'
 import { useAppStore } from '../../../core/store/useAppStore'
-import type { MunicipioSelecionado, BBox } from '../types'
+import type { MunicipioSelecionado } from '../types'
 import { LAYER_IDS } from '../types'
 
-export function useMunicipioSelect(mapRef: React.RefObject<MapLibreMap | null>) {
+export function useMunicipioSelect(mapRef: RefObject<MapLibreMap | null>) {
   const setSelectedMunicipio = useAppStore((s) => s.setSelectedMunicipio)
   const setActiveLayerIds    = useAppStore((s) => s.setActiveLayerIds)
   const activeLayerIds       = useAppStore((s) => s.activeLayerIds)
@@ -26,7 +26,7 @@ export function useMunicipioSelect(mapRef: React.RefObject<MapLibreMap | null>) 
       setSelectedMunicipio(municipio)
 
       // 2. Zoom fitBounds com animação
-      map.fitBounds(municipio.bbox as [[number,number],[number,number]], {
+      map.fitBounds(municipio.bbox as LngLatBoundsLike, {
         padding:  { top: 60, bottom: 60, left: 60, right: 60 },
         duration: 800,
         maxZoom:  13,
@@ -64,7 +64,7 @@ export function useMunicipioSelect(mapRef: React.RefObject<MapLibreMap | null>) 
 
     // Voltar ao extent do Piauí
     map.fitBounds(
-      [[-45.9, -10.95], [-40.37, -2.74]],  // bbox Piauí
+      [[-45.9, -10.95], [-40.37, -2.74]] as LngLatBoundsLike,
       { padding: 40, duration: 600 },
     )
   }, [mapRef, setSelectedMunicipio])

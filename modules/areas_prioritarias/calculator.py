@@ -75,16 +75,16 @@ def calculate_and_upload(
 
     log.info("Enviando ap_classes_municipio (%d registros)...", len(df_classes))
     upload_json(
-        records         = df_classes.to_dict("records"),
-        table           = "ap_classes_municipio",
-        conflict_column = "municipio_cod,classe_prioridade,ano_prodes",
+        data         = df_classes.to_dict("records"),
+        table        = "ap_classes_municipio",
+        conflict_col = "municipio_cod,classe_prioridade,ano_prodes",
     )
 
     log.info("Enviando ap_municipios_resumo (%d registros)...", len(gdf_resumo_upload))
     upload_geodataframe(
-        gdf             = gdf_resumo_upload,
-        table           = "ap_municipios_resumo",
-        conflict_column = "municipio_cod",
+        gdf          = gdf_resumo_upload,
+        table        = "ap_municipios_resumo",
+        conflict_col = "municipio_cod",
     )
 
     log.info("Upload concluído.")

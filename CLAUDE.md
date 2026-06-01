@@ -412,10 +412,10 @@ export function calcAutTotal(e: { autorizado: number; autorizado_p: number }): n
 | 34 | Hooks corrigidos: singleton supabase de `core/lib/supabase.ts`, ano default 2025 | **CONCLUÍDO** (2026-05-27) |
 | 35 | Migration 010_areas_prioritarias_v3_upgrade aplicada: constraints 1..5, prioridade_label, agb_medio_tc_ha, 5 RPCs v3 | **CONCLUÍDO** (2026-05-29) |
 | 36 | rasterio 1.4.4 + rasterstats 0.21.0 já instalados no env desmatamento | **CONCLUÍDO** (2026-05-29) |
-| 37 | floresta_2025.gpkg gerado com dissolve (96k patches → ~1k polígonos contíguos) | **CONCLUÍDO** (2026-05-29) |
-| 38 | Executar pipeline: `python -m core.orchestrator --module areas_prioritarias --ano 2025` | **PENDENTE** |
+| 37 | floresta_2025.gpkg gerado (display GIS only — pipeline usa TIF direto via rasterstats) | **CONCLUÍDO** (2026-05-29) |
+| 38 | Executar pipeline real: `python -m core.orchestrator --module areas_prioritarias --ano 2025` | **EM ANDAMENTO** (2026-05-29) |
 | 39 | QA pós-upload: testar 5 tabs (incl. BiomassaView), EXPLAIN ANALYZE nas RPCs | **PENDENTE** |
-| 40 | Commit + PR feature/areas-prioritarias-v3 → main | **PENDENTE** |
+| 40 | Commit + PR feature/areas-prioritarias-v3 → main | **CONCLUÍDO** (2026-05-29) |
 
 ---
 
@@ -636,12 +636,13 @@ Acesso correto: `kpis.prodes.area_floresta_total_ha` (NUNCA `kpis.area_floresta_
 ### Passos para popular o Supabase
 1. ~~Supabase SQL Editor → Aplicar migration v3~~ **CONCLUÍDO** via migration 010 (2026-05-29)
    - Tabelas truncadas, constraints 1..5, colunas v3 adicionadas, 5 RPCs atualizadas
-2. Instalar rasterio + rasterstats: `conda install -n desmatamento -c conda-forge rasterio rasterstats`
-3. Gerar floresta vetorial: `python -m modules.areas_prioritarias.vectorize_forest` (uma vez)
-4. Executar pipeline: `python -m pipeline` (com config `ano=2025`)
-5. Verificar: `SELECT COUNT(*) FROM ap_classes_municipio` → esperado ~1000–1120
+2. ~~Instalar rasterio + rasterstats~~ **CONCLUÍDO** — rasterio 1.4.4 + rasterstats 0.21.0 já instalados
+3. ~~Gerar floresta vetorial~~ **CONCLUÍDO** — floresta_2025.gpkg gerado (display GIS; pipeline usa TIF)
+4. ~~Executar pipeline dry-run~~ **CONCLUÍDO** (2026-05-29) — 1097 células, 224 municípios, ~5 min via rasterstats
+5. Executar pipeline real (upload): **EM ANDAMENTO** — `python -m core.orchestrator --module areas_prioritarias --ano 2025`
+6. Verificar: `SELECT COUNT(*) FROM ap_classes_municipio` → esperado ~1097
 Os antigos batch SQLs `_batch_ap_*.sql` em `C:\11. REDD+\` são obsoletos (baseados no raster antigo).
 
 ---
 
-*Última atualização: 2026-05-29 | Pipeline v3 | 20/20 testes OK | 6 abas + áreas prioritárias 5 tabs | Migration 010 aplicada ao Supabase | floresta_2025.gpkg gerado (dissolve: 96k→~1k polígonos) | Frontend build OK (906 módulos, 0 erros) | env: desmatamento (Python 3.11) | Próximo: python -m core.orchestrator --module areas_prioritarias --ano 2025 (upload real)*
+*Última atualização: 2026-05-29 | Pipeline v3 | 20/20 testes OK | 6 abas + áreas prioritárias 5 tabs | Migration 010 aplicada ao Supabase | rasterstats ~5 min (vs 90 min overlay) | dry-run OK: 1097 células 224 municípios | Pipeline real em andamento | Commit 35aaf3a feature/areas-prioritarias-v3 criado | Próximo: QA pós-upload (task 39)*

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * usePeriodCoverage.ts — Módulo areas_prioritarias
  * Query para get_ap_periodo_cobertura(): retorna o período real coberto
@@ -9,19 +8,20 @@
  */
 import { useEffect } from 'react'
 import { useQuery }  from '@tanstack/react-query'
-import { supabase }  from '../../../core/lib/supabase'
+import { supabase, isSupabaseConfigured }  from '../../../core/lib/supabase'
 import { useAppStore }  from '../../../core/store/useAppStore'
 import type { PeriodCoverage } from '../types'
 
-const STALE = 10 * 60 * 1000  // 10 minutos — dado raramente muda durante sessão
+const STALE       = 10 * 60 * 1000  // 10 minutos — dado raramente muda durante sessão
 const ANO_DEFAULT = 2025
 
 export function usePeriodCoverage(ano: number | 'all' = ANO_DEFAULT) {
-  const anoParam       = ano === 'all' ? ANO_DEFAULT : ano
+  const anoParam          = ano === 'all' ? ANO_DEFAULT : ano
   const setPeriodCoverage = useAppStore((s) => s.setPeriodCoverage)
 
   const query = useQuery<PeriodCoverage | null>({
     queryKey: ['ap_periodo_cobertura', anoParam],
+    enabled:  isSupabaseConfigured,
     queryFn:  async () => {
       const { data, error } = await supabase.rpc('get_ap_periodo_cobertura', {
         p_ano: anoParam,
@@ -70,8 +70,8 @@ export function formatPeriodLabel(coverage: PeriodCoverage | null): {
     if (!iso) return null
     const d = new Date(iso + 'T00:00:00Z')
     return d.toLocaleDateString('pt-BR', {
-      month: 'short',
-      year:  'numeric',
+      month:    'short',
+      year:     'numeric',
       timeZone: 'UTC',
     })
   }

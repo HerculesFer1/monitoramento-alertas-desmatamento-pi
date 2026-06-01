@@ -2,44 +2,35 @@ import React from 'react'
 import { useAppStore, type Module } from '../store/useAppStore'
 
 interface RailItem {
-  module:    Module
-  label:     string
-  disabled?: boolean
-  icon:      React.ReactNode
+  module:      Module
+  label:       string
+  disabled?:   boolean
+  icon:        React.ReactNode
+  iconActive?: React.ReactNode
 }
+
+const mkImg = (src: string, cls: string) => (
+  <img src={src} alt="" className={cls} style={{ width: 30, height: 30, display: 'block' }} />
+)
 
 const ITEMS: RailItem[] = [
   {
-    module: 'mapbiomas',
-    label: 'MapBiomas Alertas',
-    icon: (
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-        <path d="M2 17l10 5 10-5"/>
-        <path d="M2 12l10 5 10-5"/>
-      </svg>
-    ),
+    module:     'mapbiomas',
+    label:      'MapBiomas Alertas',
+    icon:       mkImg('/icon-mapbiomas.svg',        'rail-module-icon-inactive'),
+    iconActive: mkImg('/icon-mapbiomas-active.svg', 'rail-module-icon-active'),
   },
   {
-    module: 'prodes',
-    label: 'PRODES / INPE',
-    icon: (
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 11l3 3L22 4"/>
-        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-      </svg>
-    ),
+    module:     'prodes',
+    label:      'PRODES / INPE',
+    icon:       mkImg('/icon-prodes.svg',        'rail-module-icon-inactive'),
+    iconActive: mkImg('/icon-prodes-active.svg', 'rail-module-icon-active'),
   },
   {
-    module: 'matopiba',
-    label: 'MATOPIBA',
-    icon: (
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 2a14.5 14.5 0 000 20M12 2a14.5 14.5 0 010 20"/>
-        <path d="M2 12h20"/>
-      </svg>
-    ),
+    module:     'matopiba',
+    label:      'MATOPIBA',
+    icon:       mkImg('/icon-matopiba.svg',        'rail-module-icon-inactive'),
+    iconActive: mkImg('/icon-matopiba-active.svg', 'rail-module-icon-active'),
   },
   {
     module: 'areas_prioritarias',
@@ -135,7 +126,7 @@ function SettingsIcon() {
 
 /* ── PrimaryRail ──────────────────────────────────────────────────────── */
 export function PrimaryRail() {
-  const { activeModule, setActiveModule } = useAppStore()
+  const { activeModule, setActiveModule, theme } = useAppStore()
 
   return (
     <nav className="rail">
@@ -144,12 +135,9 @@ export function PrimaryRail() {
       <div className="rail-logo-area">
         <div className="rail-logo">
           <img
-            src="/logo.svg"
+            src={theme === 'light' ? '/logo-light.svg' : '/logo-dark.svg'}
             alt="CGEO"
-            style={{
-              width: 50, height: 'auto', display: 'block',
-              filter: 'drop-shadow(2px 3px 5px rgba(0,0,0,.9)) drop-shadow(-1px -1px 3px rgba(255,255,255,.07))',
-            }}
+            style={{ width: 44, height: 'auto', display: 'block' }}
           />
         </div>
       </div>
@@ -158,16 +146,19 @@ export function PrimaryRail() {
       <div className="rail-modules">
         <div className="rail-sep" />
 
-        {ITEMS.map(item => (
-          <RailBtn
-            key={item.module}
-            active={activeModule === item.module}
-            label={item.label}
-            onClick={() => setActiveModule(item.module)}
-          >
-            {item.icon}
-          </RailBtn>
-        ))}
+        {ITEMS.map(item => {
+          const isActive = activeModule === item.module
+          return (
+            <RailBtn
+              key={item.module}
+              active={isActive}
+              label={item.label}
+              onClick={() => setActiveModule(item.module)}
+            >
+              {(isActive && item.iconActive) ? item.iconActive : item.icon}
+            </RailBtn>
+          )
+        })}
 
         <div className="rail-sep" />
 

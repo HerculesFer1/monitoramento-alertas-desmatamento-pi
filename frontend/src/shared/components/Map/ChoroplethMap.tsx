@@ -4,8 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { useMunicipiosGeoJSON } from '../../../core/lib/hooks'
 import { useAgregado } from '../../../core/lib/hooks'
 import { useAppStore } from '../../../core/store/useAppStore'
-import { fmtHa } from '../../../core/lib/constants'
-import { MATOPIBA_LIST } from '../../../core/lib/constants'
+import { fmtHa, MATOPIBA_SET } from '../../../core/lib/constants'
 
 const INITIAL_VIEW = { longitude: -42.8, latitude: -7.0, zoom: 5.8 }
 
@@ -74,9 +73,7 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
         const props  = f.properties as Record<string, unknown>
         const nome   = munName(props)
         const stats  = statsMap[nome]
-        const isMat  = MATOPIBA_LIST.some(m =>
-          m.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase() === nome
-        )
+        const isMat  = MATOPIBA_SET.has(nome)
         return {
           ...f,
           properties: {

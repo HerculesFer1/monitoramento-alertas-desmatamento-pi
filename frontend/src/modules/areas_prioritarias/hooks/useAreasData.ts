@@ -1,10 +1,10 @@
-// @ts-nocheck
 /**
  * useAreasData.ts — TanStack Query hooks para o módulo areas_prioritarias.
  * Consulta RPCs do Supabase. Padrão: staleTime 5min, retry 2.
  */
 import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../../../core/lib/supabase'
+import type { FeatureCollection } from 'geojson'
+import { supabase, isSupabaseConfigured } from '../../../core/lib/supabase'
 import type {
   VisaoGeralResponse,
   MunicipioDetalheResponse,
@@ -21,6 +21,7 @@ export function useVisaoGeral(ano: number | 'all' = ANO_DEFAULT) {
 
   return useQuery<VisaoGeralResponse>({
     queryKey: ['ap_visao_geral', anoParam],
+    enabled:  isSupabaseConfigured,
     queryFn:  async () => {
       const { data, error } = await supabase.rpc('get_ap_visao_geral', {
         p_ano: anoParam,
@@ -43,6 +44,7 @@ export function useMunicipioDetalhe(
 
   return useQuery<MunicipioDetalheResponse>({
     queryKey: ['ap_municipio_detalhe', cod, anoParam],
+    enabled:  isSupabaseConfigured && !!cod,
     queryFn:  async () => {
       const { data, error } = await supabase.rpc('get_ap_municipio_detalhe', {
         p_cod: cod,
@@ -51,7 +53,6 @@ export function useMunicipioDetalhe(
       if (error) throw error
       return data as MunicipioDetalheResponse
     },
-    enabled:   !!cod,
     staleTime: STALE,
     retry:     2,
   })
@@ -68,6 +69,7 @@ export function useRanking(
 
   return useQuery<MunicipioResumo[]>({
     queryKey: ['ap_ranking', anoParam, orderby, limit],
+    enabled:  isSupabaseConfigured,
     queryFn:  async () => {
       const { data, error } = await supabase.rpc('get_ap_ranking', {
         p_ano:     anoParam,
@@ -90,15 +92,16 @@ export function useAreasGeoJson(
 ) {
   const anoParam = ano === 'all' ? ANO_DEFAULT : ano
 
-  return useQuery({
+  return useQuery<FeatureCollection>({
     queryKey: ['ap_geojson', anoParam, cod],
+    enabled:  isSupabaseConfigured,
     queryFn:  async () => {
       const { data, error } = await supabase.rpc('get_ap_geojson', {
         p_ano: anoParam,
         p_cod: cod,
       })
       if (error) throw error
-      return data
+      return data as FeatureCollection
     },
     staleTime: STALE,
     retry:     2,
