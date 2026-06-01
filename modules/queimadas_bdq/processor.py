@@ -73,7 +73,6 @@ def process(
 
     # ── 1. Carregar cicatrizes mensais ────────────────────────────────────────
     cicatrizes_pi = _load_cicatrizes(shp_paths, ano, verbose)
-    n_total_br    = sum(1 for _ in range(len(cicatrizes_pi)))  # placeholder pre-clip
     log.info("Cicatrizes carregadas (Brasil + PI): %d feições", len(cicatrizes_pi))
 
     if len(cicatrizes_pi) == 0:

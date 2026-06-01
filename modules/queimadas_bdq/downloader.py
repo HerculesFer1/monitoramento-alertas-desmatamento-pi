@@ -112,7 +112,6 @@ def _extract_shp(
 
         # Extrair todos os arquivos do shapefile (.shp/.dbf/.shx/.prj/.cpg)
         for member in zf.namelist():
-            stem = Path(member).stem
             # Renomear para padrão interno: aqXXXX_MM.{ext}
             ext  = Path(member).suffix.lower()
             if ext in {".shp", ".dbf", ".shx", ".prj", ".cpg", ".sbn", ".sbx"}:
