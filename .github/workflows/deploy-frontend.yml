@@ -55,6 +55,10 @@ jobs:
         env:
           VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # Sentry — opcional: ativo somente quando o secret existir.
+          # Criar em: https://sentry.io > New Project > React → copiar DSN.
+          # Adicionar em: GitHub > Settings > Secrets > VITE_SENTRY_DSN
+          VITE_SENTRY_DSN:        ${{ secrets.VITE_SENTRY_DSN }}
 
       # ── 5. Deploy para Vercel (CLI da raiz — o projeto já tem root=frontend) ───
       - name: Deploy para Vercel
