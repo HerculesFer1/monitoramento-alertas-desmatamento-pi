@@ -14,7 +14,7 @@ export function SplashScreen({ onDone }: Props) {
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
 
-    fetch('/logo.svg')
+    fetch('/logo-splash.svg')
       .then(r => r.text())
       .then(html => {
         const wrap = wrapRef.current
@@ -23,49 +23,52 @@ export function SplashScreen({ onDone }: Props) {
         wrap.innerHTML = html
 
         const svg = wrap.querySelector('svg')
-        if (svg) {
-          svg.setAttribute('width',  '100%')
-          svg.setAttribute('height', '100%')
-          svg.style.display = 'block'
-          svg.style.filter  = 'drop-shadow(2px 3px 5px rgba(0,0,0,.9)) drop-shadow(-1px -1px 3px rgba(255,255,255,.07))'
-        }
+        if (!svg) return
 
-        // Collect all colored (non-white) leaf paths in DOM order
-        const leaves = [...wrap.querySelectorAll<SVGPathElement>('path[fill]')]
-          .filter(p => {
-            const f = p.getAttribute('fill')
-            return f && f !== '#ffffff' && f !== 'none'
-          })
+        svg.setAttribute('width',  '100%')
+        svg.setAttribute('height', '100%')
+        svg.style.display = 'block'
 
-        // Hide every leaf
-        leaves.forEach(l => { l.style.opacity = '0' })
+        // Pegar todos os <g> de nível superior (elementos visíveis, excluindo <defs>)
+        const rawGroups = Array.from(svg.children).filter(
+          el => el.tagName === 'g'
+        ) as SVGGraphicsElement[]
 
-        // Blink each leaf sequentially (150 ms apart)
-        leaves.forEach((leaf, i) => {
-          const t0 = setTimeout(() => {
-            leaf.style.transition = 'opacity 0.1s'
-            leaf.style.opacity = '0.9'
-            const t1 = setTimeout(() => { leaf.style.opacity = '0.15' }, 110)
-            const t2 = setTimeout(() => {
-              leaf.style.transition = 'opacity 0.22s'
-              leaf.style.opacity = '1'
-            }, 260)
-            timers.push(t1, t2)
-          }, 180 + i * 170)
-          timers.push(t0)
+        // Ordenar de cima para baixo pelo centro vertical do bounding box
+        const groups = rawGroups.slice().sort((a, b) => {
+          const ay = a.getBBox().y + a.getBBox().height / 2
+          const by = b.getBBox().y + b.getBBox().height / 2
+          return by - ay
         })
 
-        // After all leaves are visible, hold then fade out
-        const total = 180 + leaves.length * 170 + 700
+        // Iniciar todos invisíveis
+        groups.forEach(g => {
+          (g as unknown as HTMLElement).style.opacity = '0'
+        })
+
+        // Fade sequencial: cada elemento aparece 45ms após o anterior
+        const STAGGER  = 45   // ms entre elementos
+        const DURATION = 0.30 // s de transição
+        const START    = 80   // ms antes do primeiro elemento
+
+        groups.forEach((g, i) => {
+          const t = setTimeout(() => {
+            ;(g as unknown as HTMLElement).style.transition = `opacity ${DURATION}s ease`
+            ;(g as unknown as HTMLElement).style.opacity    = '1'
+          }, START + i * STAGGER)
+          timers.push(t)
+        })
+
+        // Dismiss após todos aparecerem + hold de 500ms
+        const totalEntrance = START + groups.length * STAGGER + DURATION * 1000
         const tOut = setTimeout(() => {
           setLeaving(true)
           const tDone = setTimeout(() => doneRef.current(), 520)
           timers.push(tDone)
-        }, total)
+        }, totalEntrance + 500)
         timers.push(tOut)
       })
       .catch(() => {
-        // SVG unavailable — dismiss immediately
         setLeaving(true)
         const t = setTimeout(() => doneRef.current(), 520)
         timers.push(t)
@@ -86,10 +89,10 @@ export function SplashScreen({ onDone }: Props) {
       pointerEvents: leaving ? 'none' : 'all',
     }}>
 
-      {/* Tree SVG — injected dynamically */}
+      {/* Logo SVG — injetado dinamicamente, elementos animados em sequência */}
       <div
         ref={wrapRef}
-        style={{ width: 148, height: 189 }}
+        style={{ width: 220, height: 260 }}
       />
 
       <div style={{
