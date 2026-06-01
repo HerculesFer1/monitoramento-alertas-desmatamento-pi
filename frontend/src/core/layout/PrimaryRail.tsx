@@ -9,8 +9,8 @@ interface RailItem {
   iconActive?: React.ReactNode
 }
 
-const mkImg = (src: string, cls: string) => (
-  <img src={src} alt="" className={cls} style={{ width: 30, height: 30, display: 'block' }} />
+const mkImg = (src: string, cls: string, w = 30, h = 30) => (
+  <img src={src} alt="" className={cls} style={{ width: w, height: h, display: 'block', objectFit: 'contain' }} />
 )
 
 const ITEMS: RailItem[] = [
@@ -33,14 +33,10 @@ const ITEMS: RailItem[] = [
     iconActive: mkImg('/icon-matopiba-active.svg', 'rail-module-icon-active'),
   },
   {
-    module: 'areas_prioritarias',
-    label: 'Áreas Prioritárias',
-    icon: (
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M11 20A7 7 0 0114 9h4v2.5c0 3-4.1 6.3-7 8.5z"/>
-        <path d="M11 20a10 10 0 01-6-11 5 5 0 015-5 5 5 0 014 4"/>
-      </svg>
-    ),
+    module:     'areas_prioritarias',
+    label:      'Áreas Prioritárias',
+    icon:       mkImg('/icon-redd-inactive.svg', 'rail-module-icon-inactive', 36, 20),
+    iconActive: mkImg('/icon-redd-active.svg',   'rail-module-icon-active',   36, 20),
   },
 ]
 
