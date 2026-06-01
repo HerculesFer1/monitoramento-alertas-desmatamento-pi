@@ -146,12 +146,16 @@ def _enrich_biomass(
     if gdf_work.crs.to_epsg() != bio_epsg:
         gdf_work = gdf_work.to_crs(bio_epsg)
 
-    # AGB médio por célula (interseção classe × município)
+    # AGB médio por célula (interseção classe × município).
+    # all_touched=True: inclui todo pixel cuja extensão toca o polígono, não só os
+    # cujo centróide cai dentro. Evita subestimação em células pequenas/finas
+    # (achado A3 da auditoria — zonal_stats default subestima borda).
     stats_agb = zonal_stats(
-        vectors = gdf_work.geometry.tolist(),
-        raster  = str(agb_path),
-        stats   = ["mean"],
-        nodata  = -9999,
+        vectors      = gdf_work.geometry.tolist(),
+        raster       = str(agb_path),
+        stats        = ["mean"],
+        nodata       = -9999,
+        all_touched  = True,
     )
     agb_values = [s.get("mean") or 0.0 for s in stats_agb]
 
@@ -161,10 +165,11 @@ def _enrich_biomass(
         if key == "agb":
             continue
         stats = zonal_stats(
-            vectors = gdf_work.geometry.tolist(),
-            raster  = str(path),
-            stats   = ["mean"],
-            nodata  = -9999,
+            vectors      = gdf_work.geometry.tolist(),
+            raster       = str(path),
+            stats        = ["mean"],
+            nodata       = -9999,
+            all_touched  = True,
         )
         for i, s in enumerate(stats):
             total_values[i] += (s.get("mean") or 0.0)

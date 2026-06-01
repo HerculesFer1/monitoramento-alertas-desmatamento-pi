@@ -324,11 +324,14 @@ def _calc_forest_area_raster(
     if gdf_work.crs.to_epsg() != tif_crs.to_epsg():
         gdf_work = gdf_work.to_crs(tif_crs)
 
+    # all_touched=True para incluir pixels de borda — evita subestimação
+    # de área florestal em células pequenas (A3 da auditoria).
     stats = _zonal_stats(
-        vectors = gdf_work.geometry.tolist(),
-        raster  = str(forest_tif),
-        stats   = ["sum"],
-        nodata  = 0,
+        vectors      = gdf_work.geometry.tolist(),
+        raster       = str(forest_tif),
+        stats        = ["sum"],
+        nodata       = 0,
+        all_touched  = True,
     )
 
     forest_ha = [
