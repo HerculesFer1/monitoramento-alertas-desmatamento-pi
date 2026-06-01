@@ -3,8 +3,18 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import { execSync } from 'child_process'
+
+// Hash do commit para Sentry release tracking.
+const GIT_SHA = (() => {
+  try { return execSync('git rev-parse --short HEAD').toString().trim() }
+  catch { return 'unknown' }
+})()
 
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_GIT_SHA': JSON.stringify(GIT_SHA),
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
