@@ -5,7 +5,8 @@ import {
   getAlertasGeoJson, getResumoProdes,
   getResumoMatopiba, getMatopibaMunicipios,
   getExecucoes,
-  type GeoJsonParams,
+  getAlertasBbox, getApGeojsonBbox,
+  type GeoJsonParams, type BboxParams, type ApBboxParams,
 } from './queries'
 
 function guardedFn<T>(fn: () => Promise<T>): () => Promise<T> {
@@ -34,9 +35,54 @@ export function useAgregado(ano?: number) {
 }
 
 export function useAlertasGeoJson(params: GeoJsonParams) {
+  // M2: queryKey granular (campos primitivos) evita cache-miss por objeto novo a cada render.
   return useQuery({
-    queryKey: ['alertas-geojson', params],
+    queryKey: [
+      'alertas-geojson',
+      params.ano ?? null,
+      params.classificacao ?? null,
+      params.municipio ?? null,
+      params.bioma ?? null,
+      params.matopiba ?? null,
+      params.flagValidacao ?? null,
+      params.limit ?? null,
+      params.offset ?? null,
+    ],
     queryFn: guardedFn(() => getAlertasGeoJson(params)),
+    retry: 0,
+  })
+}
+
+// ── Migration 011 — hooks bbox-aware (preferir sobre useAlertasGeoJson) ──
+export function useAlertasBbox(params: BboxParams | null) {
+  // params=null desabilita o fetch (útil enquanto bbox do mapa não está pronto)
+  return useQuery({
+    queryKey: [
+      'alertas-bbox',
+      params?.xmin ?? null, params?.ymin ?? null,
+      params?.xmax ?? null, params?.ymax ?? null,
+      params?.zoom ?? null,
+      params?.ano ?? null,
+      params?.classificacao ?? null,
+      params?.limit ?? null,
+    ],
+    queryFn: guardedFn(() => getAlertasBbox(params!)),
+    enabled: params != null,
+    retry: 0,
+  })
+}
+
+export function useApGeojsonBbox(params: ApBboxParams | null) {
+  return useQuery({
+    queryKey: [
+      'ap-geojson-bbox',
+      params?.xmin ?? null, params?.ymin ?? null,
+      params?.xmax ?? null, params?.ymax ?? null,
+      params?.zoom ?? null,
+      params?.ano ?? null,
+    ],
+    queryFn: guardedFn(() => getApGeojsonBbox(params!)),
+    enabled: params != null,
     retry: 0,
   })
 }

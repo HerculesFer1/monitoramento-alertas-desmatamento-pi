@@ -171,6 +171,32 @@ export const CLASSE_LABELS: Record<ClassePrioridade, string> = {
   5: 'Muito Alto',
 }
 
+// ── Expressão MapLibre reutilizável (paint 'fill-color' por classe) ───────
+// B1 da auditoria: extraída do flatMap inline em VisaoGeralView.
+// Uso: paint={{ 'fill-color': ['match', ['get', 'classe_max'], ...CLASSE_MATCH, '#888'] }}
+export const CLASSE_MATCH: (number | string)[] =
+  (Object.keys(CLASSE_COLORS) as unknown as ClassePrioridade[])
+    .flatMap((k) => [Number(k), CLASSE_COLORS[k]])
+
+// ── Quebras de classe para escalas analíticas ────────────────────────────
+// M7 da auditoria: source-of-truth única para paint MapLibre + legenda HTML.
+
+/** Quebras IPI (Índice de Pressão Irregular) — % */
+export const BREAKS_IPI = {
+  thresholds: [30, 60, 80],
+  colors: ['#10B981', '#F59E0B', '#F97316', '#EF4444'] as const,
+  labels: ['Baixo (0–30%)', 'Médio (30–60%)', 'Alto (60–80%)', 'Crítico (>80%)'] as const,
+  unit: '%',
+} as const
+
+/** Quebras de biomassa florestal acumulada por município — tC */
+export const BREAKS_BIOMASSA = {
+  thresholds: [500_000, 2_000_000, 8_000_000, 20_000_000],
+  colors: ['#fef3c7', '#fde68a', '#fbbf24', '#d97706', '#92400e'] as const,
+  labels: ['< 500 mil tC', '500 mil – 2 M tC', '2 – 8 M tC', '8 – 20 M tC', '> 20 M tC'] as const,
+  unit: 'tC',
+} as const
+
 // ── Cobertura temporal (PeriodBadge) ─────────────────────────────────────────
 
 /**
