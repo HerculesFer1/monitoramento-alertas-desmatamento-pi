@@ -3,13 +3,14 @@
  * Mapa interativo com click→zoom→detalhamento municipal.
  * Responde: "Onde o desmatamento avança sobre zonas prioritárias?"
  */
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
 import { Map as MapLibreMap, NavigationControl, GeoJSONSource, Popup } from 'maplibre-gl'
 import type { MapMouseEvent, LngLatBoundsLike } from 'maplibre-gl'
 import type { FeatureCollection } from 'geojson'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAppStore }            from '../../../core/store/useAppStore'
 import { useMunicipioDetalhe, useAreasGeoJson } from '../hooks/useAreasData'
+import type { BboxState } from '../hooks/useAreasData'
 import { useMunicipioSelect }     from '../hooks/useMunicipioSelect'
 import { useLayerToggle }         from '../hooks/useLayerToggle'
 import { LayerTogglePanel }       from '../components/LayerTogglePanel'
@@ -23,6 +24,7 @@ export function MunicipalView() {
   const mapRef       = useRef<MapLibreMap | null>(null)
   const geojsonRef   = useRef<FeatureCollection | null>(null)
   const popupRef     = useRef<Popup | null>(null)
+  const [mapBbox, setMapBbox] = useState<BboxState | null>(null)
 
   const anoFiltro         = useAppStore((s) => s.anoFiltro)
   const theme             = useAppStore((s) => s.theme)
@@ -32,7 +34,7 @@ export function MunicipalView() {
   const { select, clear }      = useMunicipioSelect(mapRef)
   const { toggle, isVisible }  = useLayerToggle(mapRef)
 
-  const { data: geojson }              = useAreasGeoJson(anoFiltro)
+  const { data: geojson }              = useAreasGeoJson(anoFiltro, mapBbox)
   const { data: detalhe, isLoading }   = useMunicipioDetalhe(
     selectedMunicipio?.cod ?? null,
     anoFiltro,
@@ -55,6 +57,13 @@ export function MunicipalView() {
     map.addControl(new NavigationControl(), 'top-right')
     map.once('load', () => setActiveLayerIds(DEFAULT_VISIBLE_LAYERS))
     mapRef.current = map
+
+    const trackBbox = () => {
+      const b = map.getBounds()
+      setMapBbox({ xmin: b.getWest(), ymin: b.getSouth(), xmax: b.getEast(), ymax: b.getNorth(), zoom: Math.floor(map.getZoom()) })
+    }
+    map.on('load',    trackBbox)
+    map.on('moveend', trackBbox)
 
     return () => { popupRef.current?.remove(); map.remove(); mapRef.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps

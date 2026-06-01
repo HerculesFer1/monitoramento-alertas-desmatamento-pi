@@ -5,16 +5,17 @@
  * Esquerda: mapa coroplético municipal por biomassa_floresta_tc
  * Direita:  heatmap AGB médio (tC/ha) por classe × top-15 municípios
  */
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { Map as MapLibreMap, NavigationControl, Popup, GeoJSONSource } from 'maplibre-gl'
 import type { LngLatBoundsLike } from 'maplibre-gl'
 import type { FeatureCollection } from 'geojson'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAppStore }      from '../../../core/store/useAppStore'
 import { useAreasGeoJson }  from '../hooks/useAreasData'
+import type { BboxState }   from '../hooks/useAreasData'
 import { useBiomassaHeatmap } from '../hooks/useBiomassaData'
 import type { HeatmapRow }  from '../hooks/useBiomassaData'
-import { LAYER_IDS, CLASSE_LABELS } from '../types'
+import { LAYER_IDS, CLASSE_LABELS, BREAKS_BIOMASSA } from '../types'
 import type { ClassePrioridade }    from '../types'
 import { fmtHa } from '../../../core/lib/constants'
 
@@ -118,11 +119,12 @@ export function BiomassaView() {
   const mapRef       = useRef<MapLibreMap | null>(null)
   const popupRef     = useRef<Popup | null>(null)
   const geojsonRef   = useRef<FeatureCollection | null>(null)
+  const [mapBbox, setMapBbox] = useState<BboxState | null>(null)
 
   const anoFiltro = useAppStore((s) => s.anoFiltro)
   const theme     = useAppStore((s) => s.theme)
 
-  const { data: geojson,  isLoading: loadingMap  } = useAreasGeoJson(anoFiltro)
+  const { data: geojson,  isLoading: loadingMap  } = useAreasGeoJson(anoFiltro, mapBbox)
   const { data: heatmap,  isLoading: loadingHeat } = useBiomassaHeatmap(anoFiltro)
 
   const mapStyle = theme === 'light'
@@ -141,6 +143,13 @@ export function BiomassaView() {
     })
     map.addControl(new NavigationControl(), 'top-right')
     mapRef.current = map
+
+    const trackBbox = () => {
+      const b = map.getBounds()
+      setMapBbox({ xmin: b.getWest(), ymin: b.getSouth(), xmax: b.getEast(), ymax: b.getNorth(), zoom: Math.floor(map.getZoom()) })
+    }
+    map.on('load',    trackBbox)
+    map.on('moveend', trackBbox)
 
     return () => {
       popupRef.current?.remove()
@@ -256,7 +265,7 @@ export function BiomassaView() {
           Estoque de carbono florestal (tC)
         </div>
 
-        {/* Legend */}
+        {/* Legenda — B3: usa BREAKS_BIOMASSA como source-of-truth */}
         <div style={{
           position: 'absolute', bottom: 30, right: 10, zIndex: 10,
           background: 'rgba(10,10,10,.85)', backdropFilter: 'blur(8px)',
@@ -264,20 +273,17 @@ export function BiomassaView() {
           padding: '10px 12px', fontSize: 10,
         }}>
           <div style={{ fontWeight: 700, color: 'var(--t2)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em', fontSize: 9 }}>
-            Biomassa florestal
+            Biomassa florestal ({BREAKS_BIOMASSA.unit})
           </div>
-          {[
-            { color: '#6EE7B7', label: '> 20 MtC' },
-            { color: '#10B981', label: '8 – 20 MtC' },
-            { color: '#065f46', label: '2 – 8 MtC' },
-            { color: '#064e3b', label: '500k – 2 MtC' },
-            { color: '#111111', label: '< 500k tC' },
-          ].map(({ color, label }) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-              <span style={{ width: 10, height: 10, borderRadius: 2, background: color, flexShrink: 0, border: '1px solid rgba(255,255,255,.08)', display: 'inline-block' }} />
-              <span style={{ color: 'var(--t2)' }}>{label}</span>
-            </div>
-          ))}
+          {[...BREAKS_BIOMASSA.colors].reverse().map((color, i) => {
+            const revIdx = BREAKS_BIOMASSA.colors.length - 1 - i
+            return (
+              <div key={color} style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
+                <span style={{ width: 10, height: 10, borderRadius: 2, background: color, flexShrink: 0, border: '1px solid rgba(255,255,255,.08)', display: 'inline-block' }} aria-hidden="true" />
+                <span style={{ color: 'var(--t2)' }}>{BREAKS_BIOMASSA.labels[revIdx]}</span>
+              </div>
+            )
+          })}
         </div>
       </div>
 

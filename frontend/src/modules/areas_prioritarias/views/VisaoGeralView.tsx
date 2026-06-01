@@ -3,13 +3,14 @@
  * Panorama do estado: mapa coroplético das 5 classes de prioridade + KPIs.
  * Responde: "Onde está a floresta remanescente mais valiosa a proteger?"
  */
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { Map as MapLibreMap, NavigationControl, GeoJSONSource, Popup } from 'maplibre-gl'
 import type { LngLatBoundsLike } from 'maplibre-gl'
 import type { FeatureCollection } from 'geojson'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAppStore }                    from '../../../core/store/useAppStore'
 import { useVisaoGeral, useAreasGeoJson } from '../hooks/useAreasData'
+import type { BboxState } from '../hooks/useAreasData'
 import { useMunicipioSelect }             from '../hooks/useMunicipioSelect'
 import { ClasseBarChart }                 from '../components/ClasseBarChart'
 import { PeriodBadge }                    from '../components/PeriodBadge'
@@ -22,6 +23,7 @@ export function VisaoGeralView() {
   const mapRef       = useRef<MapLibreMap | null>(null)
   const geojsonRef   = useRef<FeatureCollection | null>(null)
   const popupRef     = useRef<Popup | null>(null)
+  const [mapBbox, setMapBbox] = useState<BboxState | null>(null)
 
   const anoFiltro         = useAppStore((s) => s.anoFiltro)
   const theme             = useAppStore((s) => s.theme)
@@ -29,7 +31,7 @@ export function VisaoGeralView() {
   const { select, clear } = useMunicipioSelect(mapRef)
 
   const { data: visaoGeral, isLoading: loadingKpis } = useVisaoGeral(anoFiltro)
-  const { data: geojson,    isLoading: loadingMap  } = useAreasGeoJson(anoFiltro)
+  const { data: geojson,    isLoading: loadingMap  } = useAreasGeoJson(anoFiltro, mapBbox)
 
   const mapStyle = theme === 'light'
     ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
@@ -47,6 +49,14 @@ export function VisaoGeralView() {
     })
     map.addControl(new NavigationControl(), 'top-right')
     mapRef.current = map
+
+    // Rastreia viewport para bbox-aware GeoJSON (Migration 011)
+    const trackBbox = () => {
+      const b = map.getBounds()
+      setMapBbox({ xmin: b.getWest(), ymin: b.getSouth(), xmax: b.getEast(), ymax: b.getNorth(), zoom: Math.floor(map.getZoom()) })
+    }
+    map.on('load',    trackBbox)
+    map.on('moveend', trackBbox)
 
     return () => { popupRef.current?.remove(); map.remove(); mapRef.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
