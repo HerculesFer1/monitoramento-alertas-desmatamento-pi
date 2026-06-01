@@ -38,6 +38,16 @@ const ITEMS: RailItem[] = [
     icon:       mkImg('/icon-redd-inactive.svg', 'rail-module-icon-inactive', '60%', '60%'),
     iconActive: mkImg('/icon-redd-active.svg',   'rail-module-icon-active',   '60%', '60%'),
   },
+  {
+    module: 'queimadas_bdq',
+    label:  'Queimadas BD-INPE',
+    icon: (
+      <span style={{ fontSize: 20, lineHeight: 1, opacity: .55 }}>🔥</span>
+    ),
+    iconActive: (
+      <span style={{ fontSize: 20, lineHeight: 1 }}>🔥</span>
+    ),
+  },
 ]
 
 const FUTURE: { label: string; icon: React.ReactNode }[] = [

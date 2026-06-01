@@ -14,6 +14,13 @@ const ProdesView      = React.lazy(() => import('../../modules/prodes_cerrado/Pr
 const MatopibaView    = React.lazy(() => import('../../modules/alertas_mapbiomas/MatopibaView').then(m => ({ default: m.MatopibaView })))
 const DadosView       = React.lazy(() => import('../../modules/dados/DadosView').then(m => ({ default: m.DadosView })))
 
+// ── Lazy views — queimadas_bdq ─────────────────────────────────────────────
+const QB_VisaoGeralView  = React.lazy(() => import('../../modules/queimadas_bdq/views/VisaoGeralView').then(m => ({ default: m.VisaoGeralView })))
+const QB_ClassesView     = React.lazy(() => import('../../modules/queimadas_bdq/views/ClassesView').then(m => ({ default: m.ClassesView })))
+const QB_MunicipalView   = React.lazy(() => import('../../modules/queimadas_bdq/views/MunicipalView').then(m => ({ default: m.MunicipalView })))
+const QB_TemporalView    = React.lazy(() => import('../../modules/queimadas_bdq/views/TemporalView').then(m => ({ default: m.TemporalView })))
+const QB_MetodologiaView = React.lazy(() => import('../../modules/queimadas_bdq/views/MetodologiaView').then(m => ({ default: m.MetodologiaView })))
+
 // ── Lazy views — areas_prioritarias (cada view em chunk próprio) ───────────
 const VisaoGeralView       = React.lazy(() => import('../../modules/areas_prioritarias/views/VisaoGeralView').then(m => ({ default: m.VisaoGeralView })))
 const MunicipalView_AP     = React.lazy(() => import('../../modules/areas_prioritarias/views/MunicipalView').then(m => ({ default: m.MunicipalView })))
@@ -56,6 +63,13 @@ const MODULE_VIEWS: Record<Module, { id: string; label: string }[]> = {
     { id: 'prodes_prioridade', label: 'PRODES × Prioridade' },
     { id: 'ranking',           label: 'Ranking' },
     { id: 'biomassa',          label: 'Biomassa' },
+  ],
+  queimadas_bdq: [
+    { id: 'visao_geral',  label: 'Visão Geral' },
+    { id: 'classes',      label: 'Por Classe' },
+    { id: 'municipal',    label: 'Municipal' },
+    { id: 'temporal',     label: 'Evolução Mensal' },
+    { id: 'metodologia',  label: 'Metodologia' },
   ],
 }
 
@@ -201,6 +215,11 @@ export function AppShell() {
                 {activeModule === 'areas_prioritarias' && activeView === 'prodes_prioridade' && <ProdesPrioridadeView />}
                 {activeModule === 'areas_prioritarias' && activeView === 'ranking'           && <RankingView_AP />}
                 {activeModule === 'areas_prioritarias' && activeView === 'biomassa'          && <BiomassaView_AP />}
+                {activeModule === 'queimadas_bdq' && activeView === 'visao_geral'  && <QB_VisaoGeralView />}
+                {activeModule === 'queimadas_bdq' && activeView === 'classes'      && <QB_ClassesView />}
+                {activeModule === 'queimadas_bdq' && activeView === 'municipal'    && <QB_MunicipalView />}
+                {activeModule === 'queimadas_bdq' && activeView === 'temporal'     && <QB_TemporalView />}
+                {activeModule === 'queimadas_bdq' && activeView === 'metodologia'  && <QB_MetodologiaView />}
               </div>
             </ErrorBoundary>
           </Suspense>

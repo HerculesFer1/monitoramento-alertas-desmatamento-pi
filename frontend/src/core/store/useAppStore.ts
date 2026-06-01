@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type Module = 'mapbiomas' | 'prodes' | 'matopiba' | 'dados' | 'areas_prioritarias'
+export type Module = 'mapbiomas' | 'prodes' | 'matopiba' | 'dados' | 'areas_prioritarias' | 'queimadas_bdq'
 export type AnoFiltro = number | 'all'
 export type Theme = 'dark' | 'light'
 
@@ -13,7 +13,8 @@ export type MapBiomasView = 'executiva' | 'temporal' | 'municipal' | 'comparativ
 export type ProdesView    = 'concordancia'
 export type MatopibaView  = 'territorial'
 export type DadosView     = 'gestao'
-export type AreasViewId   = 'visao_geral' | 'municipal' | 'prodes_prioridade' | 'ranking' | 'biomassa'
+export type AreasViewId      = 'visao_geral' | 'municipal' | 'prodes_prioridade' | 'ranking' | 'biomassa'
+export type QueimadasViewId  = 'visao_geral' | 'classes' | 'municipal' | 'temporal' | 'metodologia'
 
 /** Município selecionado — payload para fitBounds no MapLibre GL */
 export interface MunicipioSelecionado {
@@ -53,6 +54,13 @@ interface AppState {
   periodCoverage: PeriodCoverage | null
   setPeriodCoverage: (c: PeriodCoverage | null) => void
 
+  // queimadas_bdq — filtros mensais e por classe
+  selectedMes: number | null     // 1..12 | null = todos
+  setSelectedMes: (mes: number | null) => void
+
+  selectedClasse: number | null  // 1..5  | null = todas
+  setSelectedClasse: (classe: number | null) => void
+
   anoFiltro: AnoFiltro
   setAnoFiltro: (v: AnoFiltro) => void
 
@@ -90,10 +98,16 @@ export const useAppStore = create<AppState>((set) => ({
   periodCoverage: null,
   setPeriodCoverage: (c) => set({ periodCoverage: c }),
 
+  selectedMes: null,
+  setSelectedMes: (mes) => set({ selectedMes: mes }),
+
+  selectedClasse: null,
+  setSelectedClasse: (classe) => set({ selectedClasse: classe }),
+
   anoFiltro: 'all',
   setAnoFiltro: (v) => set({ anoFiltro: v }),
 
-  resetFiltros: () => set({ anoFiltro: 'all' }),
+  resetFiltros: () => set({ anoFiltro: 'all', selectedMes: null, selectedClasse: null }),
 
   theme: loadTheme(),
   toggleTheme: () => set(s => {
@@ -115,5 +129,6 @@ function defaultView(m: Module): string {
     case 'matopiba':  return 'territorial'
     case 'dados':     return 'gestao'
     case 'areas_prioritarias': return 'visao_geral'
+    case 'queimadas_bdq':      return 'visao_geral'
   }
 }
