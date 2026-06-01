@@ -9,7 +9,7 @@ interface RailItem {
   iconActive?: React.ReactNode
 }
 
-const mkImg = (src: string, cls: string, w = 30, h = 30) => (
+const mkImg = (src: string, cls: string, w: number | string = 30, h: number | string = 30) => (
   <img src={src} alt="" className={cls} style={{ width: w, height: h, display: 'block', objectFit: 'contain' }} />
 )
 
@@ -35,8 +35,8 @@ const ITEMS: RailItem[] = [
   {
     module:     'areas_prioritarias',
     label:      'Áreas Prioritárias',
-    icon:       mkImg('/icon-redd-inactive.svg', 'rail-module-icon-inactive', 30, 30),
-    iconActive: mkImg('/icon-redd-active.svg',   'rail-module-icon-active',   30, 30),
+    icon:       mkImg('/icon-redd-inactive.svg', 'rail-module-icon-inactive', '60%', '60%'),
+    iconActive: mkImg('/icon-redd-active.svg',   'rail-module-icon-active',   '60%', '60%'),
   },
 ]
 
