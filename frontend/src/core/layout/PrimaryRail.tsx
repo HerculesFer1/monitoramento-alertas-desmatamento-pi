@@ -17,35 +17,35 @@ const ITEMS: RailItem[] = [
   {
     module:     'mapbiomas',
     label:      'MapBiomas Alertas',
-    icon:       mkImg('/icon-mapbiomas.svg',        'rail-module-icon-inactive', '60%', '60%'),
-    iconActive: mkImg('/icon-mapbiomas-active.svg', 'rail-module-icon-active',   '60%', '60%'),
+    icon:       mkImg('/icon-mapbiomas.svg',        'rail-module-icon-inactive', '76%', '76%'),
+    iconActive: mkImg('/icon-mapbiomas-active.svg', 'rail-module-icon-active',   '76%', '76%'),
   },
   {
     module:     'prodes',
     label:      'PRODES / INPE',
-    icon:       mkImg('/icon-prodes.svg',        'rail-module-icon-inactive', '60%', '60%'),
-    iconActive: mkImg('/icon-prodes-active.svg', 'rail-module-icon-active',   '60%', '60%'),
+    icon:       mkImg('/icon-prodes.svg',        'rail-module-icon-inactive', '76%', '76%'),
+    iconActive: mkImg('/icon-prodes-active.svg', 'rail-module-icon-active',   '76%', '76%'),
   },
   {
     module:     'matopiba',
     label:      'MATOPIBA',
-    icon:       mkImg('/icon-matopiba.svg',        'rail-module-icon-inactive', '60%', '60%'),
-    iconActive: mkImg('/icon-matopiba-active.svg', 'rail-module-icon-active',   '60%', '60%'),
+    icon:       mkImg('/icon-matopiba.svg',        'rail-module-icon-inactive', '76%', '76%'),
+    iconActive: mkImg('/icon-matopiba-active.svg', 'rail-module-icon-active',   '76%', '76%'),
   },
   {
     module:     'areas_prioritarias',
     label:      'Áreas Prioritárias',
-    icon:       mkImg('/icon-redd-inactive.svg', 'rail-module-icon-inactive', '60%', '60%'),
-    iconActive: mkImg('/icon-redd-active.svg',   'rail-module-icon-active',   '60%', '60%'),
+    icon:       mkImg('/icon-redd-inactive.svg', 'rail-module-icon-inactive', '76%', '76%'),
+    iconActive: mkImg('/icon-redd-active.svg',   'rail-module-icon-active',   '76%', '76%'),
   },
   {
     module: 'queimadas_bdq',
     label:  'Queimadas BD-INPE',
     icon: (
-      <span style={{ fontSize: 20, lineHeight: 1, opacity: .55 }}>🔥</span>
+      <span style={{ fontSize: 24, lineHeight: 1, opacity: .55 }}>🔥</span>
     ),
     iconActive: (
-      <span style={{ fontSize: 20, lineHeight: 1 }}>🔥</span>
+      <span style={{ fontSize: 24, lineHeight: 1 }}>🔥</span>
     ),
   },
 ]
