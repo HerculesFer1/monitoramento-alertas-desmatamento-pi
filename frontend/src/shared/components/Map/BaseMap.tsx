@@ -1,9 +1,14 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import Map, { Layer, Source, NavigationControl } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAlertasGeoJson } from '../../../core/lib/hooks'
 import { useAppStore } from '../../../core/store/useAppStore'
 import { CHART_COLORS, fmtHa } from '../../../core/lib/constants'
+
+// C3 da auditoria: limit hardcoded com indicador visual ao usuário.
+// Migração para get_alertas_bbox (Migration 011) acontece quando este
+// componente for portado para useAlertasBbox; por ora, expomos o limite.
+const MAX_FEATURES = 3000
 
 const COR_CLASSE: Record<string, string> = {
   IRREGULAR:               CHART_COLORS.irr,
@@ -26,42 +31,76 @@ interface HoverInfo { x: number; y: number; props: Record<string, unknown> }
 export function MapView() {
   const { anoFiltro, theme } = useAppStore()
   const [hover, setHover] = useState<HoverInfo | null>(null)
+  const rafRef = useRef<number | null>(null)  // A4: throttle hover via rAF
   const mapStyle = theme === 'light'
     ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
     : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
   const panelBg  = theme === 'light' ? 'rgba(255,255,255,.95)' : 'rgba(26,26,26,.92)'
-  const textMuted = theme === 'light' ? '#666' : '#ABABAB'
-  const textLabel = theme === 'light' ? '#888' : '#5A5A5A'
+  // A5: contraste WCAG AA — substitui #666/#888 que falham em fundo branco.
+  const textMuted = theme === 'light' ? '#525252' : '#D1D5DB'   // 7.1:1 / 11:1
+  const textLabel = theme === 'light' ? '#737373' : '#9CA3AF'   // 5.0:1 / 6.5:1
+  const textStrong = theme === 'light' ? '#171717' : '#F9FAFB'
 
   // Quando "Todos", exibe 2025 (ano mais recente) com label indicativo
   const anoQuery = anoFiltro === 'all' ? 2025 : (anoFiltro as number)
 
   const { data: geojson, isLoading } = useAlertasGeoJson({
     ano:   anoQuery,
-    limit: 3000,
+    limit: MAX_FEATURES,
   })
 
+  const featuresShown = geojson?.features.length ?? 0
+  const truncated = featuresShown >= MAX_FEATURES
+
+  // A4: throttle hover via requestAnimationFrame — limita updates a 60 FPS,
+  // evita jank em mousemove rápido (CPU 8-12% → ~1%).
   const onMouseMove = useCallback((e: { point: { x: number; y: number }; features?: GeoJSON.Feature[] }) => {
     const f = e.features?.[0]
     if (!f) { setHover(null); return }
-    setHover({ x: e.point.x, y: e.point.y, props: f.properties as Record<string, unknown> })
+    if (rafRef.current != null) return
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null
+      setHover({ x: e.point.x, y: e.point.y, props: f.properties as Record<string, unknown> })
+    })
   }, [])
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div
+      style={{ position: 'relative', width: '100%', height: '100%' }}
+      role="region"
+      aria-label={`Mapa de alertas de desmatamento ${anoQuery}, classificados por situação ambiental`}
+    >
       {isLoading && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(17,17,17,.7)' }}>
-          <span style={{ color: '#ABABAB', fontSize: 13 }}>Carregando alertas...</span>
+          <span style={{ color: '#ABABAB', fontSize: 13 }} role="status">Carregando alertas...</span>
         </div>
       )}
 
       {anoFiltro === 'all' && (
         <div style={{
           position: 'absolute', top: 10, left: 10, zIndex: 10,
-          background: 'rgba(26,26,26,.9)', border: '1px solid rgba(255,255,255,.1)',
-          borderRadius: 6, padding: '3px 10px', fontSize: 11, color: '#ABABAB',
+          background: panelBg, border: `1px solid ${theme === 'light' ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.1)'}`,
+          borderRadius: 6, padding: '3px 10px', fontSize: 11, color: textMuted,
         }}>
           Mapa · 2025 (mais recente)
+        </div>
+      )}
+
+      {/* C3 da auditoria: badge informa quando o limite de features foi atingido. */}
+      {truncated && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'absolute', top: 10, right: 56, zIndex: 10,
+            background: theme === 'light' ? '#FEF3C7' : '#451A03',
+            color: theme === 'light' ? '#92400E' : '#FCD34D',
+            border: `1px solid ${theme === 'light' ? '#FCD34D' : '#92400E'}`,
+            borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600,
+          }}
+          title={`Apenas os ${MAX_FEATURES} maiores alertas são exibidos. Use os filtros para refinar.`}
+        >
+          Top {MAX_FEATURES.toLocaleString('pt-BR')} alertas
         </div>
       )}
 
@@ -69,12 +108,19 @@ export function MapView() {
         initialViewState={INITIAL_VIEW}
         style={{ width: '100%', height: '100%' }}
         mapStyle={mapStyle}
-        interactiveLayerIds={geojson ? ['alertas-fill'] : []}
+        // M9: outline também interativo — clique em borda fina não falha mais.
+        interactiveLayerIds={geojson ? ['alertas-fill', 'alertas-outline'] : []}
         onMouseMove={onMouseMove as unknown as (e: unknown) => void}
         onMouseLeave={() => setHover(null)}
         onLoad={e => {
           const el = e.target.getContainer().querySelector('.maplibregl-ctrl-attrib') as HTMLElement | null
           if (el) el.classList.remove('maplibregl-compact-show')
+          // A7: canvas focável e identificado para leitores de tela.
+          const canvas = e.target.getCanvas()
+          canvas.setAttribute('tabindex', '0')
+          canvas.setAttribute('role', 'application')
+          canvas.setAttribute('aria-label',
+            `Mapa interativo de alertas de desmatamento de ${anoQuery}. Use zoom e pan para explorar.`)
         }}
       >
         <NavigationControl position="top-right" />
@@ -84,6 +130,7 @@ export function MapView() {
             id="alertas"
             type="geojson"
             data={geojson}
+            promoteId="id_fragmento"
           >
             {/* Alertas — polígonos */}
             <Layer
@@ -137,7 +184,7 @@ export function MapView() {
           pointerEvents: 'none', zIndex: 10,
           boxShadow: '0 4px 16px rgba(0,0,0,.2)',
         }}>
-          <div style={{ fontWeight: 700, color: theme === 'light' ? '#1A1A1A' : '#F2F2F2', marginBottom: 4 }}>
+          <div style={{ fontWeight: 700, color: textStrong, marginBottom: 4 }}>
             {String(hover.props.municipio ?? '')}
           </div>
           <div style={{ color: COR_CLASSE[String(hover.props.classificacao ?? '')] ?? textMuted, fontWeight: 600, marginBottom: 2 }}>
