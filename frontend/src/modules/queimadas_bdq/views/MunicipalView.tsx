@@ -4,7 +4,7 @@
  */
 import { useState }                  from 'react'
 import { useAppStore }               from '../../../core/store/useAppStore'
-import { useQueimadasMunicipios }    from '../hooks/useQueimadasMunicipios'
+import { useQueimadasMunicipiosMes } from '../hooks/useQueimadasMunicipiosMes'
 import { QueimadasMap }              from '../components/QueimadasMap'
 import { QueimadasCard }             from '../components/QueimadasCard'
 import { MesSeletor }                from '../components/MesSeletor'
@@ -17,7 +17,9 @@ export function MunicipalView() {
 
   const [selectedMun, setSelectedMun] = useState<QueimadasMunicipio | null>(null)
 
-  const { data: muns, isLoading } = useQueimadasMunicipios(ano)
+  // useQueimadasMunicipiosMes: quando selectedMes está definido, busca dados
+  // do mês via get_qb_municipios_mes (Migration 012); caso contrário usa dados anuais.
+  const { data: muns, isLoading } = useQueimadasMunicipiosMes(ano, selectedMes ?? null)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%' }}>
@@ -29,8 +31,8 @@ export function MunicipalView() {
         </span>
         <MesSeletor />
         {selectedMes && (
-          <span style={{ fontSize: 10, color: 'var(--t3)' }}>
-            Filtro ativo: choropleth mostra totais anuais (dados mensais via TemporalView)
+          <span style={{ fontSize: 10, color: '#F59E0B', fontWeight: 600 }}>
+            Mês {selectedMes.toString().padStart(2, '0')}/{ano} — choropleth filtrado
           </span>
         )}
       </div>
