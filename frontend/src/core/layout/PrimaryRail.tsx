@@ -35,8 +35,8 @@ const ITEMS: RailItem[] = [
   {
     module:     'areas_prioritarias',
     label:      'Áreas Prioritárias',
-    icon:       mkImg('/icon-redd-inactive.svg', 'rail-module-icon-inactive', 36, 20),
-    iconActive: mkImg('/icon-redd-active.svg',   'rail-module-icon-active',   36, 20),
+    icon:       mkImg('/icon-redd-inactive.svg', 'rail-module-icon-inactive', 30, 30),
+    iconActive: mkImg('/icon-redd-active.svg',   'rail-module-icon-active',   30, 30),
   },
 ]
 
