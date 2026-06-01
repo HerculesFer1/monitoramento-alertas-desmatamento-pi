@@ -68,7 +68,7 @@ jobs:
       - name: Validar manifests dos módulos
         run: |
           python -c "
-          import importlib, pathlib, sys
+          import importlib, importlib.util, pathlib, sys
           required = {'id', 'name', 'version', 'priority', 'enabled', 'schedule', 'outputs'}
           errors = []
           for manifest in pathlib.Path('modules').glob('*/manifest.py'):
