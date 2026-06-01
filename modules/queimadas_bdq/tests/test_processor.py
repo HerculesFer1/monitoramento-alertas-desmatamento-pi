@@ -6,7 +6,6 @@ Usa geometrias sintéticas dentro do bbox do Piauí.
 """
 from __future__ import annotations
 
-import math
 from pathlib import Path
 
 import geopandas as gpd

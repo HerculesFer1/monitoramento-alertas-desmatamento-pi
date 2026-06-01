@@ -4,11 +4,10 @@ Valida cálculo de pct_floresta_estado, biomassa e preparação para upload.
 """
 from __future__ import annotations
 
+import geopandas as gpd
 import numpy as np
 import pytest
-import geopandas as gpd
 from shapely.geometry import box
-
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 

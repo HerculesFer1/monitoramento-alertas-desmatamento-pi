@@ -74,9 +74,10 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
     Retorna dict com status da execução.
     """
     import time
-    from modules.queimadas_bdq.downloader  import download
-    from modules.queimadas_bdq.processor   import process
-    from modules.queimadas_bdq.calculator  import calculate_and_upload
+
+    from modules.queimadas_bdq.calculator import calculate_and_upload
+    from modules.queimadas_bdq.downloader import download
+    from modules.queimadas_bdq.processor import process
 
     t0 = time.perf_counter()
 

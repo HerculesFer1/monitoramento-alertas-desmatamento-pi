@@ -69,7 +69,7 @@ def calculate_and_upload(
         return len(df_classes)
 
     # ── 3. Upload Supabase ────────────────────────────────────────────────────
-    from core.uploader import upload_json, upload_geodataframe
+    from core.uploader import upload_geodataframe, upload_json
 
     log.info(
         "Enviando qb_cicatrizes_classes (%d registros)...", len(df_classes)

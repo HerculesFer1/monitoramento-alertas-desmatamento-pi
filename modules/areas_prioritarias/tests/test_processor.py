@@ -4,10 +4,9 @@ Valida cruzamento gpd.overlay() e integridade dos resultados.
 """
 from __future__ import annotations
 
-import pytest
 import geopandas as gpd
+import pytest
 from shapely.geometry import box
-
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -102,6 +101,7 @@ class TestValidateOutput:
     def test_poucos_municipios_emite_aviso(self, gdf_classes_valido, caplog):
         """Menos de 50 municípios deve emitir log.warning (não levantar ValueError)."""
         import logging
+
         from modules.areas_prioritarias.processor import _validate_output
 
         gdf_resumo_pequeno = gpd.GeoDataFrame(

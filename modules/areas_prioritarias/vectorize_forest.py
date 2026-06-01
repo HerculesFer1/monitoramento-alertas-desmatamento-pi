@@ -52,10 +52,10 @@ def run() -> None:
             "Verifique o caminho e tente novamente."
         )
 
+    import geopandas as gpd
     import rasterio
     import rasterio.features
     import rasterio.windows
-    import geopandas as gpd
     from shapely.geometry import shape
     from shapely.validation import make_valid
 
@@ -127,7 +127,6 @@ def run() -> None:
     # Reduz dramaticamente o tempo do gpd.overlay() no processor.py.
     log.info("Dissolve de patches contíguos (pode demorar 1–2 min)...")
     from shapely.ops import unary_union
-    from shapely.geometry import MultiPolygon
 
     merged = unary_union(gdf.geometry.tolist())
     if merged.geom_type == "Polygon":

@@ -298,8 +298,8 @@ def _calc_forest_area_raster(
 
     Retorna DataFrame com colunas [municipio_cod, classe_prioridade, area_floresta_ha].
     """
-    from rasterstats import zonal_stats as _zonal_stats
     import rasterio
+    from rasterstats import zonal_stats as _zonal_stats
     from shapely.geometry import box as sbox
 
     FOREST_VALUE = 100  # valor de pixel correspondente a floresta

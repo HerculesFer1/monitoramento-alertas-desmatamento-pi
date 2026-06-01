@@ -84,9 +84,10 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
     Retorna dict com status da execução.
     """
     import time
-    from modules.areas_prioritarias.downloader  import download
-    from modules.areas_prioritarias.processor   import process
-    from modules.areas_prioritarias.calculator  import calculate_and_upload
+
+    from modules.areas_prioritarias.calculator import calculate_and_upload
+    from modules.areas_prioritarias.downloader import download
+    from modules.areas_prioritarias.processor import process
 
     t0 = time.perf_counter()
 

@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
 
 import geopandas as gpd
 import pandas as pd
@@ -71,7 +70,7 @@ def calculate_and_upload(
         return len(df_classes)
 
     # ── 4. Upload Supabase ───────────────────────────────────────────────────
-    from core.uploader import upload_json, upload_geodataframe
+    from core.uploader import upload_geodataframe, upload_json
 
     log.info("Enviando ap_classes_municipio (%d registros)...", len(df_classes))
     upload_json(
@@ -111,8 +110,8 @@ def _enrich_biomass(
     Se rasters indisponíveis, mantém colunas como None (sem erro).
     """
     try:
-        from rasterstats import zonal_stats
         import rasterio
+        from rasterstats import zonal_stats
     except ImportError:
         log.warning("rasterstats não instalado — biomassa será None.")
         return gdf_classes, gdf_resumo
