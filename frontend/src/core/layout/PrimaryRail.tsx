@@ -17,20 +17,20 @@ const ITEMS: RailItem[] = [
   {
     module:     'mapbiomas',
     label:      'MapBiomas Alertas',
-    icon:       mkImg('/icon-mapbiomas.svg',        'rail-module-icon-inactive', '76%', '76%'),
-    iconActive: mkImg('/icon-mapbiomas-active.svg', 'rail-module-icon-active',   '76%', '76%'),
+    icon:       mkImg('/icon-mapbiomas.svg',        'rail-module-icon-inactive', '60%', '60%'),
+    iconActive: mkImg('/icon-mapbiomas-active.svg', 'rail-module-icon-active',   '60%', '60%'),
   },
   {
     module:     'prodes',
     label:      'PRODES / INPE',
-    icon:       mkImg('/icon-prodes.svg',        'rail-module-icon-inactive', '76%', '76%'),
-    iconActive: mkImg('/icon-prodes-active.svg', 'rail-module-icon-active',   '76%', '76%'),
+    icon:       mkImg('/icon-prodes.svg',        'rail-module-icon-inactive', '84%', '84%'),
+    iconActive: mkImg('/icon-prodes-active.svg', 'rail-module-icon-active',   '84%', '84%'),
   },
   {
     module:     'matopiba',
     label:      'MATOPIBA',
-    icon:       mkImg('/icon-matopiba.svg',        'rail-module-icon-inactive', '76%', '76%'),
-    iconActive: mkImg('/icon-matopiba-active.svg', 'rail-module-icon-active',   '76%', '76%'),
+    icon:       mkImg('/icon-matopiba.svg',        'rail-module-icon-inactive', '84%', '84%'),
+    iconActive: mkImg('/icon-matopiba-active.svg', 'rail-module-icon-active',   '84%', '84%'),
   },
   {
     module:     'areas_prioritarias',
