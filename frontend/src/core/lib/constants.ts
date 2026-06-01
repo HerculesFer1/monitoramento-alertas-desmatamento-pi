@@ -20,6 +20,10 @@ export const FLAGS_PRODES   = _pipeline.flags_prodes
 // Alias para compatibilidade com componentes existentes
 export const YEARS = ANOS
 
+// Set pré-computado para O(1) lookup (vs O(n) MATOPIBA_LIST.some())
+const _norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase()
+export const MATOPIBA_SET: ReadonlySet<string> = new Set(MATOPIBA_LIST.map(_norm))
+
 // ── Constantes exclusivas do frontend ────────────────────────────────────
 export const AREA_TERESINA = 139_200 // ha — referência geográfica para KPIs
 

@@ -40,6 +40,11 @@ BATCH        = 200   # linhas por upsert (evita timeout REST)
 MAX_RETRIES  = 3     # tentativas por batch antes de abortar
 RETRY_DELAY  = 2.0   # segundos de espera entre tentativas (dobra a cada retry)
 
+# CRS aceitos para upload (PostGIS espera EPSG:4326).
+# 4674 (SIRGAS 2000 geográfico) e 5880 (Brasil Policônico) são reprojetados.
+_CRS_UPLOAD_ALVO   = 4326
+_CRS_ACEITOS       = (4326, 4674, 5880)
+
 
 # ── Cliente Supabase ──────────────────────────────────────────────────────
 def criar_cliente():
@@ -108,6 +113,30 @@ def _batches(lst, n):
         yield lst[i:i + n]
 
 
+def _ensure_crs_4326(gdf: "gpd.GeoDataFrame", table: str) -> "gpd.GeoDataFrame":
+    """Garante que o GDF está em EPSG:4326. Aborta se CRS for ausente ou desconhecido.
+
+    Aceita 4326 (passthrough), 4674 e 5880 (reprojeta).
+    Sem essa validação, GDFs em CRS arbitrário são reprojetados silenciosamente
+    para 4326 e geometrias acabam distorcidas — A1 do relatório de auditoria.
+    """
+    if gdf.crs is None:
+        raise ValueError(
+            f"[{table}] GeoDataFrame sem CRS. Defina o CRS antes do upload "
+            f"(gdf.set_crs('EPSG:4326') ou similar) — abortando para evitar reprojeção silenciosa."
+        )
+    epsg = gdf.crs.to_epsg()
+    if epsg not in _CRS_ACEITOS:
+        raise ValueError(
+            f"[{table}] CRS EPSG:{epsg} não está na lista de aceitos {_CRS_ACEITOS}. "
+            "Adicione explicitamente se for esperado, ou reprojeje no processor."
+        )
+    if epsg != _CRS_UPLOAD_ALVO:
+        log.info("[%s] Reprojetando EPSG:%d → EPSG:%d", table, epsg, _CRS_UPLOAD_ALVO)
+        gdf = gdf.to_crs(epsg=_CRS_UPLOAD_ALVO)
+    return gdf
+
+
 def _upsert_with_retry(sb, table: str, batch: list, conflict_col: str) -> None:
     """Executa upsert com retry exponencial. Lança RuntimeError se esgotar tentativas."""
     delay = RETRY_DELAY
@@ -135,10 +164,7 @@ def _upsert_with_retry(sb, table: str, batch: list, conflict_col: str) -> None:
 def upload_alertas(sb):
     log.info("Lendo %s ...", GEO_IN.name)
     gdf = gpd.read_file(GEO_IN)
-    if gdf.crs is None:
-        log.warning("GeoDataFrame sem CRS — assumindo EPSG:4326")
-    elif gdf.crs.to_epsg() != 4326:
-        gdf = gdf.to_crs(epsg=4326)
+    gdf = _ensure_crs_4326(gdf, "alertas_classificados")
     log.info("  %d fragmentos carregados", len(gdf))
 
     registros = []
@@ -363,22 +389,46 @@ def upload_geodataframe(
     load_dotenv(ROOT / ".env")
     sb = criar_cliente()
 
-    if gdf.crs is None:
-        log.warning("[%s] GeoDataFrame sem CRS — assumindo EPSG:4326", table)
-    elif gdf.crs.to_epsg() != 4326:
-        gdf = gdf.to_crs(epsg=4326)
+    gdf = _ensure_crs_4326(gdf, table)
 
     non_geom_cols = [c for c in gdf.columns if c != gdf.geometry.name]
     col_conf = conflict_col or (non_geom_cols[0] if non_geom_cols else "id")
 
     registros = []
+    n_invalidas = 0
     for _, row in gdf.iterrows():
         rec: dict = {}
         for col in non_geom_cols:
             rec[col] = _to_json_safe(row[col])
         geom = row.geometry
+
+        # Validação geométrica antes do upsert — rastreia falhas em vez de
+        # PostGIS rejeitar silenciosamente.
+        if geom is not None:
+            if geom.is_empty:
+                log.warning("[%s] Geom vazia em %s=%s — descartada",
+                            table, col_conf, rec.get(col_conf))
+                n_invalidas += 1
+                continue
+            if not geom.is_valid:
+                from shapely.validation import make_valid
+                geom_fix = make_valid(geom)
+                if not geom_fix.is_valid or geom_fix.is_empty:
+                    log.error("[%s] Geom inválida não recuperável em %s=%s",
+                              table, col_conf, rec.get(col_conf))
+                    n_invalidas += 1
+                    continue
+                geom = geom_fix
+            # PostGIS rejeita Polygon quando a coluna é MultiPolygon — forçar conversão
+            if geom.geom_type == "Polygon":
+                from shapely.geometry import MultiPolygon
+                geom = MultiPolygon([geom])
+
         rec["geom"] = f"SRID=4326;{geom.wkt}" if geom is not None else None
         registros.append(rec)
+
+    if n_invalidas > 0:
+        log.warning("[%s] Total descartado por geom inválida/vazia: %d", table, n_invalidas)
 
     total = len(registros)
     n_batches = math.ceil(total / BATCH) if total else 0

@@ -52,6 +52,58 @@ export async function getAlertasGeoJson(params: GeoJsonParams = {}) {
   return data as GeoJSON.FeatureCollection
 }
 
+// ── GeoJSON bbox-aware (Migration 011 — RPC get_alertas_bbox) ───────────
+// Preferir esta sobre getAlertasGeoJson: filtra por bbox no servidor e simplifica
+// geometria por zoom (payload tipicamente 10-100× menor).
+export interface BboxParams {
+  xmin: number
+  ymin: number
+  xmax: number
+  ymax: number
+  zoom?: number
+  ano?: number
+  classificacao?: string
+  limit?: number
+}
+
+export async function getAlertasBbox(params: BboxParams) {
+  const { data, error } = await supabase.rpc('get_alertas_bbox', {
+    p_xmin:          params.xmin,
+    p_ymin:          params.ymin,
+    p_xmax:          params.xmax,
+    p_ymax:          params.ymax,
+    p_zoom:          params.zoom          ?? 8,
+    p_ano:           params.ano           ?? null,
+    p_classificacao: params.classificacao ?? null,
+    p_limit:         params.limit         ?? 5000,
+  })
+  if (error) throw error
+  return data as GeoJSON.FeatureCollection
+}
+
+// ── Áreas prioritárias: GeoJSON bbox-aware (Migration 011) ───────────────
+export interface ApBboxParams {
+  xmin: number
+  ymin: number
+  xmax: number
+  ymax: number
+  zoom?: number
+  ano?: number
+}
+
+export async function getApGeojsonBbox(params: ApBboxParams) {
+  const { data, error } = await supabase.rpc('get_ap_geojson_bbox', {
+    p_xmin: params.xmin,
+    p_ymin: params.ymin,
+    p_xmax: params.xmax,
+    p_ymax: params.ymax,
+    p_zoom: params.zoom ?? 6,
+    p_ano:  params.ano  ?? 2025,
+  })
+  if (error) throw error
+  return data as GeoJSON.FeatureCollection
+}
+
 // ── MATOPIBA: KPIs por ano ────────────────────────────────────────────────
 export async function getResumoMatopiba(): Promise<MatopibaResumo[]> {
   const { data, error } = await supabase.rpc('get_resumo_matopiba')

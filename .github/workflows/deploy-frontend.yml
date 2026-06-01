@@ -24,6 +24,8 @@ jobs:
   deploy:
     name: "Build & Deploy → Vercel"
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
 
     steps:
       # ── 1. Checkout ─────────────────────────────────────────────────────────
@@ -54,7 +56,7 @@ jobs:
           VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      # ── 5. Deploy para Vercel (npx vercel@latest — CLI sempre atualizado) ──────
+      # ── 5. Deploy para Vercel (CLI da raiz — o projeto já tem root=frontend) ───
       - name: Deploy para Vercel
         id: deploy
         run: |
@@ -65,7 +67,6 @@ jobs:
           fi
           echo "preview-url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           echo "Deploy concluido: $DEPLOY_URL"
-        working-directory: frontend
         env:
           VERCEL_TOKEN:      ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}

@@ -246,10 +246,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plataforma Modular — SEMARH-PI")
     parser.add_argument("--module", help="ID do módulo a executar (padrão: todos)")
     parser.add_argument("--dry-run", action="store_true", help="Processar sem fazer upload")
+    parser.add_argument("--skip-download", action="store_true", help="Reutilizar arquivos já baixados")
     parser.add_argument("--ano", type=int, help="Restringir ao ano específico")
     args = parser.parse_args()
 
-    cfg = {"dry_run": args.dry_run}
+    cfg = {"dry_run": args.dry_run, "skip_download": args.skip_download}
     if args.ano:
         cfg["ano"] = args.ano
 

@@ -1,4 +1,5 @@
-import { defineConfig } from 'vitest/config'
+/// <reference types="vitest" />
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
@@ -24,13 +25,9 @@ export default defineConfig({
           if (id.includes('@tanstack'))         return 'vendor-query'
           if (id.includes('zustand'))           return 'vendor-state'
           if (id.includes('@supabase'))         return 'vendor-supabase'
+          if (id.includes('lucide-react'))      return 'vendor-icons'
         },
       },
     },
-  },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./src/test/setup.ts'],
   },
 })

@@ -135,8 +135,9 @@ Inclui validação cruzada com o **PRODES-Cerrado/INPE** e recorte especial para
 │   └── _check_env.py           # Verifica variáveis de ambiente
 │
 ├── docs/
-│   ├── architecture/           # ADR-001 a ADR-007 + DECISIONS.md
-│   └── MIGRATION-PLAN.md       # Plano de migração v1 → v2
+│   ├── architecture/                # ADR-001 a ADR-008 + DECISIONS.md
+│   ├── DATA_ANALYSIS_METHODOLOGY.md # Como o sistema chega aos números
+│   └── MIGRATION-PLAN.md            # Plano de migração v1 → v2
 │
 ├── tests/                      # pytest — testes unitários Python
 ├── pipeline/                   # Bridge v1→v2 (constants.json para Vite)
@@ -265,6 +266,8 @@ Migrations aplicadas em ordem via SQL Editor:
 | `003_deradsa_management.sql` | Gestão de DERADSAs via frontend |
 | `004_prodes_rpc_fix.sql` | Correção `get_resumo_prodes` — n_total exclui SEM_PRODES |
 | `005_security_hardening.sql` | REVOKE anon, search_path, unique parcial |
+| `008_areas_prioritarias.sql` + `010_v3_upgrade` | Módulo áreas prioritárias (5 classes, AGB, DETER gap) |
+| `011_mvt_and_bbox_serving.sql` | **MVT + GeoJSON bbox-aware** — payload 10-100× menor ([ADR-008](docs/architecture/ADR-008-mvt-tile-serving.md)) |
 
 ---
 

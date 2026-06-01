@@ -41,11 +41,11 @@
   --autp:   rgba(16,185,129,.5);
 
   /* Fundo — corpo ↔ cards invertidos */
-  --bg1: #222222;   /* corpo do app */
-  --bg2: #181818;   /* rail */
+  --bg1: #1A1A1A;   /* corpo do app — ligeiramente mais escuro */
+  --bg2: #101010;   /* rail */
   --bg3: #000000;   /* cards / KPIs — preto absoluto */
-  --bg4: #0D0D0D;   /* elementos internos de cards */
-  --bg5: #1C1C1C;   /* hover dentro de cards */
+  --bg4: #0A0A0A;   /* elementos internos de cards */
+  --bg5: #161616;   /* hover dentro de cards */
   --sep: rgba(255,255,255,.07);
 
   /* Texto */
@@ -142,7 +142,7 @@ body {
 
 /* ── Primary Rail — flutuante preto, estilo Apple ─────────────────────────  */
 .rail {
-  width: 72px;
+  width: 60px;
   background: #000000;
   border-radius: 14px;
   margin: 8px 0 8px 8px;
@@ -556,3 +556,360 @@ body {
 /* ── Light: scrollbar ─────────────────────────────────────────────────────  */
 [data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.14); }
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.22); }
+
+/* ── Rail module icons ─────────────────────────────────────────────────────  */
+/* screen blend: black bg in PNG disappears on dark rail; colored content stays */
+.rail-module-icon-inactive,
+.rail-module-icon-active {
+  mix-blend-mode: screen;
+}
+
+/* Light mode: reset blend, dim inactive, let active show natural colors */
+[data-theme="light"] .rail-module-icon-inactive {
+  mix-blend-mode: normal;
+  filter: brightness(0) opacity(0.40);
+}
+[data-theme="light"] .rail-module-icon-active {
+  mix-blend-mode: normal;
+}
+
+/* ── MapLibre GL — controles dark mode (padrão) ────────────────────────────  */
+.maplibregl-ctrl-group {
+  background: #111111 !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.45) !important;
+  overflow: hidden;
+}
+.maplibregl-ctrl-group button {
+  background-color: transparent !important;
+  border-bottom-color: rgba(255,255,255,.07) !important;
+  filter: invert(1) brightness(0.88);
+}
+.maplibregl-ctrl-group button:hover {
+  background-color: rgba(255,255,255,.1) !important;
+}
+.maplibregl-ctrl-group button:last-child {
+  border-bottom: none !important;
+}
+
+/* ── MapLibre GL — controles light mode ────────────────────────────────────  */
+[data-theme="light"] .maplibregl-ctrl-group {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(0,0,0,.12) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.1) !important;
+}
+[data-theme="light"] .maplibregl-ctrl-group button {
+  background-color: transparent !important;
+  border-bottom-color: rgba(0,0,0,.07) !important;
+  filter: none;
+}
+[data-theme="light"] .maplibregl-ctrl-group button:hover {
+  background-color: rgba(0,0,0,.05) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ÁREAS PRIORITÁRIAS — componentes específicos do módulo
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Grid 5 colunas ───────────────────────────────────────────────────────  */
+.grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+
+@media (max-width: 1200px) { .grid-5 { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px)  { .grid-5 { grid-template-columns: repeat(2, 1fr); } }
+
+/* ── Search input dark ────────────────────────────────────────────────────  */
+.ap-search {
+  background: var(--bg4); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 8px; color: var(--t1); font-size: 12px;
+  padding: 6px 12px; outline: none; width: 100%;
+  transition: border-color .15s;
+}
+.ap-search::placeholder { color: var(--t3); }
+.ap-search:focus { border-color: rgba(16,185,129,.4); }
+
+/* ── Select dark ──────────────────────────────────────────────────────────  */
+.ap-select {
+  background: var(--bg4); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 8px; color: var(--t2); font-size: 11px;
+  padding: 5px 10px; outline: none; cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+}
+.ap-select:focus { border-color: rgba(16,185,129,.4); color: var(--t1); }
+
+/* ── Map container — AP maps ──────────────────────────────────────────────  */
+.ap-map-wrap {
+  flex: 1; border-radius: var(--r-lg); overflow: hidden;
+  box-shadow: var(--shadow-map);
+  border: 1px solid rgba(255,255,255,.06);
+  position: relative;
+}
+
+/* ── Classe badge pill ────────────────────────────────────────────────────  */
+.ap-classe-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  font-size: 10px; font-weight: 700;
+}
+
+/* ── Heatmap table cell ───────────────────────────────────────────────────  */
+.ap-heatmap-cell {
+  border-radius: 4px; text-align: center; padding: 3px 2px;
+  font-size: 9px; font-variant-numeric: tabular-nums;
+  transition: filter .1s;
+}
+.ap-heatmap-cell:hover { filter: brightness(1.2); }
+
+/* ── Map overlay (loading / instruction) ─────────────────────────────────  */
+.ap-map-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.65); backdrop-filter: blur(4px);
+  font-size: 12px; color: var(--t2);
+}
+
+/* ── Glassmorphism back button ────────────────────────────────────────────  */
+.ap-back-btn {
+  position: absolute; top: 10px; left: 10px; z-index: 10;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.12); border-radius: 8px;
+  color: var(--t1); padding: 5px 12px;
+  font-size: 11px; cursor: pointer; font-family: inherit;
+  transition: background .15s;
+}
+.ap-back-btn:hover { background: rgba(0,0,0,.9); }
+
+/* ── Instruction pill (hover hint) ───────────────────────────────────────  */
+.ap-hint-pill {
+  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 10;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
+  padding: 5px 14px; font-size: 11px; color: var(--t2);
+  pointer-events: none; white-space: nowrap;
+}
+
+/* ── Panel header — título + subtítulo padronizado ────────────────────────  */
+.ap-panel-hdr { padding: 12px 14px 10px; border-bottom: 1px solid var(--sep); }
+.ap-panel-hdr-title { font-size: 13px; font-weight: 700; color: var(--t1); }
+.ap-panel-hdr-sub   { font-size: 11px; color: var(--t2); margin-top: 2px; }
+
+/* Light mode adjustments for AP components */
+[data-theme="light"] .ap-search  { background: var(--bg4); border-color: rgba(0,0,0,.1); color: var(--t1); }
+[data-theme="light"] .ap-search::placeholder { color: var(--t3); }
+[data-theme="light"] .ap-select  { background: var(--bg4); border-color: rgba(0,0,0,.1); color: var(--t2); }
+[data-theme="light"] .ap-map-wrap { border-color: rgba(0,0,0,.08); box-shadow: var(--shadow-map); }
+[data-theme="light"] .ap-back-btn { background: rgba(255,255,255,.9); border-color: rgba(0,0,0,.12); color: var(--t1); }
+[data-theme="light"] .ap-back-btn:hover { background: #FFFFFF; }
+[data-theme="light"] .ap-hint-pill { background: rgba(255,255,255,.9); border-color: rgba(0,0,0,.1); color: var(--t2); }
+[data-theme="light"] .ap-map-overlay { background: rgba(255,255,255,.75); backdrop-filter: blur(4px); color: var(--t2); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SISTEMA PREMIUM — animações, tooltips, micro-interações, information design
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Shimmer skeleton (Netflix / Linear pattern) ─────────────────────────  */
+@keyframes shimmer {
+  0%   { background-position: -400% 0; }
+  100% { background-position:  400% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,.03)  0%,
+    rgba(255,255,255,.075) 20%,
+    rgba(255,255,255,.03)  40%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* ── KPI value entrance animation ────────────────────────────────────────  */
+@keyframes value-in {
+  from { opacity: 0; transform: translateY(7px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.kpi-value {
+  animation: value-in .42s var(--ease) both;
+  animation-delay: .06s;
+}
+
+/* ── Card accent top borders (semantic colors) ───────────────────────────  */
+.card-aut    { border-top: 2px solid var(--aut)  !important; padding-top: 14px !important; }
+.card-irr    { border-top: 2px solid var(--irr)  !important; padding-top: 14px !important; }
+.card-reg    { border-top: 2px solid var(--reg)  !important; padding-top: 14px !important; }
+.card-mat    { border-top: 2px solid var(--mat)  !important; padding-top: 14px !important; }
+.card-indigo { border-top: 2px solid #6366F1     !important; padding-top: 14px !important; }
+
+/* ── Trend badges ─────────────────────────────────────────────────────────  */
+.trend-badge {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 2px 6px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; letter-spacing: .01em;
+  flex-shrink: 0;
+}
+.trend-up      { color: var(--aut); background: var(--aut-bg); }
+.trend-down    { color: var(--irr); background: var(--irr-bg); }
+.trend-neutral { color: var(--t3);  background: rgba(255,255,255,.06); }
+
+/* ── Premium glassmorphism tooltip ──────────────────────────────────────  */
+.tt-premium {
+  background: rgba(6,6,6,.97);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow:
+    0 24px 64px rgba(0,0,0,.8),
+    0 8px 24px  rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(255,255,255,.07);
+  min-width: 180px;
+  font-size: 11px;
+  pointer-events: none;
+  font-family: inherit;
+}
+.tt-title {
+  font-weight: 700; font-size: 12px; color: var(--t1);
+  margin-bottom: 8px; padding-bottom: 7px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.tt-row   { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 2px 0; }
+.tt-label { color: var(--t3); }
+.tt-val   { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--t1); }
+.tt-sep   { height: 1px; background: rgba(255,255,255,.06); margin: 6px 0; }
+
+/* ── Inline mini-bar cells (Tufte sparkline principle) ──────────────────  */
+.cell-bar-wrap { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+.cell-bar {
+  height: 3px; min-width: 3px; border-radius: 999px;
+  flex-shrink: 0; transition: width .35s var(--ease);
+}
+
+/* ── Enhanced data table hover (left glow accent) ───────────────────────  */
+.data-table tbody tr { transition: background .1s; }
+.data-table tbody tr:hover td { background: rgba(255,255,255,.035) !important; }
+.data-table tbody tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--aut);
+}
+.data-table thead th { white-space: nowrap; }
+
+/* Sortable column header */
+.data-table th.sort-active { color: var(--aut) !important; }
+.data-table th[data-sort] {
+  cursor: pointer; user-select: none;
+  transition: color .12s;
+}
+.data-table th[data-sort]:hover { color: var(--t1); }
+
+/* ── MapLibre GL popup — glassmorphism override ──────────────────────────  */
+.ap-maplibre-popup .maplibregl-popup-content {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+.maplibregl-popup-tip { display: none !important; }
+
+/* ── Progress ring container ─────────────────────────────────────────────  */
+.progress-ring-wrap {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.progress-ring-label {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; line-height: 1.1;
+}
+
+/* ── Pulsing live dot ─────────────────────────────────────────────────────  */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .55; transform: scale(1.5); }
+}
+.dot-live  { width: 6px; height: 6px; border-radius: 50%; background: var(--aut); animation: pulse-dot 2.2s ease-in-out infinite; }
+.dot-warn  { width: 6px; height: 6px; border-radius: 50%; background: var(--reg); animation: pulse-dot 2.2s ease-in-out infinite; }
+.dot-alert { width: 6px; height: 6px; border-radius: 50%; background: var(--irr); animation: pulse-dot 2.2s ease-in-out infinite; }
+
+/* ── Gradient text utility ───────────────────────────────────────────────  */
+.text-grad-forest {
+  background: linear-gradient(135deg, #10B981 20%, #059669 80%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.text-grad-danger {
+  background: linear-gradient(135deg, #EF4444 20%, #DC2626 80%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Severity color utilities ────────────────────────────────────────────  */
+.sev-critical { color: var(--irr)  !important; }
+.sev-warning  { color: var(--reg)  !important; }
+.sev-good     { color: var(--aut)  !important; }
+.sev-info     { color: #6366F1     !important; }
+.sev-neutral  { color: var(--t3)   !important; }
+
+/* ── Percentage bar (dual segment: floresta + desmatado) ─────────────────  */
+.dual-bar-track {
+  height: 5px; border-radius: 999px; overflow: hidden;
+  background: rgba(255,255,255,.06);
+  display: flex;
+}
+.dual-bar-forest { height: 100%; background: #10B981; border-radius: 999px 0 0 999px; transition: width .45s var(--ease); }
+.dual-bar-desmat { height: 100%; background: #EF4444; transition: width .45s var(--ease); }
+
+/* ── Section label utility ───────────────────────────────────────────────  */
+.section-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--t3);
+}
+
+/* ── Numero grande com unidade em superscript ────────────────────────────  */
+.kpi-value-unit {
+  font-size: 0.42em; font-weight: 500; color: var(--t3);
+  vertical-align: super; margin-left: 2px; letter-spacing: 0;
+}
+
+/* ── Tab content slide transition ────────────────────────────────────────  */
+@keyframes tab-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tab-enter { animation: tab-enter .22s var(--ease) both; }
+
+/* ── Recharts — cursor and hover refinements ─────────────────────────────  */
+.recharts-bar-rectangle path { transition: filter .1s; }
+.recharts-bar-rectangle:hover path { filter: brightness(1.18) !important; }
+.recharts-active-dot circle { stroke-width: 2px !important; }
+.recharts-tooltip-wrapper { z-index: 1000 !important; }
+
+/* ── Light mode overrides for premium system ─────────────────────────────  */
+[data-theme="light"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,.04)  0%,
+    rgba(0,0,0,.09)  20%,
+    rgba(0,0,0,.04)  40%
+  );
+  background-size: 400% 100%;
+}
+[data-theme="light"] .tt-premium {
+  background: rgba(255,255,255,.97);
+  border-color: rgba(0,0,0,.1);
+  box-shadow: 0 16px 48px rgba(0,0,0,.14), 0 4px 12px rgba(0,0,0,.08),
+    inset 0 -1px 0 rgba(0,0,0,.06);
+}
+[data-theme="light"] .tt-title { color: var(--t1); border-color: rgba(0,0,0,.07); }
+[data-theme="light"] .tt-label { color: var(--t3); }
+[data-theme="light"] .tt-val   { color: var(--t1); }
+[data-theme="light"] .tt-sep   { background: rgba(0,0,0,.06); }
+[data-theme="light"] .data-table tbody tr:hover td { background: rgba(0,0,0,.025) !important; }
+[data-theme="light"] .data-table tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--aut); }
+[data-theme="light"] .dual-bar-track { background: rgba(0,0,0,.06); }
+[data-theme="light"] .card-aut    { border-top-color: var(--aut) !important; }
+[data-theme="light"] .card-irr    { border-top-color: var(--irr) !important; }
+[data-theme="light"] .card-reg    { border-top-color: var(--reg) !important; }
+[data-theme="light"] .card-mat    { border-top-color: var(--mat) !important; }
+[data-theme="light"] .card-indigo { border-top-color: #6366F1     !important; }
