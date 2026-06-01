@@ -261,6 +261,11 @@ def _load_classes(path: Path) -> gpd.GeoDataFrame:
     """Carrega GPKG de classes de prioridade (mesmo arquivo do areas_prioritarias)."""
     gdf = gpd.read_file(str(path))
     gdf = fix_geoms(gdf, "classes_prioritarias")
+    # Garantir CRS_WORK — aborta mistura silenciosa de CRS antes do overlay.
+    if gdf.crs is None:
+        gdf = gdf.set_crs(_CRS_WORK)
+    elif gdf.crs.to_epsg() not in (4674, 4326):
+        gdf = gdf.to_crs(_CRS_WORK)
 
     if "DN" in gdf.columns:
         gdf = gdf.rename(columns={"DN": "classe_prioridade"})
@@ -297,6 +302,10 @@ def _load_municipios_from_cache() -> gpd.GeoDataFrame:
         if p.exists():
             gdf = gpd.read_file(str(p))
             gdf = fix_geoms(gdf, "municipios_ibge")
+            if gdf.crs is None:
+                gdf = gdf.set_crs(_CRS_WORK)
+            elif gdf.crs.to_epsg() not in (4674, 4326):
+                gdf = gdf.to_crs(_CRS_WORK)
             if "SIGLA_UF" in gdf.columns:
                 gdf = gdf[gdf["SIGLA_UF"] == "PI"].copy()
             elif "CD_UF" in gdf.columns:
@@ -363,6 +372,12 @@ def _intersect_by_month(
         intersected = _clean_geoms(intersected)
         if len(intersected) == 0:
             log.debug("Mês %02d: sem interseção cicatrizes × células.", mes)
+            continue
+
+        # Limpa geometrias pós-overlay antes de calcular área —
+        # overlay pode produzir polígonos inválidos que distorceriam a reprojeção.
+        intersected = _clean_geoms(intersected)
+        if len(intersected) == 0:
             continue
 
         # Área queimada em ha (EPSG:5880 — projeção equivalente)

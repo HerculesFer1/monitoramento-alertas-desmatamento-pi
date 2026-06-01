@@ -14,10 +14,13 @@ Segue padrão do _template/downloader.py:
 from __future__ import annotations
 
 import logging
+import time
 import zipfile
 from pathlib import Path
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 log = logging.getLogger(__name__)
 
@@ -28,6 +31,26 @@ _BASE_URL     = (
 _TIMEOUT_S    = 300
 _CHUNK_BYTES  = 16_384
 _MESES        = list(range(1, 13))   # Jan..Dez
+
+# Campos obrigatórios em qualquer shapefile AQ1km válido
+_REQUIRED_SHP_EXTS = {".shp", ".dbf", ".shx"}
+
+
+def _make_session() -> requests.Session:
+    """Sessão com retry exponencial para downloads do INPE (servidor instável)."""
+    session = requests.Session()
+    retry = Retry(
+        total=3,
+        backoff_factor=1.0,         # 1s, 2s, 4s entre tentativas
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET"],
+    )
+    session.mount("http://",  HTTPAdapter(max_retries=retry))
+    session.mount("https://", HTTPAdapter(max_retries=retry))
+    return session
+
+
+_SESSION = _make_session()
 
 
 def download(
@@ -103,10 +126,14 @@ def _extract_shp(
 ) -> Path | None:
     """Extrai todos os arquivos do ZIP e retorna o path do .shp encontrado."""
     with zipfile.ZipFile(zip_path, "r") as zf:
-        shp_files = [f for f in zf.namelist() if f.lower().endswith(".shp")]
-        if not shp_files:
+        members_lower = {Path(m).suffix.lower() for m in zf.namelist()}
+
+        # Valida completude do shapefile antes de extrair (achado A2 da auditoria).
+        missing = _REQUIRED_SHP_EXTS - members_lower
+        if missing:
             log.warning(
-                "ZIP %s não contém arquivo .shp.", zip_path.name
+                "ZIP %s incompleto — faltam: %s. Mês ignorado.",
+                zip_path.name, missing,
             )
             return None
 

@@ -13,11 +13,37 @@ import time
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
 from core.registry import ModuleRegistry
 
 log = logging.getLogger(__name__)
 
 _ROOT = Path(__file__).parent.parent
+
+
+def _init_sentry() -> bool:
+    """Inicializa Sentry se SENTRY_DSN estiver configurado no .env.
+
+    Ativo apenas em produção (não em dry_run local sem DSN).
+    Captura exceções não tratadas no pipeline e erros de módulos.
+    """
+    load_dotenv(_ROOT / ".env")
+    dsn = os.environ.get("SENTRY_DSN")
+    if not dsn:
+        return False
+    try:
+        import sentry_sdk
+        sentry_sdk.init(
+            dsn=dsn,
+            environment=os.environ.get("ENV", "production"),
+            traces_sample_rate=0.0,   # sem tracing — apenas error capture
+            before_send=lambda event, hint: event,
+        )
+        return True
+    except ImportError:
+        log.warning("sentry-sdk não instalado — monitoramento desabilitado. "
+                    "Instale com: pip install sentry-sdk")
+        return False
 
 
 def _status_geral(results: list[dict]) -> str:
@@ -242,6 +268,11 @@ if __name__ == "__main__":
     import argparse
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
+    # Sentry inicializado antes de qualquer execução — captura erros do pipeline.
+    sentry_ativo = _init_sentry()
+    if sentry_ativo:
+        log.info("Sentry: monitoramento de erros ativo.")
 
     parser = argparse.ArgumentParser(description="Plataforma Modular — SEMARH-PI")
     parser.add_argument("--module", help="ID do módulo a executar (padrão: todos)")
