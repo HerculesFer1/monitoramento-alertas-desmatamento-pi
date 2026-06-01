@@ -377,6 +377,10 @@ def upload_geodataframe(
         for col in non_geom_cols:
             rec[col] = _to_json_safe(row[col])
         geom = row.geometry
+        # PostGIS rejeita Polygon quando a coluna é MultiPolygon — forçar conversão
+        if geom is not None and geom.geom_type == "Polygon":
+            from shapely.geometry import MultiPolygon
+            geom = MultiPolygon([geom])
         rec["geom"] = f"SRID=4326;{geom.wkt}" if geom is not None else None
         registros.append(rec)
 
