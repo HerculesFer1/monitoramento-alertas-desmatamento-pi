@@ -18,6 +18,11 @@ from core.constants import MIN_AREA_M2
 
 log = logging.getLogger(__name__)
 
+# Guard de performance: unary_union com >5k polígonos pode levar minutos
+# e arriscar TopologyException. Acima desse limite, log de alerta sugere
+# usar dissolve(by=...) chunked ou STRtree pré-construído.
+_UNARY_UNION_WARN_THRESHOLD = 5000
+
 
 def fix_geoms(gdf: gpd.GeoDataFrame, label: str = "") -> gpd.GeoDataFrame:
     """Corrige geometrias inválidas e remove vazias. Retorna novo GeoDataFrame."""
@@ -47,11 +52,18 @@ def dissolve_safe(gdf: gpd.GeoDataFrame, label: str = "") -> Optional[Geometry]:
     """
     if gdf.empty:
         return None
+    n = len(gdf)
+    if n > _UNARY_UNION_WARN_THRESHOLD:
+        log.warning(
+            "[%s] unary_union em %d polígonos (limite %d) — considere dissolve(by=...) "
+            "chunked ou STRtree para evitar TopologyException.",
+            label, n, _UNARY_UNION_WARN_THRESHOLD,
+        )
     try:
         union = unary_union(gdf.geometry.tolist())
         return make_valid(union) if not union.is_valid else union
     except Exception as exc:
-        n_lost = len(gdf) - 1
+        n_lost = n - 1
         log.warning(
             "[%s] unary_union falhou (%s) — usando primeira geometria (%d ignoradas)",
             label, exc, n_lost,
