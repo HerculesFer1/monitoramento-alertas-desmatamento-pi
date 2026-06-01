@@ -23,14 +23,14 @@ const ITEMS: RailItem[] = [
   {
     module:     'prodes',
     label:      'PRODES / INPE',
-    icon:       mkImg('/icon-prodes.svg',        'rail-module-icon-inactive', '84%', '84%'),
-    iconActive: mkImg('/icon-prodes-active.svg', 'rail-module-icon-active',   '84%', '84%'),
+    icon:       mkImg('/icon-prodes.svg',        'rail-module-icon-inactive', '90%', '90%'),
+    iconActive: mkImg('/icon-prodes-active.svg', 'rail-module-icon-active',   '90%', '90%'),
   },
   {
     module:     'matopiba',
     label:      'MATOPIBA',
-    icon:       mkImg('/icon-matopiba.svg',        'rail-module-icon-inactive', '84%', '84%'),
-    iconActive: mkImg('/icon-matopiba-active.svg', 'rail-module-icon-active',   '84%', '84%'),
+    icon:       mkImg('/icon-matopiba.svg',        'rail-module-icon-inactive', '90%', '90%'),
+    iconActive: mkImg('/icon-matopiba-active.svg', 'rail-module-icon-active',   '90%', '90%'),
   },
   {
     module:     'areas_prioritarias',
