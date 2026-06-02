@@ -3,6 +3,7 @@ name: "Deploy Frontend — Vercel"
 # Deploy automático quando frontend/ muda no main.
 # PRs geram preview deployment; push para main faz deploy de produção.
 on:
+  workflow_dispatch:
   push:
     branches: [master, main]
     paths:
