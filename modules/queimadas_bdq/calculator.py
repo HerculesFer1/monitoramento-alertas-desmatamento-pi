@@ -172,8 +172,9 @@ def _upload_execucao(meta: dict[str, Any], ano: int, n_registros: int) -> None:
     """Registra a execução em qb_execucoes via INSERT simples (sem upsert — tabela usa SERIAL id)."""
     try:
         import os
-        from dotenv import load_dotenv
         from pathlib import Path
+
+        from dotenv import load_dotenv
         from supabase import create_client
 
         load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")

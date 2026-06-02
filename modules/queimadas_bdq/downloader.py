@@ -14,7 +14,6 @@ Segue padrão do _template/downloader.py:
 from __future__ import annotations
 
 import logging
-import time
 import zipfile
 from pathlib import Path
 

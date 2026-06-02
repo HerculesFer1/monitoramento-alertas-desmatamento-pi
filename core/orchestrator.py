@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
+
 from core.registry import ModuleRegistry
 
 log = logging.getLogger(__name__)
