@@ -42,7 +42,7 @@ const ITEMS: RailItem[] = [
     module: 'queimadas_bdq',
     label:  'Queimadas BD-INPE',
     icon: (
-      <span style={{ fontSize: 24, lineHeight: 1, opacity: .55 }}>🔥</span>
+      <span style={{ fontSize: 24, lineHeight: 1, filter: 'grayscale(1)' }}>🔥</span>
     ),
     iconActive: (
       <span style={{ fontSize: 24, lineHeight: 1 }}>🔥</span>
