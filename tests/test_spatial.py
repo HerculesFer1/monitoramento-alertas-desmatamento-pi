@@ -3,7 +3,14 @@ import pytest
 import geopandas as gpd
 from shapely.geometry import Polygon, Point, GeometryCollection, MultiPolygon
 
-from core.spatial_core import fix_geoms, dissolve_safe, extract_polygons, safe_intersection, safe_difference
+from core.spatial_core import (
+    assert_projected_crs,
+    dissolve_safe,
+    extract_polygons,
+    fix_geoms,
+    safe_difference,
+    safe_intersection,
+)
 
 
 def sq(x0, y0, x1, y1) -> Polygon:
@@ -143,3 +150,72 @@ def test_safe_difference_exception_returns_none(monkeypatch):
     monkeypatch.setattr(_Poly, "difference", _failing)
     result = safe_difference(sq(0, 0, 1, 1), sq(5, 5, 6, 6))
     assert result is None
+
+
+# ── C2 da auditoria GIS — min_area parametrizável + assert_projected_crs ──
+
+def test_safe_intersection_min_area_filtra_residuo_pequeno():
+    """min_area > area do resultado → None (artefato descartado)."""
+    a = sq(0, 0, 10, 10)            # 100
+    b = sq(9.999, 9.999, 10, 10)    # 0.000001 — sliver
+    result = safe_intersection(a, b, min_area=0.001)
+    assert result is None
+
+def test_safe_intersection_min_area_zero_aceita_sliver():
+    """min_area=0 preserva qualquer interseção não vazia — útil em CRS geográfico."""
+    a = sq(0, 0, 1, 1)
+    b = sq(0.99, 0.99, 1.01, 1.01)  # interseção bem pequena
+    result = safe_intersection(a, b, min_area=0)
+    assert result is not None
+    assert result.area > 0
+
+def test_safe_difference_min_area_parametrizavel():
+    a = sq(0, 0, 10, 10)
+    b = sq(0, 0, 9.99, 10)
+    # Resíduo ≈ 0.1 — descartado se min_area > 0.5
+    result_strict = safe_difference(a, b, min_area=0.5)
+    assert result_strict is None
+    # Mas mantido com min_area pequeno
+    result_loose = safe_difference(a, b, min_area=0.01)
+    assert result_loose is not None
+
+
+# ── assert_projected_crs ─────────────────────────────────────────────────
+
+def test_assert_projected_crs_aceita_5880():
+    """EPSG:5880 (Brasil Policônico, métrico) deve passar."""
+    gdf = gpd.GeoDataFrame(
+        {"id": [1]}, geometry=[sq(0, 0, 100, 100)], crs=5880,
+    )
+    assert_projected_crs(gdf, "teste")  # não levanta
+
+def test_assert_projected_crs_aceita_3857():
+    """EPSG:3857 (Web Mercator, métrico) deve passar — usado em MVT."""
+    gdf = gpd.GeoDataFrame(
+        {"id": [1]}, geometry=[sq(0, 0, 100, 100)], crs=3857,
+    )
+    assert_projected_crs(gdf, "teste")
+
+def test_assert_projected_crs_rejeita_4326():
+    """EPSG:4326 (WGS84 geográfico) — 1 grau² ≠ 1 m². Aborta."""
+    gdf = gpd.GeoDataFrame(
+        {"id": [1]}, geometry=[sq(0, 0, 1, 1)], crs=4326,
+    )
+    with pytest.raises(ValueError, match="EPSG:4326 é geográfico"):
+        assert_projected_crs(gdf, "alertas")
+
+def test_assert_projected_crs_rejeita_4674():
+    """EPSG:4674 (SIRGAS 2000 geográfico) — CRS nativo de PRODES, mas geográfico."""
+    gdf = gpd.GeoDataFrame(
+        {"id": [1]}, geometry=[sq(0, 0, 1, 1)], crs=4674,
+    )
+    with pytest.raises(ValueError, match="EPSG:4674 é geográfico"):
+        assert_projected_crs(gdf, "prodes")
+
+def test_assert_projected_crs_rejeita_sem_crs():
+    """GDF sem CRS — aborta com instrução de fix."""
+    gdf = gpd.GeoDataFrame(
+        {"id": [1]}, geometry=[sq(0, 0, 1, 1)], crs=None,
+    )
+    with pytest.raises(ValueError, match="sem CRS"):
+        assert_projected_crs(gdf, "teste")

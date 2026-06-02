@@ -28,7 +28,12 @@ from core.constants import (
     SUFIXO_CLASSE,
     THRESHOLD_AUTORIZADO,
 )
-from core.spatial_core import dissolve_safe, safe_difference, safe_intersection
+from core.spatial_core import (
+    assert_projected_crs,
+    dissolve_safe,
+    safe_difference,
+    safe_intersection,
+)
 from core.utils import strip_tz
 
 log = logging.getLogger(__name__)
@@ -71,6 +76,17 @@ class AlertClassifier:
         all_frags: list[dict] = []
         log.info("  Limiar AUTORIZADO: %d%%", int(self.threshold * 100))
         log.info("  Precedência: ASV > DERADSA")
+
+        # C2 da auditoria GIS — garante CRS projetado antes do filtro MIN_AREA_M2.
+        # Sem isso, qualquer regressão futura passando CRS geográfico descartaria
+        # silenciosamente polígonos correspondentes a ~12.000 km² como "artefato".
+        if not gdf_al.empty:
+            assert_projected_crs(gdf_al, "classify/alertas")
+        if not asv_base.empty:
+            assert_projected_crs(asv_base, "classify/asvs")
+        for ano, gdf_der in der_by_year.items():
+            if not gdf_der.empty:
+                assert_projected_crs(gdf_der, f"classify/deradsa_{ano}")
 
         for year in self.anos:
             all_frags.extend(
