@@ -1,14 +1,16 @@
 import { useState, useCallback, useRef } from 'react'
-import Map, { Layer, Source, NavigationControl } from 'react-map-gl/maplibre'
+import Map, { Layer, Source, NavigationControl, type MapRef, type ViewStateChangeEvent } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { useAlertasGeoJson } from '../../../core/lib/hooks'
+import { useAlertasBbox } from '../../../core/lib/hooks'
+import type { BboxParams } from '../../../core/lib/queries'
 import { useAppStore } from '../../../core/store/useAppStore'
 import { CHART_COLORS, fmtHa } from '../../../core/lib/constants'
 
-// C3 da auditoria: limit hardcoded com indicador visual ao usuário.
-// Migração para get_alertas_bbox (Migration 011) acontece quando este
-// componente for portado para useAlertasBbox; por ora, expomos o limite.
-const MAX_FEATURES = 3000
+// C4 da auditoria GIS 2026-06-02 — migrado de get_alertas_geojson (limit 3000)
+// para get_alertas_bbox (Migration 011). Servidor filtra por bbox + simplifica
+// por zoom; cliente envia viewport atual. Payload tipicamente 10-100× menor,
+// alertas mostrados são sempre os relevantes para a vista do usuário.
+const MAX_FEATURES_PER_VIEWPORT = 5000  // teto generoso por tile/viewport
 
 const COR_CLASSE: Record<string, string> = {
   IRREGULAR:               CHART_COLORS.irr,
@@ -31,7 +33,9 @@ interface HoverInfo { x: number; y: number; props: Record<string, unknown> }
 export function MapView() {
   const { anoFiltro, theme } = useAppStore()
   const [hover, setHover] = useState<HoverInfo | null>(null)
+  const [bbox, setBbox]   = useState<BboxParams | null>(null)
   const rafRef = useRef<number | null>(null)  // A4: throttle hover via rAF
+  const mapRef = useRef<MapRef | null>(null)
   const mapStyle = theme === 'light'
     ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
     : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
@@ -44,13 +48,34 @@ export function MapView() {
   // Quando "Todos", exibe 2025 (ano mais recente) com label indicativo
   const anoQuery = anoFiltro === 'all' ? 2025 : (anoFiltro as number)
 
-  const { data: geojson, isLoading } = useAlertasGeoJson({
-    ano:   anoQuery,
-    limit: MAX_FEATURES,
-  })
+  // C4 da auditoria — bbox-aware: bbox só é populada após onLoad/onMoveEnd.
+  // Antes disso, hook fica desabilitado (params=null) para evitar fetch
+  // com viewport indefinido.
+  const bboxParams = bbox != null
+    ? { ...bbox, ano: anoQuery, limit: MAX_FEATURES_PER_VIEWPORT }
+    : null
+  const { data: geojson, isLoading } = useAlertasBbox(bboxParams)
 
   const featuresShown = geojson?.features.length ?? 0
-  const truncated = featuresShown >= MAX_FEATURES
+  const truncated = featuresShown >= MAX_FEATURES_PER_VIEWPORT
+
+  // Atualiza bbox quando o usuário move/zooma o mapa.
+  const _updateBboxFromMap = useCallback(() => {
+    const map = mapRef.current
+    if (!map) return
+    const b = map.getMap().getBounds()
+    setBbox({
+      xmin: b.getWest(),
+      ymin: b.getSouth(),
+      xmax: b.getEast(),
+      ymax: b.getNorth(),
+      zoom: Math.floor(map.getMap().getZoom()),
+    })
+  }, [])
+
+  const onMoveEnd = useCallback((_e: ViewStateChangeEvent) => {
+    _updateBboxFromMap()
+  }, [_updateBboxFromMap])
 
   // A4: throttle hover via requestAnimationFrame — limita updates a 60 FPS,
   // evita jank em mousemove rápido (CPU 8-12% → ~1%).
@@ -86,7 +111,9 @@ export function MapView() {
         </div>
       )}
 
-      {/* C3 da auditoria: badge informa quando o limite de features foi atingido. */}
+      {/* C4 — badge agora indica truncamento somente quando o viewport
+          atual tem mais alertas que o teto generoso. Em ~maioria dos zooms,
+          fica oculta. */}
       {truncated && (
         <div
           role="status"
@@ -98,13 +125,14 @@ export function MapView() {
             border: `1px solid ${theme === 'light' ? '#FCD34D' : '#92400E'}`,
             borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600,
           }}
-          title={`Apenas os ${MAX_FEATURES} maiores alertas são exibidos. Use os filtros para refinar.`}
+          title={`Apenas os ${MAX_FEATURES_PER_VIEWPORT} maiores alertas da vista atual são exibidos. Aproxime para refinar.`}
         >
-          Top {MAX_FEATURES.toLocaleString('pt-BR')} alertas
+          Top {MAX_FEATURES_PER_VIEWPORT.toLocaleString('pt-BR')} no viewport
         </div>
       )}
 
       <Map
+        ref={mapRef}
         initialViewState={INITIAL_VIEW}
         style={{ width: '100%', height: '100%' }}
         mapStyle={mapStyle}
@@ -112,6 +140,7 @@ export function MapView() {
         interactiveLayerIds={geojson ? ['alertas-fill', 'alertas-outline'] : []}
         onMouseMove={onMouseMove as unknown as (e: unknown) => void}
         onMouseLeave={() => setHover(null)}
+        onMoveEnd={onMoveEnd}
         onLoad={e => {
           const el = e.target.getContainer().querySelector('.maplibregl-ctrl-attrib') as HTMLElement | null
           if (el) el.classList.remove('maplibregl-compact-show')
@@ -121,6 +150,8 @@ export function MapView() {
           canvas.setAttribute('role', 'application')
           canvas.setAttribute('aria-label',
             `Mapa interativo de alertas de desmatamento de ${anoQuery}. Use zoom e pan para explorar.`)
+          // C4 — popula bbox inicial após o mapa carregar.
+          _updateBboxFromMap()
         }}
       >
         <NavigationControl position="top-right" />
