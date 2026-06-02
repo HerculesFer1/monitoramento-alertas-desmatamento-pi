@@ -146,6 +146,9 @@ export function PrimaryRail() {
             style={{ width: 44, height: 'auto', display: 'block' }}
           />
         </div>
+        <div className="rail-org-label" aria-label="Secretaria do Meio Ambiente e Recursos Hídricos">
+          SEMARH
+        </div>
       </div>
 
       {/* ② Módulos — zona central (expande do centro) */}

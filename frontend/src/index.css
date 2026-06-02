@@ -164,8 +164,21 @@ body {
   flex-shrink: 0; z-index: 200; overflow: hidden;
 }
 /* Logo — zona fixa no topo */
-.rail-logo-area { padding: 14px 0 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.rail-logo-area { padding: 14px 0 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; flex-shrink: 0; }
 .rail-logo      { width: 64px; height: auto; display: flex; align-items: center; justify-content: center; }
+.rail-org-label {
+  font-size: 9px; font-weight: 700; letter-spacing: .12em;
+  color: var(--t3); text-transform: uppercase;
+  padding: 2px 6px; border-radius: 4px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.05);
+  line-height: 1;
+}
+[data-theme="light"] .rail-org-label {
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.08);
+  color: rgba(0,0,0,.55);
+}
 
 /* Módulos — zona central (cresce a partir do meio) */
 .rail-modules {
@@ -214,7 +227,36 @@ body {
 }
 
 /* ── Topbar — brand + tabs + ano ──────────────────────────────────────────  */
-.topbar-brand { display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; }
+.topbar-brand {
+  display: flex; flex-direction: column; gap: 1px;
+  flex: 0 1 auto; min-width: 0;
+  /* limite adaptativo: prioriza acomodar o titulo mais longo
+     ("Analise de Areas Prioritarias em Areas de QUEIMADAS")
+     sem invadir o bloco de tabs */
+  max-width: clamp(260px, 38vw, 560px);
+}
+
+/* Titulo modular — fonte adaptativa via clamp(): 13px (mobile) → 17px (desktop).
+   Permite quebra em ate 2 linhas se mesmo a max-width estiver curta. */
+.topbar-title {
+  font-size: clamp(13px, 0.65vw + 6px, 17px);
+  font-weight: 700;
+  line-height: 1.18;
+  /* line-clamp em ate 2 linhas — evita reticencias em titulos longos */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.topbar-title-key {
+  text-transform: uppercase;
+  font-feature-settings: "ss01" on, "tnum" on;
+  /* tracking ligeiramente maior em caps para destacar a palavra-chave */
+  letter-spacing: .02em;
+}
 
 /* Tabs — visíveis sobre o fundo claro */
 .topbar-tabs {

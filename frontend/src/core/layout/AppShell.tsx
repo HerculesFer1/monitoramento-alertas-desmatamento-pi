@@ -75,6 +75,18 @@ const MODULE_VIEWS: Record<Module, { id: string; label: string }[]> = {
 
 const ANOS: AnoFiltro[] = ['all', 2022, 2023, 2024, 2025]
 
+// ── Títulos por módulo ────────────────────────────────────────────────────
+// `key` recebe destaque temático (caixa alta + cor). O título completo é
+// composto como: `${prefix} ${KEY}${suffix ?? ''}`.
+const MODULE_TITLES: Record<Module, { prefix: string; key: string; suffix?: string; color: string }> = {
+  mapbiomas:          { prefix: 'Monitoramento de Alertas',                 key: 'MAPBIOMAS', color: '#F59E0B' }, // âmbar
+  prodes:             { prefix: 'Monitoramento de Alertas',                 key: 'PRODES',    color: '#10B981' }, // esmeralda INPE
+  matopiba:           { prefix: 'Panorama',                                  key: 'MATOPIBA',  color: '#D97706' }, // âmbar escuro Cerrado
+  areas_prioritarias: { prefix: 'Análise de Áreas Prioritárias',             key: 'REDD+',     color: '#10B981' }, // verde REDD+
+  queimadas_bdq:      { prefix: 'Análise de Áreas Prioritárias em Áreas de', key: 'QUEIMADAS', color: '#EF4444' }, // vermelho fogo
+  dados:              { prefix: 'Gestão de',                                 key: 'DADOS',     color: '#94A3B8' }, // cinza neutro
+}
+
 // ── Theme toggle ───────────────────────────────────────────────────────────
 function ThemeToggle() {
   const { theme, toggleTheme } = useAppStore()
@@ -157,6 +169,7 @@ function AnoDropdown() {
 export function AppShell() {
   const { activeModule, activeView, setActiveView } = useAppStore()
   const views = MODULE_VIEWS[activeModule]
+  const title = MODULE_TITLES[activeModule]
 
   return (
     <div className="app-shell">
@@ -165,13 +178,19 @@ export function AppShell() {
       <div className="app-content">
         {/* ── Topbar ─────────────────────────────────────────────────── */}
         <header className="app-topbar">
-          <div className="topbar-brand">
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)', lineHeight: 1.2 }}>
-              Monitoramento de Alertas de{' '}
-              <span style={{ color: '#F59E0B' }}>Desmatamento</span>
-            </div>
-            <div style={{ fontSize: 10, color: 'var(--t3)', fontWeight: 500, letterSpacing: '.02em' }}>
-              CGEO / SEMARH-PI
+          <div className="topbar-brand" aria-label={`${title.prefix} ${title.key}${title.suffix ?? ''}`}>
+            <div
+              className="topbar-title"
+              style={{ color: 'var(--t1)', lineHeight: 1.15 }}
+            >
+              {title.prefix}{' '}
+              <span
+                className="topbar-title-key"
+                style={{ color: title.color, fontWeight: 800, letterSpacing: '.02em' }}
+              >
+                {title.key}
+              </span>
+              {title.suffix ? <span style={{ color: 'var(--t1)' }}>{title.suffix}</span> : null}
             </div>
           </div>
 
