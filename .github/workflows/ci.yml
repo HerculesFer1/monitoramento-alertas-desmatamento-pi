@@ -136,7 +136,8 @@ jobs:
             modules/queimadas_bdq/migrations/009_queimadas_bdq.sql \
             infra/supabase/migrations/010_areas_prioritarias_v3_upgrade.sql \
             infra/supabase/migrations/011_mvt_and_bbox_serving.sql \
-            infra/supabase/migrations/012_queimadas_mvt_bbox.sql; do
+            infra/supabase/migrations/012_queimadas_mvt_bbox.sql \
+            infra/supabase/migrations/013_polimento_grants_indices.sql; do
             if [ ! -f "$f" ]; then
               echo "ERRO: Migration ausente: $f"
               exit 1
