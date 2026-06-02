@@ -13,8 +13,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from core.config import (
+    biomass_rasters_dir,
+    classes_prioritarias_gpkg,
+    forest_mask_tif,
+    repo_root,
+)
+
 # Caminho absoluto raiz do repositório (independente do cwd)
-_ROOT = Path(__file__).resolve().parent.parent.parent
+_ROOT = repo_root()
 
 MODULE_MANIFEST: dict[str, Any] = {
     # ── Identidade ──────────────────────────────────────────
@@ -46,23 +53,20 @@ MODULE_MANIFEST: dict[str, Any] = {
     ],
 
     # ── Dados locais necessários ────────────────────────────
-    # Todos os caminhos são absolutos e independentes do cwd.
+    # Resolvidos por core/config.py (.env REDD_DATA_ROOT). Default mantém
+    # caminho histórico CGEO/SEMARH-PI no Windows.
     # Executar vectorize_forest.py antes da primeira execução do pipeline.
     "local_data": {
         # 5 classes de prioridade AHP (MultiPolygon, ESRI:102033)
-        "priority_classes": Path(
-            "C:/11. REDD+/16_prioridade_classes_final/classes_prioritarias.gpkg"
-        ),
-        # Máscara florestal 2025 — TIF original (valor 100 = floresta)
-        # Usado via rasterstats — NÃO precisa vetorizar antes
-        "forest_mask_tif": Path(
-            "C:/11. REDD+/Forest_mask/Forest_mask/Mascara_de_floresta_2025.tif"
-        ),
+        "priority_classes": classes_prioritarias_gpkg(),
+        # Máscara florestal 2025 — TIF original (valor 100 = floresta).
+        # Usado via rasterstats — NÃO precisa vetorizar antes.
+        "forest_mask_tif":  forest_mask_tif(),
         # Rasters de biomassa (AGB, BGB, DW, Litter) — usados via rasterstats
-        "biomass_dir": Path(
-            "C:/11. REDD+/Biomass_rasters/Biomass_rasters"
-        ),
-        # PRODES 2022-2025 pré-classificado (local — não baixar via WFS)
+        "biomass_dir":      biomass_rasters_dir(),
+        # PRODES 2022-2025 pré-classificado (local — não baixar via WFS).
+        # Path do projeto irmão; override via REDD_PRODES_LOCAL_GEOJSON se
+        # estrutura divergir do CGEO.
         "prodes_geojson": Path(
             "C:/9.1 Monitoramento de Alertas de Desmatamento"
             "/PRODES/Resultado/prodes_classificados.geojson"

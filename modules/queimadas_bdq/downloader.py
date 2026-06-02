@@ -62,7 +62,7 @@ def download(
     Baixa e extrai os 12 ZIPs mensais AQ1km para raw_dir.
 
     Parâmetros:
-        raw_dir : destino dos arquivos (ex.: C:/11. REDD+/Focos de Queimadas/raw/2025)
+        raw_dir : destino dos arquivos (resolvido via core.config.queimadas_raw_dir())
         ano     : ano a baixar (default 2025)
         skip    : se True, reutiliza arquivos já existentes sem baixar novamente
         verbose : log detalhado

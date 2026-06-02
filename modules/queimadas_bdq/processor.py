@@ -291,12 +291,16 @@ def _load_municipios_from_cache() -> gpd.GeoDataFrame:
     """
     Carrega municípios do Piauí do cache do módulo areas_prioritarias.
     Tenta múltiplos caminhos antes de lançar erro.
+
+    Caminho resolvido via core.config.areas_prioritarias_cache_dir()
+    — depende apenas da estrutura do repositório, não do drive externo.
     """
+    from core.config import areas_prioritarias_cache_dir
+
+    cache_dir = areas_prioritarias_cache_dir()
     _candidates = [
-        Path("C:/11. REDD+/monitoramento-alertas-desmatamento-pi/data/raw/"
-             "areas_prioritarias/municipios_piaui_ibge2022.gpkg"),
-        Path("C:/11. REDD+/monitoramento-alertas-desmatamento-pi/data/raw/"
-             "areas_prioritarias/PI_Municipios_2022.shp"),
+        cache_dir / "municipios_piaui_ibge2022.gpkg",
+        cache_dir / "PI_Municipios_2022.shp",
     ]
     for p in _candidates:
         if p.exists():
@@ -318,9 +322,8 @@ def _load_municipios_from_cache() -> gpd.GeoDataFrame:
     # Fallback: baixar via IBGE FTP
     log.info("Cache de municípios não encontrado — baixando do IBGE...")
     from modules.areas_prioritarias.downloader import download as _ap_download
-    dest = Path("C:/11. REDD+/monitoramento-alertas-desmatamento-pi/data/raw/"
-                "areas_prioritarias")
-    mun_path = _ap_download(dest, {"verbose": False})
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    mun_path = _ap_download(cache_dir, {"verbose": False})
     gdf = gpd.read_file(str(mun_path))
     gdf = fix_geoms(gdf, "municipios_ibge")
     if "SIGLA_UF" in gdf.columns:

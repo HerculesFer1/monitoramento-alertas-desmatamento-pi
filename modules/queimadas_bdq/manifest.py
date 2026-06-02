@@ -13,10 +13,15 @@ Segue contrato ADR-003 (_template/manifest.py).
 """
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
-_ROOT = Path(__file__).resolve().parent.parent.parent
+from core.config import (
+    classes_prioritarias_gpkg,
+    queimadas_raw_dir,
+    repo_root,
+)
+
+_ROOT = repo_root()
 
 MODULE_MANIFEST: dict[str, Any] = {
     # ── Identidade ──────────────────────────────────────────
@@ -49,14 +54,12 @@ MODULE_MANIFEST: dict[str, Any] = {
     ],
 
     # ── Dados locais necessários ────────────────────────────
+    # Resolvidos por core/config.py (.env REDD_DATA_ROOT).
     "local_data": {
         # Diretório onde os ZIPs/SHPs mensais são salvos pelo downloader
-        "raw_dir": Path("C:/11. REDD+/Focos de Queimadas/raw"),
-
+        "raw_dir":           queimadas_raw_dir(),
         # Classes de prioridade AHP (mesmo GPKG do módulo areas_prioritarias)
-        "priority_classes": Path(
-            "C:/11. REDD+/16_prioridade_classes_final/classes_prioritarias.gpkg"
-        ),
+        "priority_classes":  classes_prioritarias_gpkg(),
     },
 }
 

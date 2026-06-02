@@ -12,14 +12,16 @@ em um SIG ou para validação visual da máscara.
 Uso:
     python -m modules.areas_prioritarias.vectorize_forest
 
-Input  : C:/11. REDD+/Forest_mask/Forest_mask/Mascara_de_floresta_2025.tif
-Output : C:/11. REDD+/Forest_mask/floresta_2025.gpkg (display only)
+Caminhos resolvidos via core.config:
+  Input  : core.config.forest_mask_tif()  (REDD_FOREST_MASK_TIF override)
+  Output : core.config.forest_mask_gpkg() (REDD_DATA_ROOT/Forest_mask/floresta_2025.gpkg)
 """
 from __future__ import annotations
 
 import logging
 import sys
-from pathlib import Path
+
+from core.config import forest_mask_gpkg, forest_mask_tif
 
 logging.basicConfig(
     level   = logging.INFO,
@@ -29,8 +31,8 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # ── Caminhos ──────────────────────────────────────────────────────────────────
-FOREST_TIF  = Path("C:/11. REDD+/Forest_mask/Forest_mask/Mascara_de_floresta_2025.tif")
-OUTPUT_GPKG = Path("C:/11. REDD+/Forest_mask/floresta_2025.gpkg")
+FOREST_TIF  = forest_mask_tif()
+OUTPUT_GPKG = forest_mask_gpkg()
 LAYER_NAME  = "floresta_2025"
 
 # Valor de floresta na máscara (0 = sem floresta, 100 = floresta)
