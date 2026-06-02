@@ -94,10 +94,8 @@ export function MunicipalView() {
   const _handleClick = useCallback((e: MapMouseEvent & { features?: { properties: unknown }[] }) => {
     const props = e.features?.[0]?.properties as MunicipioFeatureProps
     if (!props?.cod) return
-    const bbox = typeof props.bbox === 'string'
-      ? JSON.parse(props.bbox) as [[number, number], [number, number]]
-      : props.bbox
-    select({ cod: props.cod, nome: props.nome, bbox })
+    // bbox já é array tupla — normalizado em getApGeojsonBbox (M4 da auditoria).
+    select({ cod: props.cod, nome: props.nome, bbox: props.bbox })
   }, [select])
 
   function _addBaseLayers(map: MapLibreMap, data: FeatureCollection) {

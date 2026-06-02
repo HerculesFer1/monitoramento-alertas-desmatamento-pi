@@ -91,6 +91,34 @@ export interface ApBboxParams {
   ano?: number
 }
 
+/**
+ * Normaliza properties.bbox de cada feature retornada por get_ap_geojson_bbox.
+ *
+ * PostgREST serializa colunas JSONB como string em alguns shapes (o servidor
+ * faz json_build_object → JSONB; o cliente recebe string ao desserializar
+ * payload misto). Sem essa normalização, callers (MunicipalView, BiomassaView)
+ * faziam `JSON.parse` no hot path do click — custo desprezível mas tipo
+ * mente: declarado `BBox`, chegava `string`. M4 da auditoria GIS 2026-06-02.
+ *
+ * Aceita: array tupla 2x2 (já pronto) | string JSON | undefined.
+ */
+function _normalizeFeatureBbox(fc: GeoJSON.FeatureCollection): GeoJSON.FeatureCollection {
+  if (!fc?.features) return fc
+  for (const f of fc.features) {
+    const props = f.properties as Record<string, unknown> | null
+    if (!props) continue
+    const raw = props.bbox
+    if (typeof raw === 'string') {
+      try {
+        props.bbox = JSON.parse(raw)
+      } catch {
+        props.bbox = null
+      }
+    }
+  }
+  return fc
+}
+
 export async function getApGeojsonBbox(params: ApBboxParams) {
   const { data, error } = await supabase.rpc('get_ap_geojson_bbox', {
     p_xmin: params.xmin,
@@ -101,7 +129,7 @@ export async function getApGeojsonBbox(params: ApBboxParams) {
     p_ano:  params.ano  ?? 2025,
   })
   if (error) throw error
-  return data as GeoJSON.FeatureCollection
+  return _normalizeFeatureBbox(data as GeoJSON.FeatureCollection)
 }
 
 // ── MATOPIBA: KPIs por ano ────────────────────────────────────────────────

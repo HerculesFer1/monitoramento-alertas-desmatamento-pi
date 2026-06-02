@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * index.tsx — Módulo areas_prioritarias
  * Re-exports das 5 views + PeriodBadge. Padrão idêntico ao alertas_mapbiomas/index.tsx.

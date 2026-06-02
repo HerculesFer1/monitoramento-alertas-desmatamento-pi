@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * types.ts — Módulo areas_prioritarias
  * Tipos TypeScript para o cruzamento PRODES × Prioridade.

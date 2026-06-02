@@ -115,10 +115,8 @@ export function VisaoGeralView() {
     map.on('click', LAYER_IDS.PRIORIDADE_FILL, (e) => {
       const props = e.features?.[0]?.properties as MunicipioFeatureProps
       if (!props?.cod) return
-      const bbox = typeof props.bbox === 'string'
-        ? JSON.parse(props.bbox) as [[number, number], [number, number]]
-        : props.bbox
-      select({ cod: props.cod, nome: props.nome, bbox })
+      // bbox já é array tupla — normalizado em getApGeojsonBbox (M4 da auditoria).
+      select({ cod: props.cod, nome: props.nome, bbox: props.bbox })
     })
 
     // Hover tooltip
