@@ -133,7 +133,10 @@ jobs:
             infra/supabase/migrations/006_execucoes_pipeline_colunas.sql \
             infra/supabase/migrations/007_index_execucoes_pipeline.sql \
             infra/supabase/migrations/008_areas_prioritarias.sql \
-            infra/supabase/migrations/010_areas_prioritarias_v3_upgrade.sql; do
+            modules/queimadas_bdq/migrations/009_queimadas_bdq.sql \
+            infra/supabase/migrations/010_areas_prioritarias_v3_upgrade.sql \
+            infra/supabase/migrations/011_mvt_and_bbox_serving.sql \
+            infra/supabase/migrations/012_queimadas_mvt_bbox.sql; do
             if [ ! -f "$f" ]; then
               echo "ERRO: Migration ausente: $f"
               exit 1
