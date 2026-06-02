@@ -189,10 +189,13 @@ export const BREAKS_IPI = {
   unit: '%',
 } as const
 
-/** Quebras de biomassa florestal acumulada por município — tC */
+/** Quebras de biomassa florestal acumulada por município — tC
+ *  Cores idênticas à expressão 'fill-color' interpolate do BiomassaView.tsx.
+ *  Source-of-truth única: legenda HTML e paint MapLibre usam estes valores.
+ */
 export const BREAKS_BIOMASSA = {
   thresholds: [500_000, 2_000_000, 8_000_000, 20_000_000],
-  colors: ['#fef3c7', '#fde68a', '#fbbf24', '#d97706', '#92400e'] as const,
+  colors: ['#111111', '#064e3b', '#065f46', '#10B981', '#6EE7B7'] as const,
   labels: ['< 500 mil tC', '500 mil – 2 M tC', '2 – 8 M tC', '8 – 20 M tC', '> 20 M tC'] as const,
   unit: 'tC',
 } as const

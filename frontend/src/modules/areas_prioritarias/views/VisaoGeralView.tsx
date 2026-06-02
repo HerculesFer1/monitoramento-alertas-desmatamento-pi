@@ -14,8 +14,8 @@ import type { BboxState } from '../hooks/useAreasData'
 import { useMunicipioSelect }             from '../hooks/useMunicipioSelect'
 import { ClasseBarChart }                 from '../components/ClasseBarChart'
 import { PeriodBadge }                    from '../components/PeriodBadge'
-import { LAYER_IDS, CLASSE_COLORS, CLASSE_LABELS } from '../types'
-import type { MunicipioFeatureProps, ClassePrioridade } from '../types'
+import { LAYER_IDS } from '../types'
+import type { MunicipioFeatureProps } from '../types'
 import { fmtHa } from '../../../core/lib/constants'
 
 export function VisaoGeralView() {
@@ -90,15 +90,21 @@ export function VisaoGeralView() {
 
     map.addSource(SRC, { type: 'geojson', data })
 
+    // Choropleth por pressão de desmatamento PRODES (area_desmat_ha).
+    // Razão: classe_max_prioridade = 5 para todos os 224 municípios (sem variação espacial).
+    // area_desmat_ha discrimina hotspots reais e responde "onde avança o desmatamento?".
     map.addLayer({
       id: LAYER_IDS.PRIORIDADE_FILL, type: 'fill', source: SRC,
       paint: {
         'fill-color': [
-          'match', ['get', 'classe_max'],
-          ...Object.entries(CLASSE_COLORS).flatMap(([k, v]) => [Number(k), v]),
-          'rgba(255,255,255,.04)',
+          'step', ['coalesce', ['get', 'area_desmat_ha'], 0],
+          '#1a9850',  // 0 ha        → verde (sem desmatamento detectado)
+          1,   '#fee08b',  // 1–50 ha    → amarelo
+          50,  '#fdae61',  // 50–100 ha  → laranja claro
+          100, '#f46d43',  // 100–200 ha → laranja
+          200, '#d73027',  // ≥ 200 ha   → vermelho
         ] as unknown as string,
-        'fill-opacity': 0.78,
+        'fill-opacity': 0.82,
       },
     })
     map.addLayer({
@@ -171,7 +177,12 @@ export function VisaoGeralView() {
         />
         <KpiCard
           label="% Desmatamento"
-          value={loadingKpis ? '…' : `${kpis?.pct_desmat_estado?.toFixed(1) ?? '—'}%`}
+          value={loadingKpis ? '…' : (() => {
+            const v = kpis?.pct_desmat_estado
+            if (v == null) return '—%'
+            // Precisão adaptativa: valores < 0.1% mostram 2 casas; ≥ 0.1% mostram 1
+            return `${v < 0.1 ? v.toFixed(2) : v.toFixed(1)}%`
+          })()}
           sub="do total florestal PI"
           accent="#F59E0B"
           accentClass="card-mat"
@@ -242,13 +253,22 @@ export function VisaoGeralView() {
             <ClasseBarChart data={visaoGeral?.por_classe ?? []} height={220} />
           </div>
 
-          {/* Legenda */}
+          {/* Legenda — pressão de desmatamento PRODES */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-            {([1, 2, 3, 4, 5] as ClassePrioridade[]).map((c) => (
-              <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 9, height: 9, borderRadius: 2, flexShrink: 0, background: CLASSE_COLORS[c], display: 'inline-block' }} />
+            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--t3)', marginBottom: 2 }}>
+              Desmat. PRODES (ha)
+            </div>
+            {([
+              { color: '#1a9850', label: 'Sem desmatamento' },
+              { color: '#fee08b', label: '1 – 50 ha' },
+              { color: '#fdae61', label: '50 – 100 ha' },
+              { color: '#f46d43', label: '100 – 200 ha' },
+              { color: '#d73027', label: '≥ 200 ha' },
+            ]).map(({ color, label }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 9, height: 9, borderRadius: 2, flexShrink: 0, background: color, display: 'inline-block' }} />
                 <span style={{ fontSize: 10, color: 'var(--t2)' }}>
-                  {c} — {CLASSE_LABELS[c]}
+                  {label}
                 </span>
               </div>
             ))}
