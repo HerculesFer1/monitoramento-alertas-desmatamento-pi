@@ -1,7 +1,19 @@
 /**
  * ClasseBarChart.tsx
- * Gráfico de barras empilhadas: floresta × desmatamento por classe de prioridade.
- * Tooltip glassmorphism premium com hierarquia de dados.
+ * Gráfico de barras agrupadas com EIXO Y DUPLO por classe de prioridade.
+ *
+ * Histórico: a versão anterior empilhava `area_floresta_ha` e `area_desmat_ha`
+ * em escala linear. Como floresta (~3,5M ha) é ~7.000x maior que desmatamento
+ * (4-3042 ha), o desmatamento ficava invisível e todas as barras pareciam
+ * iguais — escondendo o sinal mais importante do gráfico.
+ *
+ * Esta versão usa dois eixos Y independentes (recharts suporta nativamente
+ * via `yAxisId`): Floresta à esquerda (verde, 0..4M ha) e Desmatado à direita
+ * (vermelho, 0..pico real). Revela o crescimento ~724x do desmatamento da
+ * classe 1 para a 5 — validação visual da metodologia AHP CGEO.
+ *
+ * Tooltip continua mostrando os 4 dados de contexto (floresta, desmatado,
+ * total, %floresta).
  */
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -113,10 +125,16 @@ export function ClasseBarChart({ data, height }: Props) {
     )
   }
 
+  // Formatter compartilhado pelos dois eixos (k / M).
+  const fmtAxis = (v: number) =>
+    v >= 1_000_000 ? `${(v / 1_000_000).toFixed(0)}M` :
+    v >= 1000      ? `${(v / 1000).toFixed(0)}k`       :
+    String(v)
+
   return (
     <div style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 22 }} barSize={22}>
+        <BarChart data={data} margin={{ top: 4, right: 8, left: -18, bottom: 22 }} barSize={11} barGap={2}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)" vertical={false} />
           <XAxis
             dataKey="classe_prioridade"
@@ -125,15 +143,26 @@ export function ClasseBarChart({ data, height }: Props) {
             axisLine={{ stroke: 'rgba(255,255,255,.06)' }}
             tickLine={false}
           />
+          {/* Eixo Y esquerdo — Floresta (verde) em escala 0..pico (~3.5M ha) */}
           <YAxis
-            tick={{ fontSize: 9, fill: 'var(--t3)' }}
+            yAxisId="floresta"
+            orientation="left"
+            tick={{ fontSize: 9, fill: '#34D399' }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(v: number) =>
-              v >= 1_000_000 ? `${(v / 1_000_000).toFixed(0)}M` :
-              v >= 1000      ? `${(v / 1000).toFixed(0)}k`       :
-              String(v)
-            }
+            tickFormatter={fmtAxis}
+            label={{ value: 'Floresta (ha)', angle: -90, position: 'insideLeft', offset: 18, fontSize: 9, fill: '#34D399', dy: 28 }}
+          />
+          {/* Eixo Y direito — Desmatado (vermelho) em escala separada (0..pico real ~3k ha).
+              Sem isso, com floresta ~7000x maior, o desmatado fica invisivel. */}
+          <YAxis
+            yAxisId="desmat"
+            orientation="right"
+            tick={{ fontSize: 9, fill: '#FCA5A5' }}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={fmtAxis}
+            label={{ value: 'Desmatado (ha)', angle: 90, position: 'insideRight', offset: 14, fontSize: 9, fill: '#FCA5A5', dy: -28 }}
           />
           <Tooltip content={<DarkTooltip />} cursor={{ fill: 'rgba(255,255,255,.03)' }} />
           <Legend
@@ -142,9 +171,9 @@ export function ClasseBarChart({ data, height }: Props) {
             iconSize={7}
           />
           <Bar
+            yAxisId="floresta"
             dataKey="area_floresta_ha"
             name="Floresta"
-            stackId="a"
             radius={[2, 2, 0, 0]}
           >
             {data.map((entry) => (
@@ -155,11 +184,12 @@ export function ClasseBarChart({ data, height }: Props) {
             ))}
           </Bar>
           <Bar
+            yAxisId="desmat"
             dataKey="area_desmat_ha"
-            name="Desmatado"
+            name="Desmatado (escala dir.)"
             fill="#EF4444"
-            stackId="a"
-            opacity={0.85}
+            radius={[2, 2, 0, 0]}
+            opacity={0.92}
           />
         </BarChart>
       </ResponsiveContainer>
