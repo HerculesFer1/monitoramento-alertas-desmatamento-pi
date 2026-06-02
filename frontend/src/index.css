@@ -81,6 +81,10 @@
 
   /* Easing premium */
   --ease: cubic-bezier(.25,.46,.45,.94);
+
+  /* Tipografia */
+  --font-text: 'Inter', 'SF Compact', -apple-system, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
 /* ── Reset e base ─────────────────────────────────────────────────────────  */
@@ -88,13 +92,22 @@
 
 body {
   margin: 0;
-  font-family: 'SF Compact', -apple-system, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+  font-family: var(--font-text);
   background: var(--bg1);
   color: var(--t1);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* JetBrains Mono — valores numéricos em todo o dashboard */
+.kpi-value,
+.kpi-value *,
+.font-mono {
+  font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 #root { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }

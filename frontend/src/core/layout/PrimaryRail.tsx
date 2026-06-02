@@ -23,8 +23,8 @@ const ITEMS: RailItem[] = [
   {
     module:     'prodes',
     label:      'PRODES / INPE',
-    icon:       mkImg('/icon-prodes.svg',        'rail-module-icon-inactive', '90%', '90%'),
-    iconActive: mkImg('/icon-prodes-active.svg', 'rail-module-icon-active',   '90%', '90%'),
+    icon:       mkImg('/icon-prodes.svg',        'rail-module-icon-inactive', '95%', '95%'),
+    iconActive: mkImg('/icon-prodes-active.svg', 'rail-module-icon-active',   '95%', '95%'),
   },
   {
     module:     'matopiba',
