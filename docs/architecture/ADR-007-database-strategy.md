@@ -3,7 +3,7 @@
 **Status:** Aceito
 **Data:** 2026-05-24
 **Provedor:** Supabase — PostgreSQL 15 + PostGIS 3
-**Projeto:** `ubcejvbnpuyouwpphryc`
+**Projeto:** `ssqriwgrxievcmxauegv`
 
 ## Tabelas por Módulo Dono
 

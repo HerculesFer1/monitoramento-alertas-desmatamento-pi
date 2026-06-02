@@ -69,7 +69,7 @@ Inclui validação cruzada com o **PRODES-Cerrado/INPE** e recorte especial para
 ┌────────────────────────────▼────────────────────────────────┐
 │  Supabase PostgreSQL + PostGIS                              │
 │  5 tabelas · 8 RPCs · Row Level Security · 5 migrations    │
-│  projeto: ubcejvbnpuyouwpphryc                             │
+│  projeto: ssqriwgrxievcmxauegv                             │
 └────────────────────────────┬────────────────────────────────┘
                              │ PostgREST (anon key)
 ┌────────────────────────────▼────────────────────────────────┐

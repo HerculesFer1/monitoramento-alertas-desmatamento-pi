@@ -585,7 +585,7 @@ frontend/public/data/
 ```
 Gerados de `Resultado/alertas_classificados.geojson` em 2026-05-21. Regenerar via pipeline quando os dados brutos estiverem disponíveis.
 
-### Supabase (projeto ubcejvbnpuyouwpphryc)
+### Supabase (projeto ssqriwgrxievcmxauegv)
 - 13.638 fragmentos em `alertas_classificados` ✓
 - 812 registros em `agregado_municipios` ✓
 - RPC `get_resumo_prodes` corrigida via Migration 004 ✓ — 5.918 validados | 4.198 concordantes | 70,9%
