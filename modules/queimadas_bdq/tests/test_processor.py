@@ -196,6 +196,119 @@ class TestBuildResumo:
         assert row["pct_area_prioritaria"] == pytest.approx(100.0, abs=0.01)
 
 
+class TestIntersectByMonth:
+    """C1 da auditoria GIS 2026-06-02 — viés MAUP em n_cicatrizes.
+
+    Garante que a contagem de cicatrizes preserva a metodologia raiz AQ1km/INPE:
+    1 polígono original = 1 cicatriz, independente de quantos fragmentos o
+    overlay produzir dentro da mesma célula (município × classe × mês).
+    """
+
+    def test_uma_cicatriz_em_celula_fragmentada_nao_infla_contagem(self):
+        """Cicatriz única que cobre 2 polígonos disjuntos de mesma (cod, classe) deve contar 1."""
+        from modules.queimadas_bdq.processor import _intersect_by_month
+
+        # 2 fragmentos de célula com MESMA (municipio_cod, classe_prioridade)
+        # — situação real quando uma classe AHP tem regiões geograficamente
+        # disjuntas dentro do mesmo município.
+        cells = gpd.GeoDataFrame(
+            {
+                "municipio_cod":     ["2200000", "2200000"],
+                "municipio_nome":    ["Mun A",   "Mun A"],
+                "classe_prioridade": [1, 1],
+                "prioridade_label":  ["Muito Baixo", "Muito Baixo"],
+                "geometry": [
+                    _make_poly(-43.55, -7.0, side=0.1),
+                    _make_poly(-43.15, -7.0, side=0.1),
+                ],
+            },
+            crs="EPSG:4674",
+        )
+
+        # 1 única cicatriz cobrindo ambos os fragmentos
+        cicatrizes = gpd.GeoDataFrame(
+            {
+                "mes":      [8],
+                "area_km":  [10.0],
+                "geometry": [_make_poly(-43.35, -7.0, side=1.0)],
+            },
+            crs="EPSG:4326",
+        ).to_crs("EPSG:4674")
+
+        result = _intersect_by_month(cicatrizes, cells, verbose=False)
+        assert len(result) == 1, "Esperado 1 grupo (cod=2200000, classe=1, mes=8)"
+        # n_cicatrizes deve ser 1 — cicatriz contada uma vez, não duas (uma por fragmento)
+        assert int(result.iloc[0]["n_cicatrizes"]) == 1
+        # Área somada dos fragmentos > 0 (não regrediu)
+        assert float(result.iloc[0]["area_queimada_ha"]) > 0
+
+    def test_cicatrizes_distintas_em_mesma_celula_contam_separadamente(self):
+        """2 cicatrizes diferentes na mesma célula devem contar 2."""
+        from modules.queimadas_bdq.processor import _intersect_by_month
+
+        cells = gpd.GeoDataFrame(
+            {
+                "municipio_cod":     ["2200000"],
+                "municipio_nome":    ["Mun A"],
+                "classe_prioridade": [3],
+                "prioridade_label":  ["Médio"],
+                "geometry":          [_make_poly(-43.5, -7.0, side=1.0)],
+            },
+            crs="EPSG:4674",
+        )
+
+        # 2 cicatrizes distintas, mesma célula, mesmo mês
+        cicatrizes = gpd.GeoDataFrame(
+            {
+                "mes":      [8, 8],
+                "area_km":  [0.5, 0.5],
+                "geometry": [
+                    _make_poly(-43.6, -7.05, side=0.05),
+                    _make_poly(-43.4, -6.95, side=0.05),
+                ],
+            },
+            crs="EPSG:4326",
+        ).to_crs("EPSG:4674")
+
+        result = _intersect_by_month(cicatrizes, cells, verbose=False)
+        assert len(result) == 1
+        assert int(result.iloc[0]["n_cicatrizes"]) == 2
+
+    def test_cicatriz_em_celulas_de_classes_diferentes(self):
+        """1 cicatriz tocando 2 classes deve contar 1 por classe (correto: queimou ambas)."""
+        from modules.queimadas_bdq.processor import _intersect_by_month
+
+        # Mesma área geográfica, classes diferentes (classe_prioridade=1 e =5)
+        cells = gpd.GeoDataFrame(
+            {
+                "municipio_cod":     ["2200000", "2200000"],
+                "municipio_nome":    ["Mun A",   "Mun A"],
+                "classe_prioridade": [1, 5],
+                "prioridade_label":  ["Muito Baixo", "Muito Alto"],
+                "geometry": [
+                    _make_poly(-43.6, -7.0, side=0.2),
+                    _make_poly(-43.4, -7.0, side=0.2),
+                ],
+            },
+            crs="EPSG:4674",
+        )
+
+        cicatrizes = gpd.GeoDataFrame(
+            {
+                "mes":      [8],
+                "area_km":  [5.0],
+                "geometry": [_make_poly(-43.5, -7.0, side=0.8)],
+            },
+            crs="EPSG:4326",
+        ).to_crs("EPSG:4674")
+
+        result = _intersect_by_month(cicatrizes, cells, verbose=False)
+        # 2 linhas: (cod, classe=1) e (cod, classe=5), cada uma com n=1
+        assert len(result) == 2
+        assert set(result["classe_prioridade"]) == {1, 5}
+        assert all(int(n) == 1 for n in result["n_cicatrizes"])
+
+
 class TestPrepareClasses:
     def test_normaliza_tipos(self):
         from modules.queimadas_bdq.calculator import _prepare_classes_for_upload

@@ -339,6 +339,13 @@ def _intersect_by_month(
 ) -> gpd.GeoDataFrame:
     """
     Para cada mês, intersecta cicatrizes × células (classe × município).
+
+    Preserva a contagem original de cicatrizes (AQ1km V6 INPE) usando ID estável
+    pré-overlay (`_cicatriz_id`) e agregando com `nunique`. Sem esse cuidado,
+    uma única cicatriz que cruza N células (classe × município) seria contada
+    N vezes na soma — viés clássico do Modifiable Areal Unit Problem (MAUP).
+    A metodologia raiz INPE (1 polígono = 1 cicatriz) fica intacta.
+
     Retorna GeoDataFrame com colunas:
       municipio_cod, municipio_nome, classe_prioridade, prioridade_label,
       mes, area_queimada_ha, n_cicatrizes
@@ -355,12 +362,17 @@ def _intersect_by_month(
 
         n_raw = len(sub)
 
-        # Overlay cicatrizes × células
+        # ID estável por cicatriz original (INPE). Sobrevive ao overlay e
+        # garante que `nunique` conte cicatrizes, não fragmentos pós-clip.
+        sub = sub.reset_index(drop=True)
+        sub["_cicatriz_id"] = sub.index.astype("int64")
+
+        # Overlay cicatrizes × células — carrega _cicatriz_id para o resultado
         try:
             intersected = gpd.overlay(
                 cells_work[["municipio_cod", "municipio_nome",
                              "classe_prioridade", "prioridade_label", "geometry"]],
-                sub[["geometry"]],
+                sub[["_cicatriz_id", "geometry"]],
                 how            = "intersection",
                 keep_geom_type = False,
                 make_valid     = True,
@@ -374,22 +386,16 @@ def _intersect_by_month(
             log.debug("Mês %02d: sem interseção cicatrizes × células.", mes)
             continue
 
-        # Limpa geometrias pós-overlay antes de calcular área —
-        # overlay pode produzir polígonos inválidos que distorceriam a reprojeção.
-        intersected = _clean_geoms(intersected)
-        if len(intersected) == 0:
-            continue
-
-        # Área queimada em ha (EPSG:5880 — projeção equivalente)
+        # Área queimada em ha (EPSG:5880 — projeção equivalente, métrica oficial)
         intersected["area_queimada_ha"] = (
             intersected.to_crs(_CRS_AREA).geometry.area / 10_000
         ).round(4)
 
-        # Contagem de cicatrizes originais que contribuíram
-        intersected["n_cicatrizes"] = 1
-
         intersected["mes"] = mes
 
+        # Agregação por célula (município × classe × mês):
+        # - area_queimada_ha: soma de fragmentos (cada um é área distinta no espaço)
+        # - n_cicatrizes:     IDs únicos da fonte (1 cicatriz INPE conta 1 vez por célula)
         agg = (
             intersected
             .groupby(["municipio_cod", "municipio_nome",
@@ -397,7 +403,7 @@ def _intersect_by_month(
                      as_index=False)
             .agg(
                 area_queimada_ha = ("area_queimada_ha", "sum"),
-                n_cicatrizes     = ("n_cicatrizes",     "sum"),
+                n_cicatrizes     = ("_cicatriz_id",     "nunique"),
             )
         )
         frames.append(agg)
@@ -405,8 +411,9 @@ def _intersect_by_month(
         if verbose:
             log.info(
                 "Mês %02d: %d cicatrizes brutas → %d células com queimada | "
-                "área=%.1f ha",
+                "área=%.1f ha | cicatrizes únicas agregadas=%d",
                 mes, n_raw, len(agg), agg["area_queimada_ha"].sum(),
+                int(agg["n_cicatrizes"].sum()),
             )
 
     if not frames:
