@@ -169,23 +169,32 @@ def _prepare_resumo_for_upload(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
 
 def _upload_execucao(meta: dict[str, Any], ano: int, n_registros: int) -> None:
-    """Registra a execução em qb_execucoes."""
+    """Registra a execução em qb_execucoes via INSERT simples (sem upsert — tabela usa SERIAL id)."""
     try:
-        from core.uploader import upload_json
-        upload_json(
-            data=[{
-                "ano":                    ano,
-                "n_cicatrizes_piaui":     meta.get("n_cicatrizes_piaui", 0),
-                "area_queimada_ha":       meta.get("area_queimada_total_ha", 0.0),
-                "n_municipios_afetados":  meta.get("n_municipios_afetados", 0),
-                "meses_com_dados":        ",".join(
-                    str(m) for m in meta.get("meses_com_dados", [])
-                ),
-                "n_registros_classes":    n_registros,
-                "fonte_dados":            "AQ1km_V6_colecao2",
-            }],
-            table        = "qb_execucoes",
-            conflict_col = None,
-        )
+        import os
+        from dotenv import load_dotenv
+        from pathlib import Path
+        from supabase import create_client
+
+        load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_SERVICE_KEY")
+        if not url or not key:
+            log.warning("SUPABASE_URL/KEY ausentes — execução não registrada.")
+            return
+
+        sb = create_client(url, key)
+        sb.table("qb_execucoes").insert({
+            "ano":                    ano,
+            "n_cicatrizes_piaui":     meta.get("n_cicatrizes_piaui", 0),
+            "area_queimada_ha":       float(meta.get("area_queimada_total_ha", 0.0)),
+            "n_municipios_afetados":  meta.get("n_municipios_afetados", 0),
+            "meses_com_dados":        ",".join(
+                str(m) for m in meta.get("meses_com_dados", [])
+            ),
+            "n_registros_classes":    n_registros,
+            "fonte_dados":            "AQ1km_V6_colecao2",
+        }).execute()
+        log.info("Execução registrada em qb_execucoes.")
     except Exception as exc:
         log.warning("Falha ao registrar execução em qb_execucoes: %s", exc)
