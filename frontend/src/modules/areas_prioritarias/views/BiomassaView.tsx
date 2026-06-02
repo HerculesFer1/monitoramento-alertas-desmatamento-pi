@@ -5,7 +5,7 @@
  * Esquerda: mapa coroplético municipal por biomassa_floresta_tc
  * Direita:  heatmap AGB médio (tC/ha) por classe × top-15 municípios
  */
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useMemo } from 'react'
 import { Map as MapLibreMap, NavigationControl, Popup, GeoJSONSource } from 'maplibre-gl'
 import type { LngLatBoundsLike } from 'maplibre-gl'
 import type { FeatureCollection } from 'geojson'
@@ -18,6 +18,12 @@ import type { HeatmapRow }  from '../hooks/useBiomassaData'
 import { LAYER_IDS, CLASSE_LABELS, BREAKS_BIOMASSA } from '../types'
 import type { ClassePrioridade }    from '../types'
 import { fmtHa } from '../../../core/lib/constants'
+import {
+  computeBreaks,
+  buildLabels,
+  buildInterpolateExpression,
+  type BreaksResult,
+} from '../../../core/lib/breaks'
 
 const CLASSES: ClassePrioridade[] = [1, 2, 3, 4, 5]
 const AGB_MIN = 0
@@ -127,6 +133,37 @@ export function BiomassaView() {
   const { data: geojson,  isLoading: loadingMap  } = useAreasGeoJson(anoFiltro, mapBbox)
   const { data: heatmap,  isLoading: loadingHeat } = useBiomassaHeatmap(anoFiltro)
 
+  // M5 da auditoria — Natural Breaks (Jenks/ckmeans) sobre dados reais.
+  // BREAKS_BIOMASSA estatico continua como fallback (carregamento, sem dados).
+  // Quando geojson chega, recalcula thresholds para o que esta REALMENTE
+  // distribuido — choropleth deixa de ser "monocromatico verde" em
+  // distribuicoes assimetricas (cauda longa de Mun com pouca floresta).
+  const biomassaBreaks: BreaksResult = useMemo(() => {
+    const fallback: BreaksResult = {
+      thresholds: [...BREAKS_BIOMASSA.thresholds],
+      ranges:     [],
+      counts:     [],
+      computed:   false,
+    }
+    if (!geojson?.features?.length) return fallback
+    const values = geojson.features
+      .map(f => Number((f.properties as Record<string, unknown>)?.biomassa_total_tc ?? 0))
+      .filter(v => Number.isFinite(v) && v > 0)
+    if (values.length < 5) return fallback
+    try {
+      return computeBreaks(values, 5, fallback)
+    } catch {
+      return fallback
+    }
+  }, [geojson])
+
+  const biomassaLabels = useMemo(
+    () => biomassaBreaks.computed
+      ? buildLabels(biomassaBreaks.thresholds, BREAKS_BIOMASSA.unit)
+      : [...BREAKS_BIOMASSA.labels],
+    [biomassaBreaks],
+  )
+
   const mapStyle = theme === 'light'
     ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'
     : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
@@ -176,27 +213,39 @@ export function BiomassaView() {
     if (!map || !geojson) return
     const load = () => _addLayers(map, geojson)
     map.isStyleLoaded() ? load() : map.once('styledata', load)
-  }, [geojson]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [geojson, biomassaBreaks]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function _addLayers(map: MapLibreMap, data: FeatureCollection) {
     const SRC = 'biomassa-source'
     const src = map.getSource(SRC)
-    if (src) { (src as GeoJSONSource).setData(data); return }
+    if (src) {
+      (src as GeoJSONSource).setData(data)
+      // M5 — quando thresholds recalculadas, repinta sem precisar remount.
+      try {
+        map.setPaintProperty(
+          LAYER_IDS.BIOMASSA_HEAT,
+          'fill-color',
+          buildInterpolateExpression(
+            'biomassa_total_tc',
+            biomassaBreaks.thresholds,
+            BREAKS_BIOMASSA.colors,
+          ) as unknown as string,
+        )
+      } catch { /* layer pode nao existir no primeiro setData */ }
+      return
+    }
 
     map.addSource(SRC, { type: 'geojson', data })
 
-    // Choropleth por biomassa_total_tc
+    // Choropleth por biomassa_total_tc — quebras dinamicas (M5).
     map.addLayer({
       id: LAYER_IDS.BIOMASSA_HEAT, type: 'fill', source: SRC,
       paint: {
-        'fill-color': [
-          'interpolate', ['linear'], ['coalesce', ['get', 'biomassa_total_tc'], 0],
-          0,          '#111111',
-          500_000,    '#064e3b',
-          2_000_000,  '#065f46',
-          8_000_000,  '#10B981',
-          20_000_000, '#6EE7B7',
-        ],
+        'fill-color': buildInterpolateExpression(
+          'biomassa_total_tc',
+          biomassaBreaks.thresholds,
+          BREAKS_BIOMASSA.colors,
+        ) as unknown as string,
         'fill-opacity': 0.85,
       },
     })
@@ -265,7 +314,7 @@ export function BiomassaView() {
           Estoque de carbono florestal (tC)
         </div>
 
-        {/* Legenda — B3: usa BREAKS_BIOMASSA como source-of-truth */}
+        {/* Legenda — M5: quebras dinamicas (Natural Breaks) com fallback estatico */}
         <div style={{
           position: 'absolute', bottom: 30, right: 10, zIndex: 10,
           background: 'rgba(10,10,10,.85)', backdropFilter: 'blur(8px)',
@@ -274,13 +323,21 @@ export function BiomassaView() {
         }}>
           <div style={{ fontWeight: 700, color: 'var(--t2)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em', fontSize: 9 }}>
             Biomassa florestal ({BREAKS_BIOMASSA.unit})
+            {biomassaBreaks.computed && (
+              <span
+                title="Quebras calculadas via Natural Breaks (Jenks/ckmeans) sobre a distribuição real."
+                style={{ marginLeft: 6, color: '#10B981', fontWeight: 600, fontSize: 8 }}
+              >
+                · Jenks
+              </span>
+            )}
           </div>
           {[...BREAKS_BIOMASSA.colors].reverse().map((color, i) => {
             const revIdx = BREAKS_BIOMASSA.colors.length - 1 - i
             return (
               <div key={color} style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
                 <span style={{ width: 10, height: 10, borderRadius: 2, background: color, flexShrink: 0, border: '1px solid rgba(255,255,255,.08)', display: 'inline-block' }} aria-hidden="true" />
-                <span style={{ color: 'var(--t2)' }}>{BREAKS_BIOMASSA.labels[revIdx]}</span>
+                <span style={{ color: 'var(--t2)' }}>{biomassaLabels[revIdx]}</span>
               </div>
             )
           })}
