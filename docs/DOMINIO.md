@@ -9,11 +9,40 @@
 ## 1. Estado atual
 
 - **Hospedagem**: Vercel (deploy automático a cada push em `main`).
-- **URL pública atual**: `cgeo-sync.vercel.app` (subdomínio Vercel gratuito,
-  configurado em `frontend/vercel.json` via campo `name`). Decisão institucional
-  de 2026-06-03 — provisório até oficialização do domínio governamental.
+- **URL pública alvo**: `cgeo-sync.vercel.app` (decisão institucional de 2026-06-03 —
+  provisório até oficialização do domínio governamental).
+- **Como ativar**: a renomeação do subdomínio é feita **no painel Vercel**,
+  não no código (ver seção 2.1). O campo `name` em `frontend/vercel.json` é
+  vestigial — só serve para criação inicial via CLI `vercel link`.
 - **Região do build**: `gru1` (São Paulo) — latência ~5-15 ms para usuários no Piauí.
 - **TLS**: certificado automático Let's Encrypt renovado pelo Vercel.
+
+---
+
+## 2.1 Ativar `cgeo-sync.vercel.app` (procedimento provisório)
+
+A URL final de um projeto Vercel **não é controlada pelo `vercel.json`** — é o
+slug do projeto no dashboard. Para fazer o subdomínio `cgeo-sync.vercel.app`
+ficar ativo:
+
+### Caminho A — Renomear o projeto (recomendado, URL fica limpa)
+
+1. Acesse https://vercel.com/dashboard
+2. Clique no projeto atual (provavelmente nomeado
+   `monitoramento-alertas-desmatamento-pi` ou `frontend`)
+3. **Settings → General → Project Name** → `cgeo-sync` → **Save**
+4. Vercel emite o novo subdomínio `cgeo-sync.vercel.app` em ~30 segundos
+5. URLs antigas continuam funcionando como aliases por algumas semanas
+
+⚠️ **Se `cgeo-sync` já estiver em uso** por outro usuário Vercel, o sistema sugere
+   alternativas (`cgeo-sync-pi`, `cgeo-sync-cgeo`, `cgeo-redd`, etc.).
+
+### Caminho B — Adicionar como domínio paralelo
+
+1. **Settings → Domains → Add** → digite `cgeo-sync.vercel.app`
+2. Se o subdomínio estiver disponível na sua conta, Vercel cria um alias.
+3. URL antiga continua existindo + `cgeo-sync.vercel.app` passa a apontar
+   para o mesmo build.
 
 ---
 
