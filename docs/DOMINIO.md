@@ -9,11 +9,14 @@
 ## 1. Estado atual
 
 - **Hospedagem**: Vercel (deploy automático a cada push em `main`).
-- **URL pública alvo**: `cgeo-sync.vercel.app` (decisão institucional de 2026-06-03 —
-  provisório até oficialização do domínio governamental).
-- **Como ativar**: a renomeação do subdomínio é feita **no painel Vercel**,
-  não no código (ver seção 2.1). O campo `name` em `frontend/vercel.json` é
-  vestigial — só serve para criação inicial via CLI `vercel link`.
+- **URL pública**: ✅ **`https://cgeo-sync.vercel.app/`** (ativa desde 2026-06-03).
+- **URL canônica do projeto**: `cgeo-sync-hercules-projects-93b683e7.vercel.app`
+  (alias automático do team Vercel — preserva acesso direto se o subdomínio
+  curto for liberado no futuro).
+- **Provisória até oficialização** do domínio governamental
+  (ver Opções A e B na seção 2).
+- **Time Vercel**: `hercules-projects-93b683e7` (Team ID: `team_OLMD1NubYW7Qncww1wLLJZWP`).
+- **Project ID**: `prj_nNXT3OKcDOyMU7ivCE24LqAr6Y0U`.
 - **Região do build**: `gru1` (São Paulo) — latência ~5-15 ms para usuários no Piauí.
 - **TLS**: certificado automático Let's Encrypt renovado pelo Vercel.
 
