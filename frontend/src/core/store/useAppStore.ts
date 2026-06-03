@@ -10,7 +10,7 @@ function loadTheme(): Theme {
 
 // Sub-views por módulo
 export type MapBiomasView = 'executiva' | 'temporal' | 'municipal' | 'comparativa'
-export type ProdesView    = 'concordancia'
+export type ProdesView    = 'visao_geral' | 'temporal' | 'ranking' | 'concordancia'
 export type MatopibaView  = 'territorial'
 export type DadosView     = 'gestao'
 export type AreasViewId      = 'visao_geral' | 'municipal' | 'prodes_prioridade' | 'ranking' | 'biomassa'
@@ -125,7 +125,7 @@ export const useAppStore = create<AppState>((set) => ({
 function defaultView(m: Module): string {
   switch (m) {
     case 'mapbiomas': return 'executiva'
-    case 'prodes':    return 'concordancia'
+    case 'prodes':    return 'visao_geral'
     case 'matopiba':  return 'territorial'
     case 'dados':     return 'gestao'
     case 'areas_prioritarias': return 'visao_geral'

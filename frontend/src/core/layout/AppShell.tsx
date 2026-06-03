@@ -16,7 +16,10 @@ const ExecutivaView   = React.lazy(() => import('../../modules/alertas_mapbiomas
 const MunicipalView   = React.lazy(() => import('../../modules/alertas_mapbiomas/MunicipalView').then(m => ({ default: m.MunicipalView })))
 const TemporalView    = React.lazy(() => import('../../modules/alertas_mapbiomas/TemporalView').then(m => ({ default: m.TemporalView })))
 const ComparativaView = React.lazy(() => import('../../modules/alertas_mapbiomas/ComparativaView').then(m => ({ default: m.ComparativaView })))
-const ProdesView      = React.lazy(() => import('../../modules/prodes_cerrado/ProdesView').then(m => ({ default: m.ProdesView })))
+const ProdesView         = React.lazy(() => import('../../modules/prodes_cerrado/ProdesView').then(m => ({ default: m.ProdesView })))
+const ProdesVisaoGeral   = React.lazy(() => import('../../modules/prodes_cerrado/views/VisaoGeralView').then(m => ({ default: m.VisaoGeralView })))
+const ProdesTemporal     = React.lazy(() => import('../../modules/prodes_cerrado/views/TemporalView').then(m => ({ default: m.TemporalView })))
+const ProdesRanking      = React.lazy(() => import('../../modules/prodes_cerrado/views/RankingView').then(m => ({ default: m.RankingView })))
 const MatopibaView    = React.lazy(() => import('../../modules/alertas_mapbiomas/MatopibaView').then(m => ({ default: m.MatopibaView })))
 const DadosView       = React.lazy(() => import('../../modules/dados/DadosView').then(m => ({ default: m.DadosView })))
 
@@ -61,7 +64,12 @@ const MODULE_VIEWS: Record<Module, { id: string; label: string }[]> = {
     { id: 'municipal',   label: 'Panorama Municipal' },
     { id: 'comparativa', label: 'Análise Comparativa' },
   ],
-  prodes:   [{ id: 'concordancia', label: 'PRODES vs MapBiomas' }],
+  prodes: [
+    { id: 'visao_geral',  label: 'Visão Geral' },
+    { id: 'temporal',     label: 'Evolução Temporal' },
+    { id: 'ranking',      label: 'Top Municípios' },
+    { id: 'concordancia', label: 'PRODES vs MapBiomas' },
+  ],
   matopiba: [{ id: 'territorial',  label: 'Visão Territorial' }],
   dados:    [],
   areas_prioritarias: [
@@ -253,7 +261,10 @@ export function AppShell() {
                 {activeModule === 'mapbiomas' && activeView === 'temporal'    && <TemporalView />}
                 {activeModule === 'mapbiomas' && activeView === 'municipal'   && <MunicipalView />}
                 {activeModule === 'mapbiomas' && activeView === 'comparativa' && <ComparativaView />}
-                {activeModule === 'prodes'    && <ProdesView />}
+                {activeModule === 'prodes'    && activeView === 'visao_geral'  && <ProdesVisaoGeral />}
+                {activeModule === 'prodes'    && activeView === 'temporal'     && <ProdesTemporal />}
+                {activeModule === 'prodes'    && activeView === 'ranking'      && <ProdesRanking />}
+                {activeModule === 'prodes'    && activeView === 'concordancia' && <ProdesView />}
                 {activeModule === 'matopiba'  && <MatopibaView />}
                 {activeModule === 'dados'     && <DadosView />}
                 {activeModule === 'areas_prioritarias' && activeView === 'visao_geral'       && <VisaoGeralView />}
