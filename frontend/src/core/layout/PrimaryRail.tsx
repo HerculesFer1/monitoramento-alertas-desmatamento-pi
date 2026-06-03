@@ -44,8 +44,8 @@ const ITEMS: RailItem[] = [
   {
     module:     'queimadas_bdq',
     label:      'Queimadas BD-INPE',
-    icon:       mkImg('/icon-queimadas.svg',        'rail-module-icon-inactive', '78%', '78%'),
-    iconActive: mkImg('/icon-queimadas-active.svg', 'rail-module-icon-active',   '78%', '78%'),
+    icon:       mkImg('/icon-queimadas.svg',        'rail-module-icon-inactive', '94%', '94%'),
+    iconActive: mkImg('/icon-queimadas-active.svg', 'rail-module-icon-active',   '94%', '94%'),
   },
 ]
 
