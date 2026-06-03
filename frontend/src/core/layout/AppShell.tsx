@@ -6,6 +6,7 @@ import { DataStatusBadge }   from '../../shared/components/DataStatusBadge'
 import { ErrorBoundary }     from '../../shared/components/ErrorBoundary'
 import { MetodologiaDrawer } from '../methodology/MetodologiaDrawer'
 import { useMetodologia }    from '../methodology/useMetodologia'
+import { ReportTrigger }     from '../report/ReportTrigger'
 
 // ── Lazy views — alertas_mapbiomas ─────────────────────────────────────────
 const ExecutivaView   = React.lazy(() => import('../../modules/alertas_mapbiomas/ExecutivaView').then(m => ({ default: m.ExecutivaView })))
@@ -226,6 +227,12 @@ export function AppShell() {
           <ThemeToggle />
           <div className="topbar-sep" />
           <AnoDropdown />
+          {activeModule !== 'dados' && (
+            <>
+              <div className="topbar-sep" />
+              <ReportTrigger />
+            </>
+          )}
           <div className="topbar-sep" />
           <DataStatusBadge />
         </header>
