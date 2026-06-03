@@ -29,14 +29,20 @@ export interface ProdesKpis {
 }
 
 export interface ProdesTemporalItem {
-  ano:                 number
-  ha_irregular:        number
-  ha_autorizado_total: number
-  ha_regularizado:     number
-  ha_total:            number
-  n_municipios:        number
-  n_poligonos:         number
-  pct_irregular:       number
+  ano:                          number
+  ha_irregular:                 number
+  ha_autorizado:                number  // AUTORIZADO pleno (cobertura ASV ≥ 99%)
+  ha_autorizado_parcialmente:   number  // AUTORIZADO_PARCIALMENTE (0% < ASV < 99%)
+  ha_autorizado_total:          number  // soma dos dois (kpi hero)
+  ha_regularizado:              number
+  ha_total:                     number
+  n_municipios:                 number
+  n_poligonos:                  number
+  pct_irregular:                number
+  pct_autorizado:               number
+  pct_autorizado_parcialmente:  number
+  pct_autorizado_total:         number
+  pct_regularizado:             number
 }
 
 export interface ProdesTopMunicipio {

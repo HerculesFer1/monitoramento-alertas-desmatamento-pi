@@ -9,12 +9,15 @@ import { fmtHa } from '../../../core/lib/constants'
 export function TemporalView() {
   const { data: temporal, isLoading } = useProdesTemporal()
 
+  // 4 classes da regra MapBiomas (CLAUDE.md §4.1) — espelhadas no PRODES
+  // para permitir confrontação direta entre as duas fontes.
   const dataChart = (temporal ?? []).map(r => ({
     ano:           r.ano,
-    Irregular:     Number(r.ha_irregular),
-    Autorizado:    Number(r.ha_autorizado_total),
-    Regularizado:  Number(r.ha_regularizado),
-    IPI:           Number(r.pct_irregular),
+    Irregular:                    Number(r.ha_irregular),
+    Autorizado:                   Number(r.ha_autorizado),
+    'Autorizado Parcialmente':    Number(r.ha_autorizado_parcialmente),
+    Regularizado:                 Number(r.ha_regularizado),
+    IPI:                          Number(r.pct_irregular),
   }))
 
   const TT = {
@@ -36,9 +39,10 @@ export function TemporalView() {
             <YAxis tick={{ fill: 'var(--t2)', fontSize: 11 }} tickFormatter={(v) => fmtHa(v)} />
             <Tooltip contentStyle={TT} formatter={(v: number) => fmtHa(v)} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey="Irregular"    stackId="a" fill="#B91C1C" />
-            <Bar dataKey="Autorizado"   stackId="a" fill="#047857" />
-            <Bar dataKey="Regularizado" stackId="a" fill="#C2410C" />
+            <Bar dataKey="Irregular"                stackId="a" fill="#EF4444" />
+            <Bar dataKey="Autorizado"               stackId="a" fill="#10B981" />
+            <Bar dataKey="Autorizado Parcialmente"  stackId="a" fill="#34D399" />
+            <Bar dataKey="Regularizado"             stackId="a" fill="#F97316" />
           </BarChart>
         </ResponsiveContainer>
       </div>

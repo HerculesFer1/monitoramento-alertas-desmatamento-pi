@@ -213,10 +213,27 @@ export function VisaoGeralView() {
   )
 }
 
+// Detecta se a cor "accent" é muito clara (luminância alta) — esses tons
+// ficam invisíveis no modo claro. Usado para inverter para um tom escuro
+// preservando legibilidade. Lê HEX 6 dígitos; outros formatos = false.
+function isVeryLight(hex: string): boolean {
+  if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return false
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  // Luminância relativa (aproximação simples).
+  const L = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return L > 0.85
+}
+
 // Wrapper para usar o sistema de cards padrão (.kpi-card + JetBrains Mono via .kpi-value)
 function KpiCard({ label, value, accent, sub, alert }: {
   label: string; value: string; accent: string; sub?: string; alert?: boolean
 }) {
+  const theme = useAppStore(s => s.theme)
+  // No modo claro, tons quase-brancos (#F5F5F5, etc.) ficam invisíveis sobre
+  // o KPI card (#FFF). Inverte para um cinza escuro preservando contraste AAA.
+  const valueColor = (theme === 'light' && isVeryLight(accent)) ? '#374151' : accent
   return (
     <div className="kpi-card" style={{
       borderColor: alert ? `${accent}66` : undefined,
@@ -226,7 +243,7 @@ function KpiCard({ label, value, accent, sub, alert }: {
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: accent, flexShrink: 0, display: 'inline-block' }} />
         <span style={{ fontSize: 10, letterSpacing: '.04em' }}>{label}</span>
       </div>
-      <div className="kpi-value" style={{ color: accent }}>{value}</div>
+      <div className="kpi-value" style={{ color: valueColor }}>{value}</div>
       {sub && <div style={{ fontSize: 10, color: 'var(--t3)' }}>{sub}</div>}
     </div>
   )

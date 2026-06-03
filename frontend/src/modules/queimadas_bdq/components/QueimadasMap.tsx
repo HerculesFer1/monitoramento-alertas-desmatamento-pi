@@ -146,7 +146,7 @@ export function QueimadasMap({ municipios, selectedMes, onSelectMunicipio, highl
         : ['all', ['has', 'pct_prior'], ['>', ['get', 'pct_prior'], 50]],
       paint:  {
         'line-color':     '#EF4444',
-        'line-width':     usandoFiltro ? 2.5 : 1.5,
+        'line-width':     usandoFiltro ? 1.25 : 1.5,
         'line-dasharray': usandoFiltro ? [1, 0] : [3, 2],
       },
     })
@@ -244,7 +244,7 @@ export function QueimadasMap({ municipios, selectedMes, onSelectMunicipio, highl
         map.setPaintProperty(
           QUEIMADA_LAYER_IDS.PRIORITARIAS_LINE,
           'line-width',
-          usandoFiltro ? 2.5 : 1.5,
+          usandoFiltro ? 1.25 : 1.5,
         )
         map.setPaintProperty(
           QUEIMADA_LAYER_IDS.PRIORITARIAS_LINE,

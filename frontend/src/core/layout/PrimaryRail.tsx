@@ -43,8 +43,8 @@ const ITEMS: RailItem[] = [
   {
     module:     'queimadas_bdq',
     label:      'Queimadas BD-INPE',
-    icon:       mkImg('/icon-queimadas.svg',        'rail-module-icon-inactive', '76%', '76%'),
-    iconActive: mkImg('/icon-queimadas-active.svg', 'rail-module-icon-active',   '76%', '76%'),
+    icon:       mkImg('/icon-queimadas.svg',        'rail-module-icon-inactive', '95%', '95%'),
+    iconActive: mkImg('/icon-queimadas-active.svg', 'rail-module-icon-active',   '95%', '95%'),
   },
 ]
 
@@ -189,20 +189,26 @@ function SettingsButton() {
     }
   }, [open, recompute])
 
-  // Fecha ao clicar fora ou ESC.
+  // Fecha ao clicar fora, ESC, ou em qualquer outro botão do rail
+  // (módulos do menu principal). Garante que a janela suspensa nunca fica
+  // sobreposta após o usuário escolher uma opção ou navegar.
   React.useEffect(() => {
     if (!open) return
     const onDoc = (e: MouseEvent) => {
       const t = e.target as Node
+      // Clique no próprio botão de settings ou dentro do popover: ignora.
       if (btnRef.current?.contains(t)) return
       if (popRef.current?.contains(t)) return
+      // Qualquer outro clique (inclui rail-btn dos módulos): fecha.
       setOpen(false)
     }
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
-    document.addEventListener('mousedown', onDoc)
+    // mousedown roda antes do click — garante que setOpen(false) já está
+    // refletido quando o handler de click do destino dispara.
+    document.addEventListener('mousedown', onDoc, true)
     document.addEventListener('keydown', onKey)
     return () => {
-      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('mousedown', onDoc, true)
       document.removeEventListener('keydown', onKey)
     }
   }, [open])

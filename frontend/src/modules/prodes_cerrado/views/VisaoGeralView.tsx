@@ -68,9 +68,10 @@ export function VisaoGeralView() {
               <div key={a} className="year-card" style={{ opacity: ativo ? 1 : 0.4, transition: 'opacity .2s' }}>
                 <div className="year-tag">{a}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <Row label="Irregular"    ha={r?.ha_irregular ?? 0}        tot={r?.ha_total ?? 0} color="var(--irr)" />
-                  <Row label="Autorizado"   ha={r?.ha_autorizado_total ?? 0} tot={r?.ha_total ?? 0} color="var(--aut)" />
-                  <Row label="Regularizado" ha={r?.ha_regularizado ?? 0}     tot={r?.ha_total ?? 0} color="var(--reg)" />
+                  <Row label="Autorizado"       ha={r?.ha_autorizado ?? 0}              tot={r?.ha_total ?? 0} color="var(--aut)" />
+                  <Row label="└ Parcialmente"   ha={r?.ha_autorizado_parcialmente ?? 0} tot={r?.ha_total ?? 0} color="var(--aut)" sub />
+                  <Row label="Regularizado"     ha={r?.ha_regularizado ?? 0}            tot={r?.ha_total ?? 0} color="var(--reg)" />
+                  <Row label="Irregular"        ha={r?.ha_irregular ?? 0}               tot={r?.ha_total ?? 0} color="var(--irr)" />
                 </div>
                 <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--sep)', fontSize: 10, color: 'var(--t3)' }}>
                   Total: {fmtHa(r?.ha_total ?? 0)} · {fmtNum(r?.n_poligonos ?? 0)} polígonos
@@ -89,7 +90,8 @@ export function VisaoGeralView() {
             <thead>
               <tr>
                 <th>Ano</th><th>Polígonos</th><th>Municípios</th>
-                <th>Irregular (ha)</th><th>Autorizado (ha)</th><th>Regularizado (ha)</th>
+                <th>Aut. Pleno (ha)</th><th>Aut. Parcial (ha)</th>
+                <th>Regularizado (ha)</th><th>Irregular (ha)</th>
                 <th>Total (ha)</th><th>IPI (%)</th>
               </tr>
             </thead>
@@ -99,9 +101,10 @@ export function VisaoGeralView() {
                   <td><strong>{r.ano}</strong></td>
                   <td>{fmtNum(r.n_poligonos)}</td>
                   <td>{fmtNum(r.n_municipios)}</td>
-                  <td style={{ color: 'var(--irr)', fontWeight: 600 }}>{fmtHa(r.ha_irregular)}</td>
-                  <td style={{ color: 'var(--aut)' }}>{fmtHa(r.ha_autorizado_total)}</td>
+                  <td style={{ color: 'var(--aut)' }}>{fmtHa(r.ha_autorizado)}</td>
+                  <td style={{ color: 'var(--aut)', opacity: 0.75 }}>{fmtHa(r.ha_autorizado_parcialmente)}</td>
                   <td style={{ color: 'var(--reg)' }}>{fmtHa(r.ha_regularizado)}</td>
+                  <td style={{ color: 'var(--irr)', fontWeight: 600 }}>{fmtHa(r.ha_irregular)}</td>
                   <td>{fmtHa(r.ha_total)}</td>
                   <td><strong>{Number(r.pct_irregular).toFixed(1)}%</strong></td>
                 </tr>
@@ -118,13 +121,18 @@ export function VisaoGeralView() {
   )
 }
 
-function Row({ label, ha, tot, color }: { label: string; ha: number; tot: number; color: string }) {
+function Row({ label, ha, tot, color, sub }: { label: string; ha: number; tot: number; color: string; sub?: boolean }) {
   const pct = tot > 0 ? Math.round((ha / tot) * 100) : 0
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11 }}>
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      fontSize: sub ? 10 : 11,
+      opacity: sub ? 0.75 : 1,
+      paddingLeft: sub ? 8 : 0,
+    }}>
       <span style={{ color: 'var(--t2)' }}>{label}</span>
       <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <span className="font-mono" style={{ color, fontWeight: 600 }}>{fmtHa(ha)}</span>
+        <span className="font-mono" style={{ color, fontWeight: sub ? 500 : 600 }}>{fmtHa(ha)}</span>
         <span style={{ fontSize: 9, color: 'var(--t3)', minWidth: 30, textAlign: 'right' }}>{pct}%</span>
       </span>
     </div>
