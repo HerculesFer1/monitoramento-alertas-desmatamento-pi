@@ -130,27 +130,6 @@ body {
   flex-shrink: 0; position: relative; z-index: 10;
 }
 
-/* Em telas largas: titulo centralizado absolutamente na tela (pedido do usuario).
-   Tabs e controles continuam no fluxo flex normal — o titulo sobrepoe-os
-   visualmente com pointer-events:none para que cliques passem. */
-@media (min-width: 1280px) {
-  .app-topbar > .topbar-brand {
-    position: absolute;
-    left: 50%; top: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 5;
-    pointer-events: none;
-    text-align: center;
-    max-width: clamp(280px, 36vw, 560px);
-  }
-  /* Como o titulo virou absolute, ele nao ocupa espaco no flex.
-     As tabs ganham espaco e ficam alinhadas ao logo (esquerda). */
-  .app-topbar > .topbar-tabs {
-    justify-content: flex-start;
-    padding-left: 4px;
-  }
-}
-
 /* Scrollbar customizada para listas de ranking — discreta e tematica */
 .ranking-scroll::-webkit-scrollbar { width: 6px; }
 .ranking-scroll::-webkit-scrollbar-track { background: transparent; }

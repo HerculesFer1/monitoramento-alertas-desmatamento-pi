@@ -200,7 +200,14 @@ export function DadosView() {
     : 100
 
   return (
-    <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div
+      className="ranking-scroll"
+      style={{
+        padding: '16px 20px',
+        display: 'flex', flexDirection: 'column', gap: 14,
+        height: '100%', overflowY: 'auto',
+      }}
+    >
 
       {/* ── Cabeçalho ─────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

@@ -93,7 +93,9 @@ export function QueimadasMap({ municipios, selectedMes, onSelectMunicipio }: Pro
       source: srcId,
       paint:  {
         'fill-color':   buildFillColor() as maplibregl.ExpressionSpecification,
-        'fill-opacity': 0.75,
+        // Translucidez reduzida (0.75 -> 0.55) para deixar a borda tracejada
+        // vermelha das classes 4+5 mais visivel sobre o choropleth.
+        'fill-opacity': 0.55,
       },
     })
 

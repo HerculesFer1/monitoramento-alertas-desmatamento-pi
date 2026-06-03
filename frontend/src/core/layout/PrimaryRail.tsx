@@ -1,5 +1,6 @@
 import React from 'react'
 import { useAppStore, type Module } from '../store/useAppStore'
+import { useMetodologia } from '../methodology/useMetodologia'
 
 interface RailItem {
   module:      Module
@@ -46,30 +47,6 @@ const ITEMS: RailItem[] = [
     ),
     iconActive: (
       <span style={{ fontSize: 24, lineHeight: 1 }}>🔥</span>
-    ),
-  },
-]
-
-const FUTURE: { label: string; icon: React.ReactNode }[] = [
-  {
-    label: 'SINAFLOR / ASVs (em breve)',
-    icon: (
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
-      </svg>
-    ),
-  },
-  {
-    label: 'SEMARH / DERADSAs (em breve)',
-    icon: (
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <path d="M9 9h6M9 12h6M9 15h4"/>
-      </svg>
     ),
   },
 ]
@@ -133,6 +110,7 @@ function SettingsIcon() {
 /* ── PrimaryRail ──────────────────────────────────────────────────────── */
 export function PrimaryRail() {
   const { activeModule, setActiveModule, theme } = useAppStore()
+  const { open: openMetodologia } = useMetodologia()
 
   return (
     <nav className="rail">
@@ -170,14 +148,6 @@ export function PrimaryRail() {
         })}
 
         <div className="rail-sep" />
-
-        {FUTURE.map(item => (
-          <RailBtn key={item.label} disabled label={item.label}>
-            {item.icon}
-          </RailBtn>
-        ))}
-
-        <div className="rail-sep" />
       </div>
 
       {/* ③ Bottom — dados + settings + avatar (fixo no rodapé) */}
@@ -197,9 +167,12 @@ export function PrimaryRail() {
 
         <div className="rail-sep" />
 
-        <button className="rail-btn disabled" title="Configurações (em breve)" style={{ opacity: .22, cursor: 'default' }}>
+        <RailBtn
+          label="Metodologia"
+          onClick={openMetodologia}
+        >
           <SettingsIcon />
-        </button>
+        </RailBtn>
 
         <div className="rail-avatar" title="CGEO / SEMARH-PI">CG</div>
 

@@ -1,9 +1,11 @@
 import React, { Suspense, useState, useRef, useEffect } from 'react'
 import { Sun, Moon, Calendar, ChevronDown, Check } from 'lucide-react'
 import { useAppStore, type AnoFiltro, type Module } from '../store/useAppStore'
-import { PrimaryRail }    from './PrimaryRail'
-import { DataStatusBadge } from '../../shared/components/DataStatusBadge'
-import { ErrorBoundary }   from '../../shared/components/ErrorBoundary'
+import { PrimaryRail }       from './PrimaryRail'
+import { DataStatusBadge }   from '../../shared/components/DataStatusBadge'
+import { ErrorBoundary }     from '../../shared/components/ErrorBoundary'
+import { MetodologiaDrawer } from '../methodology/MetodologiaDrawer'
+import { useMetodologia }    from '../methodology/useMetodologia'
 
 // ── Lazy views — alertas_mapbiomas ─────────────────────────────────────────
 const ExecutivaView   = React.lazy(() => import('../../modules/alertas_mapbiomas/ExecutivaView').then(m => ({ default: m.ExecutivaView })))
@@ -19,7 +21,8 @@ const QB_VisaoGeralView  = React.lazy(() => import('../../modules/queimadas_bdq/
 const QB_ClassesView     = React.lazy(() => import('../../modules/queimadas_bdq/views/ClassesView').then(m => ({ default: m.ClassesView })))
 const QB_MunicipalView   = React.lazy(() => import('../../modules/queimadas_bdq/views/MunicipalView').then(m => ({ default: m.MunicipalView })))
 const QB_TemporalView    = React.lazy(() => import('../../modules/queimadas_bdq/views/TemporalView').then(m => ({ default: m.TemporalView })))
-const QB_MetodologiaView = React.lazy(() => import('../../modules/queimadas_bdq/views/MetodologiaView').then(m => ({ default: m.MetodologiaView })))
+// Aba "Metodologia" do queimadas foi removida em 2026-06-03 — conteudo
+// migrado para o drawer global de Metodologia (acessivel pelo gear).
 
 // ── Lazy views — areas_prioritarias (cada view em chunk próprio) ───────────
 const VisaoGeralView       = React.lazy(() => import('../../modules/areas_prioritarias/views/VisaoGeralView').then(m => ({ default: m.VisaoGeralView })))
@@ -69,7 +72,7 @@ const MODULE_VIEWS: Record<Module, { id: string; label: string }[]> = {
     { id: 'classes',      label: 'Por Classe' },
     { id: 'municipal',    label: 'Municipal' },
     { id: 'temporal',     label: 'Evolução Mensal' },
-    { id: 'metodologia',  label: 'Metodologia' },
+    // Metodologia removida — agora disponivel pelo drawer global (gear)
   ],
 }
 
@@ -170,9 +173,19 @@ export function AppShell() {
   const { activeModule, activeView, setActiveView } = useAppStore()
   const views = MODULE_VIEWS[activeModule]
   const title = MODULE_TITLES[activeModule]
+  const { isMetodologiaOpen, close: closeMetodologia } = useMetodologia()
+
+  // Migracao: se vier rota antiga `metodologia` do queimadas, redireciona
+  // para a primeira view do modulo (a metodologia agora esta no drawer).
+  React.useEffect(() => {
+    if (activeModule === 'queimadas_bdq' && activeView === 'metodologia') {
+      setActiveView('visao_geral')
+    }
+  }, [activeModule, activeView, setActiveView])
 
   return (
     <div className="app-shell">
+      <MetodologiaDrawer open={isMetodologiaOpen} onClose={closeMetodologia} />
       <PrimaryRail />
 
       <div className="app-content">
@@ -238,7 +251,6 @@ export function AppShell() {
                 {activeModule === 'queimadas_bdq' && activeView === 'classes'      && <QB_ClassesView />}
                 {activeModule === 'queimadas_bdq' && activeView === 'municipal'    && <QB_MunicipalView />}
                 {activeModule === 'queimadas_bdq' && activeView === 'temporal'     && <QB_TemporalView />}
-                {activeModule === 'queimadas_bdq' && activeView === 'metodologia'  && <QB_MetodologiaView />}
               </div>
             </ErrorBoundary>
           </Suspense>
