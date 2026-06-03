@@ -5,8 +5,11 @@ import { PrimaryRail }       from './PrimaryRail'
 import { DataStatusBadge }   from '../../shared/components/DataStatusBadge'
 import { ErrorBoundary }     from '../../shared/components/ErrorBoundary'
 import { MetodologiaDrawer } from '../methodology/MetodologiaDrawer'
+import { MetodologiaPage }   from '../methodology/MetodologiaPage'
 import { useMetodologia }    from '../methodology/useMetodologia'
 import { ReportTrigger }     from '../report/ReportTrigger'
+import { ReportPage }        from '../report/ReportPage'
+import { useReportPage }     from '../report/useReportPage'
 
 // ── Lazy views — alertas_mapbiomas ─────────────────────────────────────────
 const ExecutivaView   = React.lazy(() => import('../../modules/alertas_mapbiomas/ExecutivaView').then(m => ({ default: m.ExecutivaView })))
@@ -58,7 +61,7 @@ const MODULE_VIEWS: Record<Module, { id: string; label: string }[]> = {
     { id: 'municipal',   label: 'Panorama Municipal' },
     { id: 'comparativa', label: 'Análise Comparativa' },
   ],
-  prodes:   [{ id: 'concordancia', label: 'Concordância PRODES' }],
+  prodes:   [{ id: 'concordancia', label: 'PRODES vs MapBiomas' }],
   matopiba: [{ id: 'territorial',  label: 'Visão Territorial' }],
   dados:    [],
   areas_prioritarias: [
@@ -174,7 +177,8 @@ export function AppShell() {
   const { activeModule, activeView, setActiveView } = useAppStore()
   const views = MODULE_VIEWS[activeModule]
   const title = MODULE_TITLES[activeModule]
-  const { isMetodologiaOpen, close: closeMetodologia } = useMetodologia()
+  const { isMetodologiaOpen, close: closeMetodologia, selectedModule: metoSelected } = useMetodologia()
+  const { isReportOpen } = useReportPage()
 
   // Migracao: se vier rota antiga `metodologia` do queimadas, redireciona
   // para a primeira view do modulo (a metodologia agora esta no drawer).
@@ -239,6 +243,9 @@ export function AppShell() {
 
         {/* ── Conteúdo ────────────────────────────────────────────────── */}
         <main className="app-main" role="main">
+          {isReportOpen && <ReportPage />}
+          {!isReportOpen && metoSelected && <MetodologiaPage />}
+          {!isReportOpen && !metoSelected && (
           <Suspense fallback={<ViewFallback />}>
             <ErrorBoundary label={`${activeModule} › ${activeView}`}>
               <div key={`${activeModule}-${activeView}`} className="view-slide">
@@ -261,6 +268,7 @@ export function AppShell() {
               </div>
             </ErrorBoundary>
           </Suspense>
+          )}
         </main>
 
         {/* ── Footer ──────────────────────────────────────────────────── */}

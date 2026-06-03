@@ -2,7 +2,8 @@
  * VisaoGeralView.tsx — queimadas_bdq
  * KPIs de queimadas 2025 + choropleth + top 10 municípios críticos.
  */
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import { useAppStore }                  from '../../../core/store/useAppStore'
 import { useQueimadasVisaoGeral }       from '../hooks/useQueimadasVisaoGeral'
 import { useQueimadasMunicipios }       from '../hooks/useQueimadasMunicipios'
@@ -17,6 +18,40 @@ function fmt(n: number | null | undefined, dec = 0) {
   return n.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec })
 }
 
+// ─ Toggle flutuante "Prioridade alta" ─────────────────────────────────────────
+function PriorityToggle({ active, disabled, count, onToggle }: {
+  active: boolean; disabled: boolean; count: number; onToggle: () => void
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      disabled={disabled}
+      aria-pressed={active}
+      title={active
+        ? `${count} municípios em alta prioridade — clique para ver todos`
+        : 'Destacar apenas municípios em alta prioridade (AHP 4-5)'}
+      style={{
+        position: 'absolute', top: 10, left: 10, zIndex: 5,
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '6px 10px', borderRadius: 7,
+        fontSize: 11, fontWeight: 600,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        background: active ? 'rgba(239, 68, 68, 0.92)' : 'var(--bg3)',
+        color: active ? '#FFFFFF' : 'var(--t2)',
+        border: `1px solid ${active ? '#EF4444' : 'var(--sep)'}`,
+        boxShadow: active
+          ? '0 2px 8px rgba(239,68,68,.35), 0 1px 0 rgba(0,0,0,.05)'
+          : '0 2px 8px rgba(0,0,0,.12)',
+        opacity: disabled ? 0.5 : 1,
+        transition: 'all .15s',
+      }}
+    >
+      <AlertTriangle size={12} strokeWidth={2} />
+      <span>{active ? `Atenção · ${count}` : 'Prioridade alta'}</span>
+    </button>
+  )
+}
+
 export function VisaoGeralView() {
   const anoFiltro    = useAppStore(s => s.anoFiltro)
   const ano          = anoFiltro === 'all' ? 2025 : anoFiltro
@@ -27,6 +62,39 @@ export function VisaoGeralView() {
   const { data: rank, isLoading: loadRank } = useQueimadasRanking(ano, 20)
 
   const kpis = vg?.kpis
+
+  // Filtro "Atenção": destaca TODOS os municípios em alta pressão de fogo
+  // dentro de áreas prioritárias — critério `pct_area_prioritaria > 50%` E
+  // `classe_max_queimada ∈ {4, 5}` (Alta + Muito Alta). É o mesmo conjunto
+  // já marcado no mapa com borda tracejada vermelha.
+  const [priorityOnly, setPriorityOnly] = useState(false)
+  const destacadosMuns = useMemo(() => {
+    if (!muns) return null
+    return muns
+      .filter(m =>
+        m.classe_max_queimada != null && m.classe_max_queimada >= 4 &&
+        m.pct_area_prioritaria != null && m.pct_area_prioritaria > 50,
+      )
+      .sort((a, b) => (b.area_queimada_total_ha ?? 0) - (a.area_queimada_total_ha ?? 0))
+  }, [muns])
+  const highlightCods = useMemo<Set<string> | null>(() => {
+    if (!priorityOnly || !destacadosMuns) return null
+    return new Set(destacadosMuns.map(m => m.municipio_cod))
+  }, [priorityOnly, destacadosMuns])
+  // Quando filtro ativo: lista os destacados (todos, sem cap de 20).
+  // Quando inativo: mantém Top 20 do ranking original.
+  const rankExibido = priorityOnly
+    ? destacadosMuns?.map((m, i) => ({
+        rank:                   i + 1,
+        municipio_cod:          m.municipio_cod,
+        municipio_nome:         m.municipio_nome,
+        area_queimada_total_ha: m.area_queimada_total_ha,
+        n_cicatrizes_total:     m.n_cicatrizes_total,
+        classe_max_queimada:    m.classe_max_queimada,
+        pct_area_prioritaria:   m.pct_area_prioritaria,
+        mes_pico:               m.mes_pico,
+      })) ?? []
+    : (rank ?? [])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, height: '100%', padding: 14, overflow: 'hidden' }}>
@@ -73,8 +141,17 @@ export function VisaoGeralView() {
             : <QueimadasMap
                 municipios={muns ?? []}
                 onSelectMunicipio={setSelected}
+                highlightCods={highlightCods}
               />
           }
+
+          {/* Toggle "Prioridade alta" — flutua no canto superior esquerdo do mapa */}
+          <PriorityToggle
+            active={priorityOnly}
+            disabled={loadMap || !destacadosMuns}
+            count={destacadosMuns?.length ?? 0}
+            onToggle={() => setPriorityOnly(v => !v)}
+          />
         </div>
 
         {/* Top 20 ranking — scroll vertical, cabecalho fixo */}
@@ -86,8 +163,8 @@ export function VisaoGeralView() {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             flexShrink: 0,
           }}>
-            <span>Top 20 — maior área queimada</span>
-            <span style={{ fontSize: 9, color: 'var(--t3)', fontWeight: 500 }}>{rank?.length ?? 0} mun.</span>
+            <span>{priorityOnly ? 'Prioridade alta (AHP 4-5)' : 'Top 20 — maior área queimada'}</span>
+            <span style={{ fontSize: 9, color: 'var(--t3)', fontWeight: 500 }}>{rankExibido.length} mun.</span>
           </div>
           <div className="ranking-scroll" style={{
             flex: 1, minHeight: 0, overflowY: 'auto',
@@ -95,7 +172,9 @@ export function VisaoGeralView() {
           }}>
             {loadRank
               ? <div style={{ fontSize: 10, color: 'var(--t3)' }}>Carregando…</div>
-              : (rank ?? []).map((r) => (
+              : rankExibido.length === 0
+                ? <div style={{ fontSize: 10, color: 'var(--t3)', padding: 8 }}>Nenhum município destacado no critério atual.</div>
+                : rankExibido.map((r) => (
                 <div key={r.municipio_cod} style={{
                   display: 'flex', flexDirection: 'column', gap: 3,
                   padding: '7px 9px',

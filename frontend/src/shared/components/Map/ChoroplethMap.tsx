@@ -6,6 +6,7 @@ import { useAgregado } from '../../../core/lib/hooks'
 import { useAppStore } from '../../../core/store/useAppStore'
 import { fmtHa, MATOPIBA_SET } from '../../../core/lib/constants'
 import { BREAKS_IPI } from '../../../modules/areas_prioritarias/types'
+import { hideNonCapitalLabels } from './basemapLabels'
 
 const INITIAL_VIEW = { longitude: -42.8, latitude: -7.0, zoom: 5.8 }
 
@@ -195,6 +196,8 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
           canvas.setAttribute('role', 'application')
           canvas.setAttribute('aria-label',
             'Mapa interativo. Use as setas para navegar entre os 10 municípios de maior IPI.')
+          hideNonCapitalLabels(e.target)
+          e.target.on('styledata', () => hideNonCapitalLabels(e.target))
         }}
       >
         <NavigationControl position="top-right" />

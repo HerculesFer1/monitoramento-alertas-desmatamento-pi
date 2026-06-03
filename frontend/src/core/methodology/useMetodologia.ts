@@ -1,13 +1,23 @@
 /**
- * useMetodologia.ts — estado global simples do drawer de Metodologia.
+ * useMetodologia.ts — estado global do drawer + página de metodologia.
  *
- * Sem reducer / Zustand — basta um booleano compartilhado. Implementado com
- * useSyncExternalStore para que multiplos componentes (PrimaryRail abre,
- * AppShell renderiza) leiam o mesmo estado sem precisar de Context.
+ * Dois estados independentes:
+ *   - `isMetodologiaOpen` — sidebar lateral aberta (lista de módulos)
+ *   - `selectedModuleForMeto` — módulo selecionado, cuja metodologia ocupa o
+ *     `<main>` no AppShell. `null` significa que o dashboard continua normal.
+ *
+ * Implementado com useSyncExternalStore para que múltiplos componentes leiam
+ * o mesmo estado sem precisar de Context.
  */
 import { useSyncExternalStore } from 'react'
+import type { Module } from '../store/useAppStore'
 
-let isOpen = false
+interface MetoState {
+  isOpen:   boolean
+  selected: Module | null
+}
+
+let state: MetoState = { isOpen: false, selected: null }
 const listeners = new Set<() => void>()
 
 function subscribe(cb: () => void) {
@@ -15,21 +25,27 @@ function subscribe(cb: () => void) {
   return () => { listeners.delete(cb) }
 }
 
-function getSnapshot() {
-  return isOpen
+function getSnapshot(): MetoState {
+  return state
 }
 
-function setOpen(value: boolean) {
-  isOpen = value
+function setState(next: Partial<MetoState>) {
+  state = { ...state, ...next }
   listeners.forEach(l => l())
 }
 
 export function useMetodologia() {
-  const isMetodologiaOpen = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+  const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
   return {
-    isMetodologiaOpen,
-    open:   () => setOpen(true),
-    close:  () => setOpen(false),
-    toggle: () => setOpen(!isOpen),
+    isMetodologiaOpen: s.isOpen,
+    selectedModule:    s.selected,
+    open:    () => setState({ isOpen: true }),
+    close:   () => setState({ isOpen: false }),
+    toggle:  () => setState({ isOpen: !state.isOpen }),
+    /** Seleciona um módulo para abrir sua metodologia no <main>. Mantém o
+     *  sidebar aberto para permitir trocar de módulo sem reabrir. */
+    select:  (m: Module) => setState({ selected: m, isOpen: true }),
+    /** Limpa a seleção — volta ao dashboard normal. */
+    clearSelection: () => setState({ selected: null }),
   }
 }

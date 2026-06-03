@@ -1,4 +1,5 @@
 import React from 'react'
+import { BookOpen, Database } from 'lucide-react'
 import { useAppStore, type Module } from '../store/useAppStore'
 import { useMetodologia } from '../methodology/useMetodologia'
 
@@ -40,14 +41,10 @@ const ITEMS: RailItem[] = [
     iconActive: mkImg('/icon-redd-active.svg',   'rail-module-icon-active',   '76%', '76%'),
   },
   {
-    module: 'queimadas_bdq',
-    label:  'Queimadas BD-INPE',
-    icon: (
-      <span style={{ fontSize: 24, lineHeight: 1, filter: 'grayscale(1)' }}>🔥</span>
-    ),
-    iconActive: (
-      <span style={{ fontSize: 24, lineHeight: 1 }}>🔥</span>
-    ),
+    module:     'queimadas_bdq',
+    label:      'Queimadas BD-INPE',
+    icon:       mkImg('/icon-queimadas.svg',        'rail-module-icon-inactive', '76%', '76%'),
+    iconActive: mkImg('/icon-queimadas-active.svg', 'rail-module-icon-active',   '76%', '76%'),
   },
 ]
 
@@ -100,7 +97,7 @@ function RailBtn({
 /* ── Settings icon ────────────────────────────────────────────────────── */
 function SettingsIcon() {
   return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
     </svg>
@@ -110,7 +107,6 @@ function SettingsIcon() {
 /* ── PrimaryRail ──────────────────────────────────────────────────────── */
 export function PrimaryRail() {
   const { activeModule, setActiveModule, theme } = useAppStore()
-  const { open: openMetodologia } = useMetodologia()
 
   return (
     <nav className="rail">
@@ -123,9 +119,6 @@ export function PrimaryRail() {
             alt="CGEO"
             style={{ width: 44, height: 'auto', display: 'block' }}
           />
-        </div>
-        <div className="rail-org-label" aria-label="Secretaria do Meio Ambiente e Recursos Hídricos">
-          SEMARH
         </div>
       </div>
 
@@ -150,33 +143,161 @@ export function PrimaryRail() {
         <div className="rail-sep" />
       </div>
 
-      {/* ③ Bottom — dados + settings + avatar (fixo no rodapé) */}
+      {/* ③ Bottom — settings (popover) + avatar (fixo no rodapé) */}
       <div className="rail-bottom">
-
-        <RailBtn
-          active={activeModule === 'dados'}
-          label="Gestão de Dados"
-          onClick={() => setActiveModule('dados')}
-        >
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <ellipse cx="12" cy="5" rx="9" ry="3"/>
-            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-          </svg>
-        </RailBtn>
 
         <div className="rail-sep" />
 
-        <RailBtn
-          label="Metodologia"
-          onClick={openMetodologia}
-        >
-          <SettingsIcon />
-        </RailBtn>
+        <SettingsButton />
 
         <div className="rail-avatar" title="CGEO / SEMARH-PI">CG</div>
 
       </div>
     </nav>
+  )
+}
+
+/* ── Settings popover (Metodologia + Gestão de Dados) ───────────────────── */
+function SettingsButton() {
+  const { open: openMetodologia } = useMetodologia()
+  const setActiveModule = useAppStore(s => s.setActiveModule)
+  const activeModule    = useAppStore(s => s.activeModule)
+  const [open, setOpen] = React.useState(false)
+  const btnRef          = React.useRef<HTMLButtonElement>(null)
+  const popRef          = React.useRef<HTMLDivElement>(null)
+  const [hovered, setHovered] = React.useState(false)
+  const [pos, setPos]   = React.useState<{ left: number; top: number } | null>(null)
+
+  // Calcula posição do popover usando o rect do botão (position:fixed escapa
+  // do overflow:hidden do rail).
+  const recompute = React.useCallback(() => {
+    const btn = btnRef.current
+    if (!btn) return
+    const r = btn.getBoundingClientRect()
+    // Aparece à direita do botão, alinhado pelo topo.
+    setPos({ left: r.right + 8, top: r.top })
+  }, [])
+
+  React.useLayoutEffect(() => {
+    if (!open) return
+    recompute()
+    window.addEventListener('resize', recompute)
+    window.addEventListener('scroll', recompute, true)
+    return () => {
+      window.removeEventListener('resize', recompute)
+      window.removeEventListener('scroll', recompute, true)
+    }
+  }, [open, recompute])
+
+  // Fecha ao clicar fora ou ESC.
+  React.useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (btnRef.current?.contains(t)) return
+      if (popRef.current?.contains(t)) return
+      setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        ref={btnRef}
+        className={`rail-btn${open ? ' active' : ''}`}
+        onClick={() => setOpen(v => !v)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Configurações"
+      >
+        <SettingsIcon />
+      </button>
+      {hovered && !open && <Tooltip label="Configurações" />}
+
+      {open && pos && (
+        <div
+          ref={popRef}
+          role="menu"
+          aria-label="Configurações"
+          className="settings-popover"
+          style={{
+            // position:fixed escapa do overflow:hidden do .rail.
+            // Subimos para que a base do popover fique alinhada com a base
+            // do botão (popover cresce para cima).
+            position: 'fixed',
+            left: pos.left,
+            top:  Math.max(8, pos.top - 76),
+            minWidth: 200,
+            padding: 6,
+            background: 'var(--bg2, #161616)',
+            border: '1px solid var(--sep)',
+            borderRadius: 10,
+            boxShadow: '0 12px 32px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.18)',
+            zIndex: 1000,
+            display: 'flex', flexDirection: 'column', gap: 2,
+            animation: 'settings-pop-in .16s cubic-bezier(.2,.7,.2,1)',
+          }}
+        >
+          <PopoverItem
+            icon={<BookOpen size={14} strokeWidth={1.7} />}
+            label="Metodologia"
+            onClick={() => { openMetodologia(); setOpen(false) }}
+          />
+          <PopoverItem
+            icon={<Database size={14} strokeWidth={1.7} />}
+            label="Gestão de Dados"
+            active={activeModule === 'dados'}
+            onClick={() => { setActiveModule('dados'); setOpen(false) }}
+          />
+          <style>{`
+            @keyframes settings-pop-in {
+              from { transform: translateY(4px); opacity: 0; }
+              to   { transform: translateY(0);   opacity: 1; }
+            }
+          `}</style>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PopoverItem({ icon, label, onClick, active }: {
+  icon: React.ReactNode; label: string; onClick: () => void; active?: boolean
+}) {
+  return (
+    <button
+      role="menuitem"
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '8px 10px',
+        background: active ? 'rgba(16,185,129,.10)' : 'transparent',
+        border: 'none',
+        borderRadius: 7,
+        color: active ? 'var(--aut)' : 'var(--t1)',
+        cursor: 'pointer',
+        fontSize: 12.5, fontWeight: 500,
+        textAlign: 'left',
+        transition: 'background .12s',
+      }}
+      onMouseEnter={(e) => {
+        if (!active) e.currentTarget.style.background = 'rgba(255,255,255,.06)'
+      }}
+      onMouseLeave={(e) => {
+        if (!active) e.currentTarget.style.background = 'transparent'
+      }}
+    >
+      <span style={{ display: 'inline-flex', color: active ? 'var(--aut)' : 'var(--t2)' }}>{icon}</span>
+      <span>{label}</span>
+    </button>
   )
 }

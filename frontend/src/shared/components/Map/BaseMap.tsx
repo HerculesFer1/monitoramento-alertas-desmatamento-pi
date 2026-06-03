@@ -5,6 +5,7 @@ import { useAlertasBbox } from '../../../core/lib/hooks'
 import type { BboxParams } from '../../../core/lib/queries'
 import { useAppStore } from '../../../core/store/useAppStore'
 import { CHART_COLORS, fmtHa } from '../../../core/lib/constants'
+import { hideNonCapitalLabels } from './basemapLabels'
 
 // C4 da auditoria GIS 2026-06-02 — migrado de get_alertas_geojson (limit 3000)
 // para get_alertas_bbox (Migration 011). Servidor filtra por bbox + simplifica
@@ -152,6 +153,9 @@ export function MapView() {
             `Mapa interativo de alertas de desmatamento de ${anoQuery}. Use zoom e pan para explorar.`)
           // C4 — popula bbox inicial após o mapa carregar.
           _updateBboxFromMap()
+          // Esconde rótulos de cidades pequenas — mantém só capitais.
+          hideNonCapitalLabels(e.target)
+          e.target.on('styledata', () => hideNonCapitalLabels(e.target))
         }}
       >
         <NavigationControl position="top-right" />

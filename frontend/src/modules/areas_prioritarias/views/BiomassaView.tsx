@@ -24,6 +24,7 @@ import {
   buildInterpolateExpression,
   type BreaksResult,
 } from '../../../core/lib/breaks'
+import { hideNonCapitalLabels } from '../../../shared/components/Map/basemapLabels'
 
 const CLASSES: ClassePrioridade[] = [1, 2, 3, 4, 5]
 const AGB_MIN = 0
@@ -179,6 +180,7 @@ export function BiomassaView() {
       fitBoundsOptions: { padding: 40 },
     })
     map.addControl(new NavigationControl(), 'top-right')
+    map.on('style.load', () => hideNonCapitalLabels(map))
     mapRef.current = map
 
     const trackBbox = () => {

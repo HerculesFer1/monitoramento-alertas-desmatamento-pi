@@ -1,0 +1,122 @@
+name: "Atualização Mensal — Cicatrizes Queimadas (AQ1km INPE)"
+
+# BD Queimadas/INPE publica AQ1km Coleção 2 mensalmente até o início do mês
+# seguinte. Rodamos no dia 5 às 04:00 UTC para garantir disponibilidade do
+# arquivo do mês anterior. Também acionável manualmente.
+on:
+  schedule:
+    - cron: "0 4 5 * *"
+  workflow_dispatch:
+    inputs:
+      ano:
+        description: "Ano a processar (default: ano corrente)"
+        required: false
+        default: ""
+      skip_download:
+        description: "Reutilizar ZIPs já baixados em data/raw/queimadas (true/false)"
+        required: false
+        default: "false"
+
+concurrency:
+  group: update-queimadas
+  cancel-in-progress: false
+
+env:
+  PYTHONUTF8: "1"
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+
+jobs:
+  update-queimadas:
+    name: "Download BD-Queimadas → Pipeline queimadas_bdq → Upload"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60   # 12 ZIPs mensais + overlay vetorial
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: "3.11"
+          channels: conda-forge,defaults
+          channel-priority: strict
+          activate-environment: desmatamento
+          environment-file: environment.yml
+          use-mamba: true
+          miniforge-version: latest
+
+      - name: Criar .env
+        run: |
+          printf '%s\n' \
+            "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
+            "SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}" \
+            "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" \
+            "REDD_DATA_ROOT=${{ github.workspace }}/data" \
+            > .env
+          chmod 600 .env
+
+      - name: Resolver ano alvo
+        id: ano
+        run: |
+          INPUT_ANO="${{ github.event.inputs.ano }}"
+          if [ -z "$INPUT_ANO" ]; then
+            ANO=$(date -u +%Y)
+          else
+            ANO="$INPUT_ANO"
+          fi
+          echo "ano=$ANO" >> "$GITHUB_OUTPUT"
+          echo "Ano alvo: $ANO"
+
+      # ── Pré-requisito: GPKG de classes AHP ─────────────────────────────────
+      # O módulo queimadas_bdq cruza com `classes_prioritarias.gpkg` produzido
+      # pelo módulo areas_prioritarias. Se ainda não existe (primeira execução
+      # no runner), o orchestrator vai falhar com mensagem clara.
+      - name: Verificar GPKG de classes prioritárias
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          root = Path(os.environ.get('REDD_DATA_ROOT', 'data'))
+          candidates = [
+              root / 'raw' / 'classes_prioritarias.gpkg',
+              root / 'classes_prioritarias.gpkg',
+          ]
+          for p in candidates:
+              if p.exists():
+                  print(f"✓ {p}")
+                  raise SystemExit(0)
+          print("AVISO: classes_prioritarias.gpkg ausente — execute update-areas-prioritarias primeiro.")
+          PY
+        continue-on-error: true
+
+      # ── Executar pipeline do módulo ──────────────────────────────────────
+      - name: Executar Orquestrador — módulo queimadas_bdq
+        env:
+          SKIP_DL: ${{ github.event.inputs.skip_download }}
+        run: |
+          ARGS="--module queimadas_bdq --ano ${{ steps.ano.outputs.ano }}"
+          if [ "$SKIP_DL" = "true" ]; then ARGS="$ARGS --skip-download"; fi
+          conda run -n desmatamento python -m core.orchestrator $ARGS
+
+      - name: Upload artefatos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: queimadas-update-${{ steps.ano.outputs.ano }}-${{ github.run_number }}
+          path: |
+            data/output/pipeline.log
+            data/output/qb_*.json
+          retention-days: 60
+
+      - name: Resumo da execução
+        if: always()
+        run: |
+          echo "## Atualização BD-Queimadas INPE — Ano ${{ steps.ano.outputs.ano }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "data/output/pipeline.log" ]; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -E "(ETAPA|✓|qb_|cicatrizes|meses)" data/output/pipeline.log \
+              | tail -30 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi

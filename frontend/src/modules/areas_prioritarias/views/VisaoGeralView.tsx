@@ -17,6 +17,7 @@ import { PeriodBadge }                    from '../components/PeriodBadge'
 import { LAYER_IDS } from '../types'
 import type { MunicipioFeatureProps } from '../types'
 import { fmtHa } from '../../../core/lib/constants'
+import { hideNonCapitalLabels } from '../../../shared/components/Map/basemapLabels'
 
 export function VisaoGeralView() {
   const mapContainer = useRef<HTMLDivElement>(null)
@@ -49,6 +50,9 @@ export function VisaoGeralView() {
     })
     map.addControl(new NavigationControl(), 'top-right')
     mapRef.current = map
+
+    // Esconde rótulos de cidades pequenas (re-aplica em troca de tema).
+    map.on('style.load', () => hideNonCapitalLabels(map))
 
     // Rastreia viewport para bbox-aware GeoJSON (Migration 011)
     const trackBbox = () => {

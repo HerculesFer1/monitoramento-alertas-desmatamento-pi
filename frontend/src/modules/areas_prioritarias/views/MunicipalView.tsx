@@ -18,6 +18,7 @@ import { MunicipioCard }          from '../components/MunicipioCard'
 import { PeriodBadge }            from '../components/PeriodBadge'
 import { LAYER_IDS, DEFAULT_VISIBLE_LAYERS, CLASSE_COLORS } from '../types'
 import type { MunicipioFeatureProps } from '../types'
+import { hideNonCapitalLabels } from '../../../shared/components/Map/basemapLabels'
 
 export function MunicipalView() {
   const mapContainer = useRef<HTMLDivElement>(null)
@@ -56,6 +57,7 @@ export function MunicipalView() {
     })
     map.addControl(new NavigationControl(), 'top-right')
     map.once('load', () => setActiveLayerIds(DEFAULT_VISIBLE_LAYERS))
+    map.on('style.load', () => hideNonCapitalLabels(map))
     mapRef.current = map
 
     const trackBbox = () => {

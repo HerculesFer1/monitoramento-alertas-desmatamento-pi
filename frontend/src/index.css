@@ -504,6 +504,17 @@ body {
   --t1:  #1A1A1A;
   --t2:  #555555;
   --t3:  #AAAAAA;
+  /* Cores semânticas escurecidas para texto sobre fundo claro — WCAG AA
+     (contraste ≥4.5:1 sobre #FFF). CHART_COLORS é hardcoded em JS e mantém
+     os tons originais nos charts/mapas. */
+  --irr: #B91C1C;  /* red-700 — 7.7:1 */
+  --aut: #047857;  /* emerald-700 — 5.3:1 */
+  --reg: #C2410C;  /* orange-700 — 5.8:1 */
+  --mat: #B45309;  /* amber-700 — 6.0:1 */
+  --irr-bg: rgba(185, 28, 28, .12);
+  --aut-bg: rgba(4, 120, 87, .12);
+  --reg-bg: rgba(194, 65, 12, .12);
+  --mat-bg: rgba(180, 83, 9, .12);
   --shadow:
     inset 0 -1px 0 rgba(0,0,0,.04),
     0 1px 3px  rgba(0,0,0,.09),
@@ -585,14 +596,21 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
 }
 [data-theme="light"] .card:hover { border-color: rgba(0,0,0,.13); transform: translateY(-2px); }
+/* KPI cards em branco absoluto criam contraste forte com o --bg1 (#ECECEC).
+   Sombra um pouco mais densa que .card para reforçar a hierarquia visual
+   (KPI > card secundário). Texto em --t1 (#1A1A1A) → contraste 16:1 (AAA). */
 [data-theme="light"] .kpi-card {
-  background: var(--bg3); border-color: rgba(0,0,0,.08);
-  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+  background: #FFFFFF; border-color: rgba(0,0,0,.10);
+  box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 14px rgba(0,0,0,.07);
 }
-[data-theme="light"] .kpi-card:hover { border-color: rgba(0,0,0,.13); }
-[data-theme="light"] .kpi-value  { color: var(--t1); }
-[data-theme="light"] .kpi-label  { color: var(--t2); }
-[data-theme="light"] .kpi-sub    { color: var(--t2); }
+[data-theme="light"] .kpi-card:hover { border-color: rgba(0,0,0,.16); box-shadow: 0 2px 4px rgba(0,0,0,.07), 0 8px 20px rgba(0,0,0,.09); }
+[data-theme="light"] .kpi-value  { color: #1A1A1A; }                       /* 16:1 sobre #FFF */
+[data-theme="light"] .kpi-label  { color: #525252; }                       /* 7.5:1 — AAA */
+[data-theme="light"] .kpi-sub    { color: #525252; }
+/* Anula tons temáticos de fundo aplicados via style inline (IPI hero, MATOPIBA
+   hero) — no light queremos branco absoluto. Hierarquia preservada pela
+   borda colorida do próprio style inline. */
+[data-theme="light"] .kpi-card[style*="background"] { background: #FFFFFF !important; }
 [data-theme="light"] .year-card {
   background: var(--bg3); border-color: rgba(0,0,0,.08);
   box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);

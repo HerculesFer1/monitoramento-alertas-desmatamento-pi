@@ -4,6 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAlertasGeoJson } from '../../../core/lib/hooks'
 import { useAppStore } from '../../../core/store/useAppStore'
 import { fmtHa } from '../../../core/lib/constants'
+import { hideNonCapitalLabels } from './basemapLabels'
 
 const INITIAL_VIEW = { longitude: -42.8, latitude: -7.0, zoom: 5.8 }
 
@@ -65,6 +66,8 @@ export function ConcordanciaMap() {
         onLoad={e => {
           const el = e.target.getContainer().querySelector('.maplibregl-ctrl-attrib') as HTMLElement | null
           if (el) el.classList.remove('maplibregl-compact-show')
+          hideNonCapitalLabels(e.target)
+          e.target.on('styledata', () => hideNonCapitalLabels(e.target))
         }}
       >
         <NavigationControl position="top-right" />
