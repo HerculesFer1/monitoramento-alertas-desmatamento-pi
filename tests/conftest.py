@@ -1,21 +1,57 @@
+"""
+tests/conftest.py — configuração específica de testes geoespaciais.
+
+Quando rodando em ambientes que sobrescrevem PROJ_LIB/GDAL_DATA
+(comum em Windows + Miniconda), pyproj/geopandas podem falhar ao
+encontrar os arquivos de grade do CRS.
+
+Esta camada é DEFENSIVA — só executa se as env vars não estiverem
+definidas e tenta detectar o ambiente conda ativo. Caminhos absolutos
+hardcoded foram removidos (auditoria 2026-06-03 — portabilidade).
+
+Para forçar paths específicos, defina antes de rodar pytest:
+    PROJ_LIB=/path/to/proj
+    GDAL_DATA=/path/to/gdal
+"""
+from __future__ import annotations
+
 import os
 import sys
 from pathlib import Path
 
-# Permite importar 'pipeline' a partir da raiz do projeto
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Garante que a raiz do repo esteja em sys.path (redundante com conftest.py raiz,
+# mas seguro caso pytest seja invocado direto de tests/).
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 
-# PROJ/GDAL — necessário antes de qualquer import de geopandas/pyproj (Windows/conda geo)
-_PROJ_DIR = Path("C:/miniconda3/envs/geo/Library/share/proj")
-_GDAL_DIR = Path("C:/miniconda3/envs/geo/Library/share/gdal")
 
-if _PROJ_DIR.exists():
-    os.environ["PROJ_LIB"]  = str(_PROJ_DIR)
-    os.environ["GDAL_DATA"] = str(_GDAL_DIR)
+def _detect_conda_share_dir(subdir: str) -> Path | None:
+    """Tenta localizar PROJ/GDAL no ambiente conda ativo."""
+    conda_prefix = os.environ.get("CONDA_PREFIX")
+    if not conda_prefix:
+        return None
+    candidate = Path(conda_prefix) / "Library" / "share" / subdir   # Windows
+    if candidate.exists():
+        return candidate
+    candidate = Path(conda_prefix) / "share" / subdir               # Linux/macOS
+    if candidate.exists():
+        return candidate
+    return None
 
-    # pyproj >= 3 pode ignorar env vars já inicializadas — força via API Python
-    try:
-        import pyproj.datadir
-        pyproj.datadir.set_data_dir(str(_PROJ_DIR))
-    except Exception:
-        pass
+
+# Só age se a env var ainda não estiver definida — não sobrescreve usuário.
+if "PROJ_LIB" not in os.environ:
+    _proj = _detect_conda_share_dir("proj")
+    if _proj is not None:
+        os.environ["PROJ_LIB"] = str(_proj)
+        try:
+            import pyproj.datadir
+            pyproj.datadir.set_data_dir(str(_proj))
+        except Exception:
+            pass
+
+if "GDAL_DATA" not in os.environ:
+    _gdal = _detect_conda_share_dir("gdal")
+    if _gdal is not None:
+        os.environ["GDAL_DATA"] = str(_gdal)
