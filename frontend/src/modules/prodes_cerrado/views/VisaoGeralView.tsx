@@ -1,10 +1,20 @@
 /**
  * VisaoGeralView.tsx — PRODES Cerrado
- * KPIs anuais + breakdown por ano (cards 2022-2025).
+ * KPIs anuais + breakdown por ano (cards 2022-2025) + graficos
+ * (espelhamento do modelo MapBiomas Executiva).
  */
+import {
+  BarChart, Bar, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts'
 import { useAppStore } from '../../../core/store/useAppStore'
 import { useProdesVisaoGeral, useProdesTemporal } from '../hooks/useProdesData'
-import { fmtHa, fmtNum } from '../../../core/lib/constants'
+import { fmtHa, fmtNum, CHART_COLORS } from '../../../core/lib/constants'
+
+const TT = {
+  background: '#222222', border: '1px solid rgba(255,255,255,.08)',
+  borderRadius: 8, fontSize: 12, color: '#F2F2F2',
+}
 
 const ANOS = [2022, 2023, 2024, 2025] as const
 
@@ -81,7 +91,53 @@ export function VisaoGeralView() {
           })}
         </div>
 
-        {/* Row 3: Tabela temporal */}
+        {/* Row 3: Barras empilhadas + IPI linha — espelhamento MapBiomas */}
+        <div className="bento">
+          <div className="card b-3">
+            <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--t2)', marginBottom: 12 }}>
+              Área por classificação (ha) — PRODES Cerrado 2022–2025
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={(temporal ?? []).map(r => ({
+                ano: r.ano,
+                Irregular:    Number(r.ha_irregular),
+                'Aut. Pleno': Number(r.ha_autorizado),
+                'Aut. Parc.': Number(r.ha_autorizado_parcialmente),
+                Regularizado: Number(r.ha_regularizado),
+              }))} barSize={24}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.06)" vertical={false} />
+                <XAxis dataKey="ano" tick={{ fontSize: 11, fill: 'var(--t2)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: 'var(--t3)' }} axisLine={false} tickLine={false}
+                  tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
+                <Tooltip contentStyle={TT} formatter={(v) => fmtHa(Number(v))} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="Irregular"    fill={CHART_COLORS.irr} fillOpacity={0.85} stackId="a" />
+                <Bar dataKey="Aut. Pleno"   fill={CHART_COLORS.aut} fillOpacity={0.85} stackId="a" />
+                <Bar dataKey="Aut. Parc."   fill={CHART_COLORS.aut} fillOpacity={0.4}  stackId="a" />
+                <Bar dataKey="Regularizado" fill={CHART_COLORS.reg} fillOpacity={0.8}  stackId="a" radius={[4,4,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="card b-3">
+            <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--t2)', marginBottom: 12 }}>
+              IPI — Índice de Pressão Irregular (%) PRODES
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={(temporal ?? []).map(r => ({ ano: r.ano, IPI: Number(r.pct_irregular) }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.06)" vertical={false} />
+                <XAxis dataKey="ano" tick={{ fontSize: 11, fill: 'var(--t2)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: 'var(--t3)' }} axisLine={false} tickLine={false}
+                  domain={[0, 100]} unit="%" />
+                <Tooltip contentStyle={TT} formatter={(v) => [`${Number(v).toFixed(1)}%`, 'IPI']} />
+                <Line type="monotone" dataKey="IPI" stroke="var(--irr)" strokeWidth={2.5}
+                  dot={{ r: 5, fill: 'var(--irr)', stroke: 'var(--bg1)', strokeWidth: 2 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Row 4: Tabela temporal */}
         <div className="card">
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--t2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
             Série Anual PRODES Cerrado

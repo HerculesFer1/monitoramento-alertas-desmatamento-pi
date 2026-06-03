@@ -45,6 +45,9 @@ export function useMetodologia() {
     /** Seleciona um módulo para abrir sua metodologia no <main>. Mantém o
      *  sidebar aberto para permitir trocar de módulo sem reabrir. */
     select:  (m: Module) => setState({ selected: m, isOpen: true }),
+    /** Seleciona um modulo SEM abrir o sidebar — usado pelo popover de
+     *  Configurações, onde o submenu já cumpre o papel de selecionar. */
+    selectOnly: (m: Module) => setState({ selected: m, isOpen: false }),
     /** Limpa a seleção — volta ao dashboard normal. */
     clearSelection: () => setState({ selected: null }),
   }

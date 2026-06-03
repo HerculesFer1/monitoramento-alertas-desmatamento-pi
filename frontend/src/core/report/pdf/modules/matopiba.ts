@@ -23,7 +23,6 @@ export function buildMatopibaSnapshot(input: MatopibaInput): ReportSnapshot {
   const haTotal  = linhaAtual?.ha_total     ?? 0
   const haIrr    = linhaAtual?.ha_irregular ?? 0
   const haAut    = linhaAtual?.ha_autorizado_total ?? 0
-  const haReg    = linhaAtual?.ha_regularizado     ?? 0
   const nMun     = linhaAtual?.n_municipios        ?? 0
   const nReinc   = linhaAtual?.n_reincidentes      ?? 0
   const deltaYoY = linhaAtual?.delta_ipi_yoy ?? (linhaAnt ? (ipi - linhaAnt.ipi) : null)

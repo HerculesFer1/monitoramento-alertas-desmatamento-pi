@@ -1,7 +1,8 @@
 import React from 'react'
-import { BookOpen, Database } from 'lucide-react'
+import { BookOpen, Database, ChevronRight } from 'lucide-react'
 import { useAppStore, type Module } from '../store/useAppStore'
 import { useMetodologia } from '../methodology/useMetodologia'
+import { METODOLOGIAS } from '../methodology/content'
 
 interface RailItem {
   module:      Module
@@ -43,8 +44,8 @@ const ITEMS: RailItem[] = [
   {
     module:     'queimadas_bdq',
     label:      'Queimadas BD-INPE',
-    icon:       mkImg('/icon-queimadas.svg',        'rail-module-icon-inactive', '95%', '95%'),
-    iconActive: mkImg('/icon-queimadas-active.svg', 'rail-module-icon-active',   '95%', '95%'),
+    icon:       mkImg('/icon-queimadas.svg',        'rail-module-icon-inactive', '78%', '78%'),
+    iconActive: mkImg('/icon-queimadas-active.svg', 'rail-module-icon-active',   '78%', '78%'),
   },
 ]
 
@@ -158,15 +159,21 @@ export function PrimaryRail() {
 }
 
 /* ── Settings popover (Metodologia + Gestão de Dados) ───────────────────── */
+const METODOLOGIA_MODULES: Module[] = ['mapbiomas', 'prodes', 'matopiba', 'areas_prioritarias', 'queimadas_bdq']
+
 function SettingsButton() {
-  const { open: openMetodologia } = useMetodologia()
+  const { selectOnly: selectMetodologia } = useMetodologia()
   const setActiveModule = useAppStore(s => s.setActiveModule)
   const activeModule    = useAppStore(s => s.activeModule)
   const [open, setOpen] = React.useState(false)
+  const [metoOpen, setMetoOpen] = React.useState(false)
   const btnRef          = React.useRef<HTMLButtonElement>(null)
   const popRef          = React.useRef<HTMLDivElement>(null)
+  const metoItemRef     = React.useRef<HTMLButtonElement>(null)
+  const metoSubRef      = React.useRef<HTMLDivElement>(null)
   const [hovered, setHovered] = React.useState(false)
   const [pos, setPos]   = React.useState<{ left: number; top: number } | null>(null)
+  const [metoPos, setMetoPos] = React.useState<{ left: number; top: number } | null>(null)
 
   // Calcula posição do popover usando o rect do botão (position:fixed escapa
   // do overflow:hidden do rail).
@@ -176,6 +183,14 @@ function SettingsButton() {
     const r = btn.getBoundingClientRect()
     // Aparece à direita do botão, alinhado pelo topo.
     setPos({ left: r.right + 8, top: r.top })
+  }, [])
+
+  // Posicao do submenu Metodologia (a direita do PopoverItem).
+  const recomputeMeto = React.useCallback(() => {
+    const el = metoItemRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    setMetoPos({ left: r.right + 6, top: r.top })
   }, [])
 
   React.useLayoutEffect(() => {
@@ -189,6 +204,17 @@ function SettingsButton() {
     }
   }, [open, recompute])
 
+  React.useLayoutEffect(() => {
+    if (!metoOpen) return
+    recomputeMeto()
+    window.addEventListener('resize', recomputeMeto)
+    window.addEventListener('scroll', recomputeMeto, true)
+    return () => {
+      window.removeEventListener('resize', recomputeMeto)
+      window.removeEventListener('scroll', recomputeMeto, true)
+    }
+  }, [metoOpen, recomputeMeto])
+
   // Fecha ao clicar fora, ESC, ou em qualquer outro botão do rail
   // (módulos do menu principal). Garante que a janela suspensa nunca fica
   // sobreposta após o usuário escolher uma opção ou navegar.
@@ -196,13 +222,20 @@ function SettingsButton() {
     if (!open) return
     const onDoc = (e: MouseEvent) => {
       const t = e.target as Node
-      // Clique no próprio botão de settings ou dentro do popover: ignora.
+      // Clique no proprio botao de settings, popover ou submenu: ignora.
       if (btnRef.current?.contains(t)) return
       if (popRef.current?.contains(t)) return
+      if (metoSubRef.current?.contains(t)) return
       // Qualquer outro clique (inclui rail-btn dos módulos): fecha.
       setOpen(false)
+      setMetoOpen(false)
     }
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (metoOpen) setMetoOpen(false)
+        else setOpen(false)
+      }
+    }
     // mousedown roda antes do click — garante que setOpen(false) já está
     // refletido quando o handler de click do destino dispara.
     document.addEventListener('mousedown', onDoc, true)
@@ -211,7 +244,7 @@ function SettingsButton() {
       document.removeEventListener('mousedown', onDoc, true)
       document.removeEventListener('keydown', onKey)
     }
-  }, [open])
+  }, [open, metoOpen])
 
   return (
     <div style={{ position: 'relative' }}>
@@ -254,15 +287,18 @@ function SettingsButton() {
           }}
         >
           <PopoverItem
+            ref={metoItemRef}
             icon={<BookOpen size={14} strokeWidth={1.7} />}
             label="Metodologia"
-            onClick={() => { openMetodologia(); setOpen(false) }}
+            active={metoOpen}
+            trailing={<ChevronRight size={12} style={{ color: 'var(--t3)' }} />}
+            onClick={() => setMetoOpen(v => !v)}
           />
           <PopoverItem
             icon={<Database size={14} strokeWidth={1.7} />}
             label="Gestão de Dados"
             active={activeModule === 'dados'}
-            onClick={() => { setActiveModule('dados'); setOpen(false) }}
+            onClick={() => { setActiveModule('dados'); setOpen(false); setMetoOpen(false) }}
           />
           <style>{`
             @keyframes settings-pop-in {
@@ -272,38 +308,91 @@ function SettingsButton() {
           `}</style>
         </div>
       )}
+
+      {open && metoOpen && metoPos && (
+        <div
+          ref={metoSubRef}
+          role="menu"
+          aria-label="Metodologia — selecione um módulo"
+          className="settings-popover settings-submenu"
+          style={{
+            position: 'fixed',
+            left: metoPos.left,
+            top:  Math.max(8, metoPos.top - 6),
+            minWidth: 220,
+            padding: 6,
+            background: 'var(--bg2, #161616)',
+            border: '1px solid var(--sep)',
+            borderRadius: 10,
+            boxShadow: '0 12px 32px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.18)',
+            zIndex: 1001,
+            display: 'flex', flexDirection: 'column', gap: 2,
+            animation: 'settings-pop-in .16s cubic-bezier(.2,.7,.2,1)',
+          }}
+        >
+          {METODOLOGIA_MODULES.map(m => {
+            const meto = METODOLOGIAS[m]
+            return (
+              <PopoverItem
+                key={m}
+                icon={<span style={{
+                  display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+                  background: meto.cor, boxShadow: `0 0 6px ${meto.cor}88`,
+                }} />}
+                label={meto.nomeModulo}
+                onClick={() => {
+                  selectMetodologia(m)
+                  setOpen(false)
+                  setMetoOpen(false)
+                }}
+              />
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
 
-function PopoverItem({ icon, label, onClick, active }: {
-  icon: React.ReactNode; label: string; onClick: () => void; active?: boolean
-}) {
-  return (
-    <button
-      role="menuitem"
-      onClick={onClick}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '8px 10px',
-        background: active ? 'rgba(16,185,129,.10)' : 'transparent',
-        border: 'none',
-        borderRadius: 7,
-        color: active ? 'var(--aut)' : 'var(--t1)',
-        cursor: 'pointer',
-        fontSize: 12.5, fontWeight: 500,
-        textAlign: 'left',
-        transition: 'background .12s',
-      }}
-      onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.background = 'rgba(255,255,255,.06)'
-      }}
-      onMouseLeave={(e) => {
-        if (!active) e.currentTarget.style.background = 'transparent'
-      }}
-    >
-      <span style={{ display: 'inline-flex', color: active ? 'var(--aut)' : 'var(--t2)' }}>{icon}</span>
-      <span>{label}</span>
-    </button>
-  )
+interface PopoverItemProps {
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+  active?: boolean
+  trailing?: React.ReactNode
 }
+
+const PopoverItem = React.forwardRef<HTMLButtonElement, PopoverItemProps>(
+  function PopoverItem({ icon, label, onClick, active, trailing }, ref) {
+    return (
+      <button
+        ref={ref}
+        role="menuitem"
+        onClick={onClick}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '8px 10px',
+          background: active ? 'rgba(16,185,129,.10)' : 'transparent',
+          border: 'none',
+          borderRadius: 7,
+          color: active ? 'var(--aut)' : 'var(--t1)',
+          cursor: 'pointer',
+          fontSize: 12.5, fontWeight: 500,
+          textAlign: 'left',
+          transition: 'background .12s',
+          width: '100%',
+        }}
+        onMouseEnter={(e) => {
+          if (!active) e.currentTarget.style.background = 'rgba(255,255,255,.06)'
+        }}
+        onMouseLeave={(e) => {
+          if (!active) e.currentTarget.style.background = 'transparent'
+        }}
+      >
+        <span style={{ display: 'inline-flex', color: active ? 'var(--aut)' : 'var(--t2)' }}>{icon}</span>
+        <span style={{ flex: 1 }}>{label}</span>
+        {trailing}
+      </button>
+    )
+  }
+)
