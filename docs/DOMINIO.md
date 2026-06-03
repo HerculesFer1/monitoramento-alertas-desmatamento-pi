@@ -9,8 +9,9 @@
 ## 1. Estado atual
 
 - **Hospedagem**: Vercel (deploy automático a cada push em `main`).
-- **URL pública atual**: `cgeo-semarh-piaui.vercel.app` (subdomínio Vercel gratuito,
-  configurado em `frontend/vercel.json` via campo `name`).
+- **URL pública atual**: `cgeo-sync.vercel.app` (subdomínio Vercel gratuito,
+  configurado em `frontend/vercel.json` via campo `name`). Decisão institucional
+  de 2026-06-03 — provisório até oficialização do domínio governamental.
 - **Região do build**: `gru1` (São Paulo) — latência ~5-15 ms para usuários no Piauí.
 - **TLS**: certificado automático Let's Encrypt renovado pelo Vercel.
 
@@ -56,7 +57,7 @@ Custo: gratuito para `.gov.br`. Prazo: 5-15 dias úteis.
 
 ### 🥉 Opção C — Subdomínio Vercel (atual)
 
-`cgeo-semarh-piaui.vercel.app` — **já configurado**, funciona imediatamente.
+`cgeo-sync.vercel.app` — **já configurado**, funciona imediatamente.
 Útil enquanto o domínio institucional não é provisionado. Custo zero.
 
 **Não recomendado como solução final** para uso institucional/oficial:
