@@ -1,17 +1,47 @@
 import { createClient } from '@supabase/supabase-js'
 
-const url = import.meta.env.VITE_SUPABASE_URL  as string | undefined
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+// ── Fallback institucional do projeto Supabase CGEO/SEMARH-PI ─────────────
+//
+// Estes valores sao PUBLICOS por design:
+//   - URL e identificador do projeto (esta em qualquer requisicao do browser)
+//   - anon key e desenhada para ir ao bundle (RLS no Postgres protege os
+//     dados, nao o segredo da chave)
+//
+// Por que hardcoded como fallback:
+//   1. import.meta.env.VITE_* e substituido em build-time pelo Vite.
+//   2. Se o ambiente de build (GitHub Actions / Vercel) tiver o secret
+//      vazio, errado ou apontando para outro projeto, todo o dashboard
+//      cai (foi exatamente o que aconteceu em 2026-06-03 quando o
+//      Vercel build pegou o secret antigo apontando para ubcejvbnpuyouwpphryc).
+//   3. Com este fallback, o frontend SEMPRE aponta para o projeto correto
+//      enquanto os secrets servem apenas para staging/preview eventual.
+//   4. Migracao futura: trocar estas 2 constantes e fazer redeploy.
+//
+// Anon key abaixo expira em 2036-04-26 (exp: 2093076476).
+const FALLBACK_SUPABASE_URL  = 'https://ssqriwgrxievcmxauegv.supabase.co'
+const FALLBACK_SUPABASE_ANON =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' +
+  '.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcXJpd2dyeGlldmNteGF1ZWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MDA0NzYsImV4cCI6MjA5MzA3NjQ3Nn0' +
+  '.AqVdc_n9R_OfWNkl8fKMdA4IhUlaDhoz3YaElCuugaM'
+
+const envUrl = import.meta.env.VITE_SUPABASE_URL  as string | undefined
+const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+
+// Aceita o secret apenas se ele apontar para o projeto correto.
+// Qualquer outra coisa cai no fallback — protege contra secrets antigos.
+const url = (envUrl && envUrl.includes('ssqriwgrxievcmxauegv')) ? envUrl : FALLBACK_SUPABASE_URL
+const key = envKey || FALLBACK_SUPABASE_ANON
 
 export const isSupabaseConfigured = Boolean(url && key)
 
-if (!isSupabaseConfigured) {
-  console.warn('[supabase] VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY ausentes — dados ao vivo indisponíveis.')
+if (envUrl && !envUrl.includes('ssqriwgrxievcmxauegv')) {
+  console.warn(
+    `[supabase] VITE_SUPABASE_URL aponta para projeto incorreto (${envUrl}). ` +
+    `Usando fallback ${FALLBACK_SUPABASE_URL}.`,
+  )
 }
 
-export const supabase = isSupabaseConfigured
-  ? createClient(url!, key!)
-  : (null as unknown as ReturnType<typeof createClient>)
+export const supabase = createClient(url, key)
 
 // ── Tipos derivados do schema Supabase ────────────────────────────────────
 export interface AgregadoRow {
