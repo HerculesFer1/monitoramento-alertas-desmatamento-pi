@@ -27,16 +27,18 @@ const FALLBACK_SUPABASE_ANON =
 const envUrl = import.meta.env.VITE_SUPABASE_URL  as string | undefined
 const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-// Aceita o secret apenas se ele apontar para o projeto correto.
-// Qualquer outra coisa cai no fallback — protege contra secrets antigos.
-const url = (envUrl && envUrl.includes('ssqriwgrxievcmxauegv')) ? envUrl : FALLBACK_SUPABASE_URL
-const key = envKey || FALLBACK_SUPABASE_ANON
+// URL e key sao SEMPRE pareadas — ou ambas vem do secret (so se a URL apontar
+// para o projeto correto), ou ambas caem no fallback. Misturar URL nova com
+// key velha causa 401 "Invalid API key" e quebra silenciosamente o frontend.
+const envIsValid = Boolean(envUrl && envUrl.includes('ssqriwgrxievcmxauegv') && envKey)
+const url = envIsValid ? envUrl! : FALLBACK_SUPABASE_URL
+const key = envIsValid ? envKey! : FALLBACK_SUPABASE_ANON
 
 export const isSupabaseConfigured = Boolean(url && key)
 
-if (envUrl && !envUrl.includes('ssqriwgrxievcmxauegv')) {
+if (envUrl && !envIsValid) {
   console.warn(
-    `[supabase] VITE_SUPABASE_URL aponta para projeto incorreto (${envUrl}). ` +
+    `[supabase] VITE_SUPABASE_URL/KEY incompativeis com o projeto atual (${envUrl}). ` +
     `Usando fallback ${FALLBACK_SUPABASE_URL}.`,
   )
 }
