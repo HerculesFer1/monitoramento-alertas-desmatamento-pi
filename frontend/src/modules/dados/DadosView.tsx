@@ -8,6 +8,14 @@ import { useMemo } from 'react'
 import { useExecucoes, useAgregado, useResumoEstatico } from '../../core/lib/hooks'
 import { StatusBadge } from '../../shared/components/StatusBadge'
 import { fmtHa, fmtNum, ANOS, ANOS_DERADSA } from '../../core/lib/constants'
+import {
+  FONTES,
+  proximaExecucao,
+  frequenciaPipeline,
+  fmtDataPrevisao,
+  relativoEm,
+  type FonteDados,
+} from '../../core/lib/sources'
 
 // ── Helpers visuais ────────────────────────────────────────────────────────
 
@@ -80,6 +88,65 @@ function Step({
   )
 }
 
+// ── Linha de fonte com previsão de próxima atualização ──────────────────
+
+function FonteRow({ fonte, ultimaExecucao }: { fonte: FonteDados; ultimaExecucao: Date | null }) {
+  const proxima      = useMemo(() => proximaExecucao(fonte.cron), [fonte.cron])
+  const fmtFreq      = frequenciaPipeline(fonte.cron)
+  const fmtUltima    = ultimaExecucao && fonte.cron
+    ? ultimaExecucao.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : null
+  const proxLabel    = fmtDataPrevisao(proxima)
+  const proxRelativo = relativoEm(proxima)
+
+  const badgeFor: Record<string, { bg: string; fg: string; label: string }> = {
+    ativo:        { bg: 'var(--aut-bg)',       fg: 'var(--aut)', label: 'Ativo' },
+    manual:       { bg: 'rgba(245,158,11,.12)', fg: 'var(--mat)', label: 'Manual' },
+    pendente:     { bg: 'rgba(245,158,11,.12)', fg: 'var(--mat)', label: 'Pendente' },
+    indisponivel: { bg: 'rgba(239,68,68,.12)',  fg: 'var(--irr)', label: 'Indisponível' },
+  }
+  const badge = badgeFor[fonte.status] ?? badgeFor.ativo
+
+  return (
+    <tr title={fonte.obs ?? ''}>
+      <td style={{ fontWeight: 500, color: 'var(--t1)' }}>
+        {fonte.nome}
+        <div style={{ fontSize: 10, color: 'var(--t3)', fontWeight: 400 }}>{fonte.provedor}</div>
+      </td>
+      <td style={{ color: 'var(--t2)', fontSize: 11 }}>{fonte.frequenciaOrigem}</td>
+      <td style={{ color: 'var(--t2)', fontSize: 11 }}>
+        {fmtFreq}
+        {fonte.workflow && (
+          <div style={{ fontSize: 9, color: 'var(--t3)' }}>
+            <code style={{ fontSize: 9 }}>{fonte.workflow}</code>
+          </div>
+        )}
+      </td>
+      <td style={{ color: 'var(--t2)', fontSize: 11 }}>
+        {fmtUltima ?? <span style={{ color: 'var(--t3)' }}>—</span>}
+      </td>
+      <td style={{ color: 'var(--t2)', fontSize: 11 }}>
+        {proxima ? (
+          <>
+            {proxLabel}
+            <div style={{ fontSize: 9, color: 'var(--t3)' }}>{proxRelativo}</div>
+          </>
+        ) : (
+          <span style={{ color: 'var(--t3)' }}>—</span>
+        )}
+      </td>
+      <td>
+        <span style={{
+          fontSize: 9, padding: '2px 7px', borderRadius: 999, fontWeight: 700,
+          background: badge.bg, color: badge.fg,
+        }}>
+          {badge.label}
+        </span>
+      </td>
+    </tr>
+  )
+}
+
 // ── Componente principal ───────────────────────────────────────────────────
 
 export function DadosView() {
@@ -97,6 +164,12 @@ export function DadosView() {
         hour: '2-digit', minute: '2-digit',
       })
     : null
+
+  // Última execução por fonte — derivada da lista completa de execucoes_pipeline.
+  // A tabela atual nao discrimina por fonte; usamos lastExec como proxy
+  // para fontes que rodam no orquestrador principal. Fontes manuais ficam
+  // sem timestamp ate que execucoes_pipeline ganhe coluna `modulo`.
+  const ultimaExecucao = lastExec ? new Date(lastExec.executado_em) : null
 
   // DERADSAs regularizadas por ano (derivado do agregado municipal)
   const derasdaStats = useMemo(() => {
@@ -274,73 +347,27 @@ export function DadosView() {
         </div>
       </Section>
 
-      {/* ── Fontes de dados ───────────────────────────────────────────── */}
-      <Section title="Fontes de Dados">
+      {/* ── Fontes de dados (Catálogo + previsão de atualização) ─────── */}
+      <Section title="Fontes de Dados — Cobertura e Previsão de Atualização">
+        <div style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 10, lineHeight: 1.5 }}>
+          A última atualização efetiva é puxada da tabela <code>execucoes_pipeline</code> (Supabase),
+          quando disponível. A próxima atualização é derivada do cron do workflow
+          GitHub Actions correspondente. Fontes manuais não têm previsão automática.
+        </div>
         <div style={{ overflowX: 'auto' }}>
           <table className="data-table">
             <thead>
               <tr>
-                <th>Fonte</th>
-                <th>Tipo</th>
+                <th>Fonte / Provedor</th>
+                <th>Frequência (origem)</th>
+                <th>Frequência (pipeline)</th>
                 <th>Última atualização</th>
+                <th>Próxima prevista</th>
                 <th>Status</th>
-                <th>Método de ingestão</th>
               </tr>
             </thead>
             <tbody>
-              {([
-                {
-                  fonte: 'MapBiomas Alerta', tipo: 'GeoJSON (alertas)',
-                  ultima: '2022–2025 (13.299 alertas)', status: 'ok',
-                  metodo: 'GraphQL API v2 · mensal',
-                },
-                {
-                  fonte: 'ASVs SINAFLOR+', tipo: 'GeoJSON (polígonos ASV)',
-                  ultima: 'Último pipeline', status: 'ok',
-                  metodo: 'WFS ArcGIS IBAMA · semanal',
-                },
-                {
-                  fonte: 'DERADSA SEMARH-PI 2024', tipo: 'GeoJSON (polígonos)',
-                  ultima: 'Série B', status: 'ok',
-                  metodo: 'Ingestão manual CGEO',
-                },
-                {
-                  fonte: 'DERADSA SEMARH-PI 2025', tipo: 'GeoJSON (polígonos)',
-                  ultima: 'Série B', status: 'ok',
-                  metodo: 'Ingestão manual CGEO',
-                },
-                {
-                  fonte: 'PRODES-Cerrado INPE', tipo: 'GeoJSON (TerraBrasilis WFS)',
-                  ultima: 'Ciclos 2022–2025', status: 'ok',
-                  metodo: 'WFS GetFeature + bbox PI',
-                },
-                {
-                  fonte: 'Malha Municipal IBGE', tipo: 'GeoJSON',
-                  ultima: 'Automático', status: 'ok',
-                  metodo: 'API IBGE · sob demanda',
-                },
-                {
-                  fonte: 'DERADSA SEMARH-PI 2026', tipo: 'GeoJSON (polígonos)',
-                  ultima: '—', status: 'pending',
-                  metodo: 'Aguardando ingestão CGEO',
-                },
-              ] as { fonte: string; tipo: string; ultima: string; status: string; metodo: string }[]).map(r => (
-                <tr key={r.fonte}>
-                  <td style={{ fontWeight: 500, color: 'var(--t1)' }}>{r.fonte}</td>
-                  <td style={{ color: 'var(--t3)', fontSize: 11 }}>{r.tipo}</td>
-                  <td style={{ color: 'var(--t2)', fontSize: 11 }}>{r.ultima}</td>
-                  <td>
-                    <span style={{
-                      fontSize: 9, padding: '2px 7px', borderRadius: 999, fontWeight: 700,
-                      background: r.status === 'ok' ? 'var(--aut-bg)' : 'rgba(245,158,11,.12)',
-                      color: r.status === 'ok' ? 'var(--aut)' : 'var(--mat)',
-                    }}>
-                      {r.status === 'ok' ? 'Ativo' : 'Pendente'}
-                    </span>
-                  </td>
-                  <td style={{ color: 'var(--t3)', fontSize: 11 }}>{r.metodo}</td>
-                </tr>
-              ))}
+              {FONTES.map(f => <FonteRow key={f.id} fonte={f} ultimaExecucao={ultimaExecucao} />)}
             </tbody>
           </table>
         </div>
