@@ -94,51 +94,52 @@ export function TemporalView() {
           </div>
         </div>
 
-        {/* Composicao anual — barras empilhadas */}
-        <div className="card">
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--t2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
-            Composição anual (ha) — PRODES Cerrado
-          </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={dataChart}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)" />
-              <XAxis dataKey="ano" tick={{ fill: 'var(--t2)', fontSize: 11 }} />
-              <YAxis tick={{ fill: 'var(--t2)', fontSize: 11 }} tickFormatter={(v) => fmtHa(v)} />
-              <Tooltip contentStyle={TT} formatter={(v) => fmtHa(Number(v))} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="Irregular"                stackId="a" fill="#EF4444" />
-              <Bar dataKey="Autorizado"               stackId="a" fill="#10B981" />
-              <Bar dataKey="Autorizado Parcialmente"  stackId="a" fill="#34D399" />
-              <Bar dataKey="Regularizado"             stackId="a" fill="#F97316" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* IPI por ano */}
-        <div className="card">
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--t2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
-            Índice de Pressão Irregular (IPI %) por ano
-          </div>
-          <ResponsiveContainer width="100%" height={240}>
-            <ComposedChart data={dataChart}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)" />
-              <XAxis dataKey="ano" tick={{ fill: 'var(--t2)', fontSize: 11 }} />
-              <YAxis tick={{ fill: 'var(--t2)', fontSize: 11 }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
-              <Tooltip contentStyle={TT} formatter={(v) => `${Number(v).toFixed(1)}%`} />
-              <Bar dataKey="IPI" fill="#EF4444" radius={[6, 6, 0, 0]}>
-                {dataChart.map((d, i) => (
-                  <Cell key={i} fill={d.IPI >= 80 ? '#B91C1C' : d.IPI >= 60 ? '#EF4444' : d.IPI >= 40 ? '#F97316' : '#10B981'} />
-                ))}
-              </Bar>
-              <Line type="monotone" dataKey="IPI" stroke="#FBBF24" strokeWidth={2} dot={{ r: 5 }} />
-            </ComposedChart>
-          </ResponsiveContainer>
-          {!isLoading && dataChart.length > 0 && (
-            <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 8, textAlign: 'center' }}>
-              Tendência: {dataChart[0].IPI.toFixed(1)}% ({dataChart[0].ano}) → {dataChart[dataChart.length - 1].IPI.toFixed(1)}% ({dataChart[dataChart.length - 1].ano})
-              {' · '}variação: {(dataChart[dataChart.length - 1].IPI - dataChart[0].IPI).toFixed(1)} pp
+        {/* Composicao anual + IPI por ano — lado a lado */}
+        <div className="bento">
+          <div className="card b-3">
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--t2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+              Composição anual (ha) — PRODES Cerrado
             </div>
-          )}
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={dataChart}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)" />
+                <XAxis dataKey="ano" tick={{ fill: 'var(--t2)', fontSize: 11 }} />
+                <YAxis tick={{ fill: 'var(--t2)', fontSize: 11 }} tickFormatter={(v) => fmtHa(v)} />
+                <Tooltip contentStyle={TT} formatter={(v) => fmtHa(Number(v))} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="Irregular"                stackId="a" fill="#EF4444" />
+                <Bar dataKey="Autorizado"               stackId="a" fill="#10B981" />
+                <Bar dataKey="Autorizado Parcialmente"  stackId="a" fill="#34D399" />
+                <Bar dataKey="Regularizado"             stackId="a" fill="#F97316" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="card b-3">
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--t2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+              Índice de Pressão Irregular (IPI %) por ano
+            </div>
+            <ResponsiveContainer width="100%" height={240}>
+              <ComposedChart data={dataChart}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)" />
+                <XAxis dataKey="ano" tick={{ fill: 'var(--t2)', fontSize: 11 }} />
+                <YAxis tick={{ fill: 'var(--t2)', fontSize: 11 }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                <Tooltip contentStyle={TT} formatter={(v) => `${Number(v).toFixed(1)}%`} />
+                <Bar dataKey="IPI" fill="#EF4444" radius={[6, 6, 0, 0]}>
+                  {dataChart.map((d, i) => (
+                    <Cell key={i} fill={d.IPI >= 80 ? '#B91C1C' : d.IPI >= 60 ? '#EF4444' : d.IPI >= 40 ? '#F97316' : '#10B981'} />
+                  ))}
+                </Bar>
+                <Line type="monotone" dataKey="IPI" stroke="#FBBF24" strokeWidth={2} dot={{ r: 5 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+            {!isLoading && dataChart.length > 0 && (
+              <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 8, textAlign: 'center' }}>
+                Tendência: {dataChart[0].IPI.toFixed(1)}% ({dataChart[0].ano}) → {dataChart[dataChart.length - 1].IPI.toFixed(1)}% ({dataChart[dataChart.length - 1].ano})
+                {' · '}variação: {(dataChart[dataChart.length - 1].IPI - dataChart[0].IPI).toFixed(1)} pp
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Tabela resumo anual */}
