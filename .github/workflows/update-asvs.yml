@@ -57,29 +57,52 @@ jobs:
         continue-on-error: true
         run: conda run -n desmatamento python -m modules.asvs_sinaflor.downloader
 
+      # Auditoria 2026-06-03: tornar este step resiliente.
+      # WFS IBAMA cai com frequencia; nao queremos que o workflow inteiro
+      # falhe quando isso acontece — basta sinalizar via outputs e pular
+      # as etapas seguintes. Run mensal de update-alertas reabsorve a ASV
+      # quando o servico voltar.
       - name: Verificar arquivo ASV
+        id: verify-asv
         run: |
           python -c "
           from pathlib import Path
+          import json, os
           p = Path('data/raw/ASVs Emitidas-PI(SINAFLOR+).geojson')
+          gh_output = os.environ.get('GITHUB_OUTPUT', '')
+          def emit(key, val):
+              if gh_output:
+                  with open(gh_output, 'a') as f:
+                      f.write(f'{key}={val}\n')
           if not p.exists():
-              print('AVISO: ASVs não disponíveis (WFS IBAMA indisponível e sem cache).')
-              print('O pipeline será interrompido — execute novamente quando o IBAMA estiver acessível.')
-              raise SystemExit('ASVs não baixadas')
-          import json
-          data = json.loads(p.read_text(encoding='utf-8'))
-          n = len(data.get('features', []))
-          print(f'✓ {n} ASVs disponíveis')
+              print('AVISO: ASVs nao disponiveis (WFS IBAMA indisponivel e sem cache).')
+              print('Pipeline sera pulado — proxima execucao tenta de novo.')
+              emit('disponivel', 'false')
+              emit('n_features', '0')
+              raise SystemExit(0)  # sai com status 0 — nao falha o workflow
+          try:
+              data = json.loads(p.read_text(encoding='utf-8'))
+              n = len(data.get('features', []))
+          except Exception as exc:
+              print(f'AVISO: GeoJSON ASV corrompido: {exc}')
+              emit('disponivel', 'false')
+              emit('n_features', '0')
+              raise SystemExit(0)
+          print(f'OK: {n} ASVs disponiveis')
+          emit('disponivel', 'true')
+          emit('n_features', str(n))
           if n == 0:
-              raise SystemExit('Nenhuma ASV retornada — verificar WFS IBAMA')
+              print('AVISO: WFS IBAMA respondeu, mas sem ASVs — pulando re-execucao')
+              emit('disponivel', 'false')
           if '${{ steps.download-asvs.outcome }}' == 'failure':
-              print('AVISO: Download falhou mas arquivo de cache encontrado — usando dados anteriores.')
+              print('AVISO: Download falhou — usando arquivo de cache.')
           "
 
       # Só re-executa o pipeline completo se os dados mudaram
       # (verifica hash do arquivo de ASVs)
       - name: Verificar se ASVs mudaram
         id: check-change
+        if: steps.verify-asv.outputs.disponivel == 'true'
         run: |
           if [ -f "data/output/.last_asv_hash" ]; then
             OLD=$(cat data/output/.last_asv_hash)
