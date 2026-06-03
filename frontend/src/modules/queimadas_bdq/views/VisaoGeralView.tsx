@@ -24,20 +24,20 @@ export function VisaoGeralView() {
 
   const { data: vg,   isLoading: loadKpis } = useQueimadasVisaoGeral(ano)
   const { data: muns, isLoading: loadMap  } = useQueimadasMunicipios(ano)
-  const { data: rank, isLoading: loadRank } = useQueimadasRanking(ano, 10)
+  const { data: rank, isLoading: loadRank } = useQueimadasRanking(ano, 20)
 
   const kpis = vg?.kpis
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, height: '100%', padding: 14, overflow: 'hidden' }}>
 
-      {/* KPI cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
+      {/* KPI cards — usa .grid-5 + .kpi-card (design system + JetBrains Mono) */}
+      <div className="grid-5" style={{ flexShrink: 0 }}>
         <KpiCard
           label="Área queimada total"
           value={loadKpis ? '…' : `${fmt(kpis?.area_queimada_total_ha)} ha`}
           accent="#FC8D59"
-          note="AQ1km V6 Col.2 — estimativa"
+          sub="AQ1km V6 Col.2 — estimativa"
         />
         <KpiCard
           label="Cicatrizes detectadas"
@@ -53,7 +53,7 @@ export function VisaoGeralView() {
           label="Em classes prioritárias"
           value={loadKpis ? '…' : `${fmt(kpis?.area_prioritaria_ha)} ha`}
           accent="#E34A33"
-          note="Classes 4 + 5"
+          sub="Classes 4 + 5"
         />
         <KpiCard
           label="% em alta prioridade"
@@ -77,62 +77,78 @@ export function VisaoGeralView() {
           }
         </div>
 
-        {/* Top 10 ranking */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8, overflow: 'auto' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--t2)', marginBottom: 4 }}>
-            Top 10 — maior área queimada
+        {/* Top 20 ranking — scroll vertical, cabecalho fixo */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: 'var(--t2)',
+            padding: '11px 12px 9px',
+            borderBottom: '1px solid var(--sep)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            flexShrink: 0,
+          }}>
+            <span>Top 20 — maior área queimada</span>
+            <span style={{ fontSize: 9, color: 'var(--t3)', fontWeight: 500 }}>{rank?.length ?? 0} mun.</span>
           </div>
-          {loadRank
-            ? <div style={{ fontSize: 10, color: 'var(--t3)' }}>Carregando…</div>
-            : (rank ?? []).map((r) => (
-              <div key={r.municipio_cod} style={{
-                display: 'flex', flexDirection: 'column', gap: 3,
-                padding: '7px 9px',
-                background: 'rgba(255,255,255,.03)',
-                borderRadius: 6,
-                border: '1px solid rgba(255,255,255,.05)',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--t1)' }}>
-                    {r.rank}. {r.municipio_nome}
-                  </span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#FC8D59' }}>
-                    {fmt(r.area_queimada_total_ha)} ha
-                  </span>
-                </div>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  {r.classe_max_queimada && <PrioridadeBadge classe={r.classe_max_queimada} size="sm" />}
-                  {r.mes_pico && (
-                    <span style={{ fontSize: 9, color: 'var(--t3)' }}>
-                      Pico: {MESES_LABELS[r.mes_pico] ?? r.mes_pico}
+          <div className="ranking-scroll" style={{
+            flex: 1, minHeight: 0, overflowY: 'auto',
+            display: 'flex', flexDirection: 'column', gap: 6, padding: 10,
+          }}>
+            {loadRank
+              ? <div style={{ fontSize: 10, color: 'var(--t3)' }}>Carregando…</div>
+              : (rank ?? []).map((r) => (
+                <div key={r.municipio_cod} style={{
+                  display: 'flex', flexDirection: 'column', gap: 3,
+                  padding: '7px 9px',
+                  background: 'rgba(255,255,255,.03)',
+                  borderRadius: 6,
+                  border: '1px solid rgba(255,255,255,.05)',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--t1)' }}>
+                      {r.rank}. {r.municipio_nome}
                     </span>
-                  )}
-                  {r.pct_area_prioritaria != null && (
-                    <span style={{ fontSize: 9, color: r.pct_area_prioritaria > 50 ? '#E34A33' : 'var(--t3)' }}>
-                      {fmt(r.pct_area_prioritaria, 0)}% prio.
+                    <span className="font-mono" style={{ fontSize: 10, fontWeight: 700, color: '#FC8D59' }}>
+                      {fmt(r.area_queimada_total_ha)} ha
                     </span>
-                  )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    {r.classe_max_queimada && <PrioridadeBadge classe={r.classe_max_queimada} size="sm" />}
+                    {r.mes_pico && (
+                      <span style={{ fontSize: 9, color: 'var(--t3)' }}>
+                        Pico: {MESES_LABELS[r.mes_pico] ?? r.mes_pico}
+                      </span>
+                    )}
+                    {r.pct_area_prioritaria != null && (
+                      <span className="font-mono" style={{ fontSize: 9, color: r.pct_area_prioritaria > 50 ? '#E34A33' : 'var(--t3)' }}>
+                        {fmt(r.pct_area_prioritaria, 0)}% prio.
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
-          }
+              ))
+            }
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-function KpiCard({ label, value, accent, note, alert }: {
-  label: string; value: string; accent: string; note?: string; alert?: boolean
+// Wrapper para usar o sistema de cards padrão (.kpi-card + JetBrains Mono via .kpi-value)
+function KpiCard({ label, value, accent, sub, alert }: {
+  label: string; value: string; accent: string; sub?: string; alert?: boolean
 }) {
   return (
-    <div className="card" style={{
-      display: 'flex', flexDirection: 'column', gap: 4,
-      border: alert ? `1px solid ${accent}44` : undefined,
+    <div className="kpi-card" style={{
+      borderColor: alert ? `${accent}66` : undefined,
+      boxShadow: alert ? `0 0 0 1px ${accent}33 inset` : undefined,
     }}>
-      <div style={{ fontSize: 9, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 800, color: accent, lineHeight: 1 }}>{value}</div>
-      {note && <div style={{ fontSize: 9, color: 'var(--t3)' }}>{note}</div>}
+      <div className="kpi-label" style={{ gap: 5 }}>
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: accent, flexShrink: 0, display: 'inline-block' }} />
+        <span style={{ fontSize: 10, letterSpacing: '.04em' }}>{label}</span>
+      </div>
+      <div className="kpi-value" style={{ color: accent }}>{value}</div>
+      {sub && <div style={{ fontSize: 10, color: 'var(--t3)' }}>{sub}</div>}
     </div>
   )
 }
