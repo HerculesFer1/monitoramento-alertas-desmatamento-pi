@@ -4,7 +4,10 @@
  * Três opções:
  *   1. Abrir relatório web   — abre ReportPage no <main> (rota interna).
  *   2. Baixar PDF             — abre o modal de preview e gera jsPDF.
- *   3. Analisar com IA        — copia briefing + abre ChatGPT/Gemini/Claude.
+ *   3. ChatGPT                — abre nova aba com o briefing inteiro no
+ *                               campo de prompt (via ?q=); clipboard
+ *                               serve como fallback caso a URL trunque.
+ *   4. Copiar briefing        — só copia, sem abrir IA.
  *
  * O PDF permanece intacto (fluxo legado preservado).
  */
@@ -16,9 +19,7 @@ import { useReportPage }      from './useReportPage'
 import { buildBriefingMarkdown, buildPromptOrientador } from './briefing'
 
 const PROVEDORES = [
-  { id: 'chatgpt' as const, nome: 'ChatGPT', url: (p: string) => `https://chat.openai.com/?q=${encodeURIComponent(p)}`,    cor: '#10A37F' },
-  { id: 'gemini'  as const, nome: 'Gemini',  url: (p: string) => `https://gemini.google.com/app?text=${encodeURIComponent(p)}`, cor: '#4285F4' },
-  { id: 'claude'  as const, nome: 'Claude',  url: (p: string) => `https://claude.ai/new?q=${encodeURIComponent(p)}`,         cor: '#D97706' },
+  { id: 'chatgpt' as const, nome: 'ChatGPT', url: (p: string) => `https://chat.openai.com/?q=${encodeURIComponent(p)}`, cor: '#10A37F' },
 ]
 
 export function ReportTrigger() {
@@ -55,16 +56,26 @@ export function ReportTrigger() {
   async function acionarIA(prov: typeof PROVEDORES[number] | 'copy') {
     if (!snapshot) return
     const briefing = buildBriefingMarkdown(snapshot)
+
+    // Sempre copia o briefing para o clipboard — serve como fallback caso
+    // a URL seja truncada pelo navegador ou pelo servidor do ChatGPT.
     try {
       await navigator.clipboard.writeText(briefing)
     } catch (err) { console.warn('Clipboard indisponível:', err) }
+
     const tag = prov === 'copy' ? 'copy' : prov.id
     setCopied(tag)
     setTimeout(() => setCopied(null), 2200)
+
     if (prov !== 'copy') {
-      const prompt = buildPromptOrientador(snapshot)
-      window.open(prov.url(prompt), '_blank', 'noopener,noreferrer')
+      // Monta o prompt completo: orientador + briefing inteiro,
+      // assim o usuario abre o ChatGPT ja com tudo pronto no campo
+      // de mensagem (sem precisar voltar ao dashboard e colar).
+      const orientador     = buildPromptOrientador(snapshot)
+      const promptCompleto = `${orientador}\n\n---\n\n${briefing}`
+      window.open(prov.url(promptCompleto), '_blank', 'noopener,noreferrer')
     }
+
     setTimeout(() => setOpen(false), 900)
   }
 
@@ -148,13 +159,13 @@ export function ReportTrigger() {
                 key={p.id}
                 icon={<Sparkles size={13} strokeWidth={1.8} />}
                 label={p.nome}
-                hint="Copia briefing + abre nova aba"
+                hint="Abre nova aba com briefing ja no prompt"
                 onClick={() => acionarIA(p)}
                 accent={p.cor}
                 trailing={
                   copied === p.id
                     ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#10B981', fontSize: 10 }}>
-                        <Check size={11} /><span>Copiado</span>
+                        <Check size={11} /><span>Aberto</span>
                       </span>
                     : <ExternalLink size={11} style={{ color: 'var(--t3)' }} />
                 }

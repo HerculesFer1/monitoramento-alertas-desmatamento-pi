@@ -201,12 +201,22 @@ export function DadosView() {
 
   return (
     <div
-      className="view-no-map ranking-scroll"
+      className="ranking-scroll"
       style={{
-        // Sobrescreve o padding default do view-no-map para a Gestao de Dados
+        // NAO usar view-no-map aqui: aquele layout e flex-column e
+        // comprime os ultimos cards quando o conteudo cabe quase
+        // inteiro na tela. Aqui usamos block + overflow-y: auto, assim
+        // os cards mantem altura natural e o scroll funciona de verdade.
+        display: 'block',
+        width: '100%',
+        height: '100%',
+        overflowY: 'auto',
         padding: '16px 20px',
+        boxSizing: 'border-box',
       }}
     >
+      {/* Contêiner interno com o gap entre seções (substitui o gap do flex). */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
       {/* ── Cabeçalho ─────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -466,6 +476,7 @@ export function DadosView() {
         </Section>
       )}
 
+      </div>
     </div>
   )
 }
