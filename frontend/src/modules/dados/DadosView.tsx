@@ -393,26 +393,17 @@ export function DadosView() {
       <Section title="Guia de Atualização — Próximo Ciclo">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <Step num={1} status="done"
-            title="Obter arquivo PRODES-Cerrado-PI"
-            desc="Executar rodar_download_prodes.ps1 — baixa via WFS TerraBrasilis com bbox do Piauí. Verificar se ano novo está disponível (outubro INPE)." />
-          <Step num={2} status="pending"
-            title="Copiar GeoJSONs brutos para base de dados/"
-            desc="Transferir de MARCO: Alertas de Desmatamento(MAPBIOMAS).geojson · ASVs Emitidas-PI(SINAFLOR+).geojson · DERADSAs 2024/2025 (com polígonos)" />
-          <Step num={3} status="pending"
-            title="Adicionar DERADSA do novo ciclo"
-            desc="Digitalizar polígonos das novas DERADSAs emitidas pela SEMARH-PI. Salvar como GeoJSON em base de dados/ com campos: Id, Município, Área/ha, Ano." />
-          <Step num={4} status="manual"
-            title="Executar o pipeline"
-            desc="rodar_pipeline.ps1 (duplo clique) — processa 11 etapas, roda 9 testes T1–T9, gera alertas_classificados.geojson e agregado_municipios.json." />
-          <Step num={5} status="manual"
-            title="Verificar 9/9 testes OK no log"
-            desc="Abrir Resultado/pipeline.log e confirmar todos os testes T1–T9 como ✓. Se algum falhar, investigar antes de prosseguir." />
-          <Step num={6} status="manual"
-            title="Upload para Supabase"
-            desc="O pipeline roda _upload_supabase.py automaticamente ao final. Verificar no dashboard: 13k+ fragmentos em alertas_classificados." />
-          <Step num={7} status="done"
+            title="Workflows mensais agendados"
+            desc="GitHub Actions roda update-alertas (dia 5 03:00 UTC) · update-asvs (toda segunda 03:00 UTC) · update-queimadas (dia 5 04:00 UTC) · update-prodes (1 de outubro 03:00 UTC)." />
+          <Step num={2} status="manual"
+            title="Ingerir DERADSA quando emitida (CGEO)"
+            desc="Upload manual via Supabase Storage (DERADSAs SEMARH-PI são polígonos emitidos sob demanda; o pipeline mensal puxa automaticamente o que estiver na Storage)." />
+          <Step num={3} status="manual"
+            title="Verificar logs após execução"
+            desc="Em caso de falha, o GitHub envia e-mail. Abrir Actions → run com falha → download do artefato pipeline.log e investigar." />
+          <Step num={4} status="done"
             title="Frontend atualizado automaticamente"
-            desc="O React consulta as RPCs ao vivo. Após upload, todos os KPIs, gráficos e mapa refletem os dados novos sem rebuild." />
+            desc="O React consulta as RPCs ao vivo. Após upload, todos os KPIs, gráficos e mapa refletem os dados novos sem rebuild — Vercel faz deploy só quando houver mudança de código." />
         </div>
       </Section>
 

@@ -35,6 +35,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Validar secrets obrigatorios
+        run: |
+          set -eu
+          missing=""
+          for s in SUPABASE_URL SUPABASE_SERVICE_KEY SUPABASE_ANON_KEY; do
+            v="$(eval echo \"\${$s:-}\")"
+            if [ -z "$v" ]; then missing="$missing $s"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Secrets ausentes:$missing"
+            echo "## ❌ Secrets ausentes" >> "$GITHUB_STEP_SUMMARY"
+            for s in $missing; do echo "- \`$s\`" >> "$GITHUB_STEP_SUMMARY"; done
+            exit 1
+          fi
+          echo "✓ Secrets presentes"
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_ANON_KEY:    ${{ secrets.SUPABASE_ANON_KEY }}
+
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:

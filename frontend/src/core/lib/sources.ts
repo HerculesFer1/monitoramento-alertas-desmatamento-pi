@@ -87,11 +87,12 @@ export const FONTES: FonteDados[] = [
     nome:             'AQ1km V6 (Cicatrizes)',
     provedor:         'INPE / BD Queimadas',
     tipo:             'Shapefile (mensal)',
-    frequenciaOrigem: 'Mensal',
-    cron:             null,                  // ainda manual via EXECUTAR_PIPELINE.ps1
-    metodoIngestao:   'Download HTTP do BD Queimadas + processamento local',
-    status:           'manual',
-    obs:              'Automação via Prefect prevista no roadmap.',
+    frequenciaOrigem: 'Mensal (início do mês seguinte)',
+    cron:             '0 4 5 * *',           // dia 5 de cada mês 04:00 UTC
+    workflow:         'update-queimadas.yml',
+    metodoIngestao:   'Download HTTP BD Queimadas + overlay vetorial',
+    status:           'ativo',
+    obs:              'Roda apos o update-areas-prioritarias para herdar o GPKG de classes AHP.',
   },
   {
     id:               'ibge_municipios',

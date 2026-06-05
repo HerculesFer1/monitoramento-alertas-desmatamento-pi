@@ -35,6 +35,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # ── 1b. Validar secrets obrigatorios (early-fail com msg clara) ──
+      - name: Validar secrets obrigatorios
+        run: |
+          set -eu
+          missing=""
+          for s in SUPABASE_URL SUPABASE_SERVICE_KEY SUPABASE_ANON_KEY MAPBIOMAS_EMAIL MAPBIOMAS_PASSWORD; do
+            v="$(eval echo \"\${$s:-}\")"
+            if [ -z "$v" ]; then missing="$missing $s"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Secrets ausentes:$missing"
+            echo "## ❌ Secrets ausentes no repositório" >> "$GITHUB_STEP_SUMMARY"
+            echo "Verifique em Settings → Secrets and variables → Actions:" >> "$GITHUB_STEP_SUMMARY"
+            for s in $missing; do echo "- \`$s\`" >> "$GITHUB_STEP_SUMMARY"; done
+            exit 1
+          fi
+          echo "✓ Todos os secrets obrigatórios estão presentes"
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_ANON_KEY:    ${{ secrets.SUPABASE_ANON_KEY }}
+          MAPBIOMAS_EMAIL:      ${{ secrets.MAPBIOMAS_EMAIL }}
+          MAPBIOMAS_PASSWORD:   ${{ secrets.MAPBIOMAS_PASSWORD }}
+
       # ── 2. Ambiente Conda com geopandas ───────────────────────────────────
       - name: Setup Miniconda (mamba solver)
         uses: conda-incubator/setup-miniconda@v3
@@ -47,14 +71,31 @@ jobs:
           use-mamba: true
           miniforge-version: latest
 
-      # ── 3. Autenticar no MapBiomas e criar .env ──────────────────────────
+      # ── 3. Autenticar no MapBiomas e criar .env (com diagnostico) ───────
       - name: Autenticar MapBiomas + criar .env
+        env:
+          MAPBIOMAS_EMAIL:    ${{ secrets.MAPBIOMAS_EMAIL }}
+          MAPBIOMAS_PASSWORD: ${{ secrets.MAPBIOMAS_PASSWORD }}
         run: |
-          MAPBIOMAS_TOKEN=$(curl -s -X POST \
+          set -eu
+          RESP=$(curl -fsS -X POST \
             -H "Content-Type: application/json" \
-            -d "{\"query\":\"mutation { signIn(email: \\\"${{ secrets.MAPBIOMAS_EMAIL }}\\\" password: \\\"${{ secrets.MAPBIOMAS_PASSWORD }}\\\") { token } }\"}" \
-            "https://plataforma.alerta.mapbiomas.org/api/v2/graphql" \
-            | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['signIn']['token'])")
+            -d "{\"query\":\"mutation { signIn(email: \\\"$MAPBIOMAS_EMAIL\\\" password: \\\"$MAPBIOMAS_PASSWORD\\\") { token } }\"}" \
+            "https://plataforma.alerta.mapbiomas.org/api/v2/graphql")
+
+          # Diagnostico claro se o login falhar
+          MAPBIOMAS_TOKEN=$(echo "$RESP" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          if 'errors' in d:
+              print('::error::MapBiomas retornou erros: ' + json.dumps(d['errors']), file=sys.stderr)
+              sys.exit(1)
+          tok = (d.get('data') or {}).get('signIn', {}) and (d.get('data') or {}).get('signIn', {}).get('token')
+          if not tok:
+              print('::error::MapBiomas não retornou token. Resposta: ' + json.dumps(d)[:400], file=sys.stderr)
+              sys.exit(1)
+          print(tok)
+          ")
           echo "::add-mask::$MAPBIOMAS_TOKEN"
           echo "MAPBIOMAS_TOKEN=$MAPBIOMAS_TOKEN" >> $GITHUB_ENV
           printf '%s\n' \
@@ -64,6 +105,7 @@ jobs:
             "MAPBIOMAS_TOKEN=$MAPBIOMAS_TOKEN" \
             > .env
           chmod 600 .env
+          echo "✓ Token MapBiomas obtido e .env criado"
 
       # ── 4. Download DERADSAs do Supabase Storage ──────────────────────────
       - name: Download DERADSAs (Supabase Storage)
