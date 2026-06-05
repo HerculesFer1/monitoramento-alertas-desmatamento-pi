@@ -189,7 +189,7 @@ export function AppShell() {
   const { activeModule, activeView, setActiveView } = useAppStore()
   const views = MODULE_VIEWS[activeModule]
   const title = MODULE_TITLES[activeModule]
-  const { isMetodologiaOpen, close: closeMetodologia, selectedModule: metoSelected } = useMetodologia()
+  const { isMetodologiaOpen, close: closeMetodologia, selectedModule: metoSelected, clearSelection } = useMetodologia()
   const { isReportOpen } = useReportPage()
 
   // Migracao: se vier rota antiga `metodologia` do queimadas, redireciona
@@ -199,6 +199,14 @@ export function AppShell() {
       setActiveView('visao_geral')
     }
   }, [activeModule, activeView, setActiveView])
+
+  // Limpa a selecao de Metodologia quando o usuario troca de modulo
+  // ou de aba — corrige o "travamento" em que a pagina de metodologia
+  // continuava visivel mesmo apos navegacao no rail/topbar.
+  React.useEffect(() => {
+    if (metoSelected) clearSelection()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeModule, activeView])
 
   return (
     <div className="app-shell">

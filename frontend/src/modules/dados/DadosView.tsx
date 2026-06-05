@@ -201,11 +201,10 @@ export function DadosView() {
 
   return (
     <div
-      className="ranking-scroll"
+      className="view-no-map ranking-scroll"
       style={{
+        // Sobrescreve o padding default do view-no-map para a Gestao de Dados
         padding: '16px 20px',
-        display: 'flex', flexDirection: 'column', gap: 14,
-        height: '100%', overflowY: 'auto',
       }}
     >
 
@@ -401,10 +400,7 @@ export function DadosView() {
           <Step num={6} status="manual"
             title="Upload para Supabase"
             desc="O pipeline roda _upload_supabase.py automaticamente ao final. Verificar no dashboard: 13k+ fragmentos em alertas_classificados." />
-          <Step num={7} status="manual"
-            title="Aplicar migrations pendentes"
-            desc="SQL Editor do Supabase → infra/supabase/migrations/004_prodes_rpc_fix.sql → Run. Corrige n_total na RPC get_resumo_prodes." />
-          <Step num={8} status="done"
+          <Step num={7} status="done"
             title="Frontend atualizado automaticamente"
             desc="O React consulta as RPCs ao vivo. Após upload, todos os KPIs, gráficos e mapa refletem os dados novos sem rebuild." />
         </div>
@@ -469,22 +465,6 @@ export function DadosView() {
           </div>
         </Section>
       )}
-
-      {/* ── Nota sobre Migration 004 ──────────────────────────────────── */}
-      <div style={{
-        display: 'flex', alignItems: 'flex-start', gap: 8,
-        background: 'rgba(245,158,11,.07)', border: '1px solid rgba(245,158,11,.18)',
-        borderRadius: 8, padding: '10px 14px',
-      }}>
-        <span style={{ color: 'var(--mat)', fontSize: 14, flexShrink: 0 }}>⚠</span>
-        <div style={{ fontSize: 11, color: 'var(--t2)', lineHeight: 1.6 }}>
-          <strong style={{ color: 'var(--mat)' }}>Migration 004 pendente:</strong>{' '}
-          A RPC <code>get_resumo_prodes</code> no Supabase ainda usa a definição antiga (sem DISTINCT ON e sem exclusão de
-          SEM_PRODES_NO_CICLO do n_total). O frontend já contorna isso no cálculo de concordância (70,9% exibido corretamente).
-          Para completar a correção: Supabase Dashboard → SQL Editor → abrir{' '}
-          <code>infra/supabase/migrations/004_prodes_rpc_fix.sql</code> → Run.
-        </div>
-      </div>
 
     </div>
   )

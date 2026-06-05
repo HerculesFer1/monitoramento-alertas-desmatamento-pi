@@ -14,11 +14,31 @@ export function MetodologiaPage() {
   const meto = METODOLOGIAS[selectedModule]
 
   return (
+    <>
+      {/* Backdrop blur — cobre o topbar/rail/conteudo para evidenciar
+          a troca de tela quando o usuario abre a metodologia pelo popover.
+          A propria pagina (a seguir) fica acima e nao recebe o blur. */}
+      <div
+        aria-hidden
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,.32)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          zIndex: 30,
+          animation: 'meto-backdrop-in .22s ease-out',
+          pointerEvents: 'none',
+        }}
+      />
+
     <div className="metodologia-page" style={{
       width: '100%', height: '100%',
       display: 'flex', flexDirection: 'column',
       background: 'var(--bg1)',
       overflow: 'hidden',
+      position: 'relative',
+      zIndex: 31,
+      animation: 'meto-page-in .22s cubic-bezier(.2,.7,.2,1)',
     }}>
       {/* Header */}
       <header style={{
@@ -89,7 +109,18 @@ export function MetodologiaPage() {
           <Secao corDestaque={meto.cor} secao={meto.limitacoes} />
         </div>
       </div>
+      <style>{`
+        @keyframes meto-backdrop-in {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes meto-page-in {
+          from { opacity: 0; transform: translateY(6px) scale(.995); }
+          to   { opacity: 1; transform: translateY(0)   scale(1);    }
+        }
+      `}</style>
     </div>
+    </>
   )
 }
 

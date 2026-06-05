@@ -1,19 +1,15 @@
 /**
  * AnaliseIADropdown.tsx — Botão "Analisar com IA" com submenu.
  *
- * Cada provedor (ChatGPT, Gemini, Claude):
- *   1. Constrói o briefing markdown
- *   2. Copia para a área de transferência
- *   3. Abre nova aba com a IA + prompt curto orientador
+ * Estratégia atual (simplificada):
+ *   - **ChatGPT**: o briefing inteiro vai direto na URL via `?q=`; a aba
+ *     abre com o prompt já preenchido no campo de mensagem.
+ *   - **Copiar briefing**: copia para o clipboard, sem abrir IA.
  *
- * "Copiar briefing" só copia sem abrir IA — útil para colar em outro
- * destino (Notion, doc, etc).
- *
- * Pontos críticos:
- *   - Limite prático de URL para query string ≈ 4 KB. O briefing pode ser
- *     maior — por isso a estratégia é: clipboard com briefing inteiro +
- *     prompt curto na URL pedindo para o usuário colar.
- *   - Fluxo `window.open` requer click do usuário (popup blocker).
+ * Limite prático de URL: a maioria dos navegadores aceita até ~8 KB.
+ * Como fallback, mesmo no fluxo do ChatGPT o briefing tambem é copiado
+ * para o clipboard — assim, se a URL for truncada, o usuario tem como
+ * recuperar o conteúdo com Ctrl+V.
  */
 import { useState, useRef, useEffect } from 'react'
 import { Sparkles, ChevronDown, Check, Copy, ExternalLink } from 'lucide-react'
@@ -21,7 +17,7 @@ import type { ReportSnapshot } from './types'
 import { buildBriefingMarkdown, buildPromptOrientador } from './briefing'
 
 interface Provedor {
-  id:    'chatgpt' | 'gemini' | 'claude' | 'copy'
+  id:    'chatgpt' | 'copy'
   nome:  string
   url?:  (prompt: string) => string
   cor:   string
@@ -33,18 +29,6 @@ const PROVEDORES: Provedor[] = [
     nome: 'ChatGPT',
     url: (p) => `https://chat.openai.com/?q=${encodeURIComponent(p)}`,
     cor: '#10A37F',
-  },
-  {
-    id: 'gemini',
-    nome: 'Gemini',
-    url: (p) => `https://gemini.google.com/app?text=${encodeURIComponent(p)}`,
-    cor: '#4285F4',
-  },
-  {
-    id: 'claude',
-    nome: 'Claude',
-    url: (p) => `https://claude.ai/new?q=${encodeURIComponent(p)}`,
-    cor: '#D97706',
   },
   {
     id: 'copy',
@@ -79,6 +63,9 @@ export function AnaliseIADropdown({ snapshot }: Props) {
 
   async function acionar(p: Provedor) {
     const briefing = buildBriefingMarkdown(snapshot)
+
+    // Sempre copia o briefing para o clipboard — serve como fallback caso
+    // a URL seja truncada pelo navegador ou pelo servidor da IA.
     try {
       await navigator.clipboard.writeText(briefing)
     } catch (err) {
@@ -88,8 +75,12 @@ export function AnaliseIADropdown({ snapshot }: Props) {
     setTimeout(() => setCopied(null), 2200)
 
     if (p.url) {
-      const prompt = buildPromptOrientador(snapshot)
-      window.open(p.url(prompt), '_blank', 'noopener,noreferrer')
+      // Para o ChatGPT, montamos um prompt completo: orientador + briefing
+      // inteiro. Assim o usuario ja vê tudo pronto no campo de mensagem,
+      // sem precisar voltar ao dashboard ou colar manualmente.
+      const orientador = buildPromptOrientador(snapshot)
+      const promptCompleto = `${orientador}\n\n---\n\n${briefing}`
+      window.open(p.url(promptCompleto), '_blank', 'noopener,noreferrer')
     }
 
     // Mantém menu aberto por 1.2s para o usuário ver o "Copiado".
@@ -203,7 +194,7 @@ export function AnaliseIADropdown({ snapshot }: Props) {
             fontSize: 10, color: 'var(--t3)', lineHeight: 1.5,
             borderTop: '1px solid var(--sep)', marginTop: 4,
           }}>
-            O briefing é copiado para a área de transferência. Cole no chat da IA escolhida para iniciar a análise.
+            No ChatGPT, o briefing vai direto na URL. Também fica no clipboard como fallback (Ctrl+V) caso o navegador trunque o link.
           </div>
 
           <style>{`
