@@ -71,12 +71,12 @@ export function ReportTrigger() {
     setTimeout(() => setCopied(null), 2200)
 
     if (prov !== 'copy') {
-      // Monta o prompt completo: orientador + briefing inteiro,
-      // assim o usuario abre o ChatGPT ja com tudo pronto no campo
-      // de mensagem (sem precisar voltar ao dashboard e colar).
-      const orientador     = buildPromptOrientador(snapshot)
-      const promptCompleto = `${orientador}\n\n---\n\n${briefing}`
-      window.open(prov.url(promptCompleto), '_blank', 'noopener,noreferrer')
+      // IMPORTANTE: a URL leva APENAS o orientador curto.
+      // O briefing completo (3-8 KB) ja foi para o clipboard acima — colar
+      // tudo no `?q=` derruba o ChatGPT com HTTP 431 (Request Header Too
+      // Large). O orientador instrui o usuario a colar com Ctrl+V.
+      const orientador = buildPromptOrientador(snapshot)
+      window.open(prov.url(orientador), '_blank', 'noopener,noreferrer')
     }
 
     setTimeout(() => setOpen(false), 900)
