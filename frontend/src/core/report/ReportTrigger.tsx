@@ -12,14 +12,17 @@
  * O PDF permanece intacto (fluxo legado preservado).
  */
 import { useState, useRef, useEffect } from 'react'
-import { FileText, ChevronDown, FileBarChart, Download, Sparkles, Copy, Check, ExternalLink } from 'lucide-react'
+import { FileText, FileBarChart, Download, Sparkles, Copy, Check, ExternalLink } from 'lucide-react'
 import { ReportPreviewModal } from './ReportPreviewModal'
 import { useReportData }      from './useReportData'
 import { useReportPage }      from './useReportPage'
 import { buildBriefingMarkdown, buildPromptOrientador } from './briefing'
 
+// chatgpt.com (não chat.openai.com): mantém a sessão logada do usuário,
+// passa o prompt via ?q= e ?model= opcional. O endpoint antigo `chat.openai.com`
+// redireciona para login anônimo e perde o vínculo de conta.
 const PROVEDORES = [
-  { id: 'chatgpt' as const, nome: 'ChatGPT', url: (p: string) => `https://chat.openai.com/?q=${encodeURIComponent(p)}`, cor: '#10A37F' },
+  { id: 'chatgpt' as const, nome: 'ChatGPT', url: (p: string) => `https://chatgpt.com/?q=${encodeURIComponent(p)}`, cor: '#10A37F' },
 ]
 
 export function ReportTrigger() {
@@ -87,10 +90,10 @@ export function ReportTrigger() {
           aria-haspopup="menu"
           aria-expanded={open}
           title="Opções de relatório"
+          aria-label="Relatório"
           style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '5px 11px', borderRadius: 7,
-            fontSize: 12, fontWeight: 600,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 30, height: 28, borderRadius: 7,
             cursor: 'pointer', transition: 'all .15s',
             border: '1px solid rgba(0,0,0,.25)',
             background: 'rgba(0,0,0,.2)',
@@ -107,9 +110,7 @@ export function ReportTrigger() {
             e.currentTarget.style.color = 'var(--t2)'
           }}
         >
-          <FileText size={12} strokeWidth={1.8} />
-          <span>Relatório</span>
-          <ChevronDown size={10} strokeWidth={1.8} style={{ opacity: .7, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+          <FileText size={14} strokeWidth={1.8} />
         </button>
 
         {open && (

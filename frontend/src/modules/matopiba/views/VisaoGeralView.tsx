@@ -103,166 +103,222 @@ export function VisaoGeralView() {
         </div>
       )}
 
-      {/* ── Bloco 1: Alertas MapBiomas ──────────────────────────────── */}
-      <SectionHeader title="Alertas MapBiomas" color={MAT_COLOR} />
-      <div className="bento" style={{ marginBottom: 16 }}>
-        <KpiCard
-          label={<>IPI MATOPIBA <StatusBadge live={alertasLive} /></>}
-          value={alertasLive ? `${(alertasAno!.ipi ?? 0).toFixed(1)}%` : '—'}
-          sub={`Índice de Pressão Irregular · ${ano}`}
-          color={MAT_COLOR}
-        />
-        <KpiCard
-          label="Área Irregular"
-          value={alertasLive ? fmtHa(alertasAno!.ha_irregular ?? 0) : '—'}
-          sub={`Total no recorte · ${ano}`}
-          color="var(--irr)"
-        />
-        <KpiCard
-          label="Reincidentes"
-          value={alertasLive ? String(alertasAno!.n_reincidentes ?? 0) : '—'}
-          sub="≥ 3 anos com irregular"
-          color={MAT_COLOR_2}
-        />
-        <KpiCard
-          label="Δ IPI YoY"
-          value={alertasLive && alertasAno!.delta_ipi_yoy != null
-            ? `${alertasAno!.delta_ipi_yoy > 0 ? '+' : ''}${alertasAno!.delta_ipi_yoy?.toFixed(1)} pp`
-            : '—'}
-          sub="variação vs ano anterior"
-          color={alertasLive && (alertasAno!.delta_ipi_yoy ?? 0) > 0 ? 'var(--irr)' : 'var(--aut)'}
-        />
+      {/* ── 4 sessões temáticas lado a lado ───────────────────────────
+          Grid responsivo: 4 colunas em telas largas, 2 em médias,
+          1 em mobile. Cada sessão é um cartão denso com 4 mini-KPIs
+          empilhados verticalmente — sem barra de rolagem. */}
+      <div className="matopiba-grid">
+        <SectionCard title="Alertas MapBiomas" color={MAT_COLOR} live={alertasLive}>
+          <MiniKpi
+            label="IPI MATOPIBA"
+            value={alertasLive ? `${(alertasAno!.ipi ?? 0).toFixed(1)}%` : '—'}
+            sub={`Pressão Irregular · ${ano}`}
+            color={MAT_COLOR}
+          />
+          <MiniKpi
+            label="Área Irregular"
+            value={alertasLive ? fmtHa(alertasAno!.ha_irregular ?? 0) : '—'}
+            sub="Total no recorte"
+            color="var(--irr)"
+          />
+          <MiniKpi
+            label="Reincidentes"
+            value={alertasLive ? String(alertasAno!.n_reincidentes ?? 0) : '—'}
+            sub="≥ 3 anos c/ IRR"
+            color={MAT_COLOR_2}
+          />
+          <MiniKpi
+            label="Δ IPI YoY"
+            value={alertasLive && alertasAno!.delta_ipi_yoy != null
+              ? `${alertasAno!.delta_ipi_yoy > 0 ? '+' : ''}${alertasAno!.delta_ipi_yoy?.toFixed(1)} pp`
+              : '—'}
+            sub="vs ano anterior"
+            color={alertasLive && (alertasAno!.delta_ipi_yoy ?? 0) > 0 ? 'var(--irr)' : 'var(--aut)'}
+          />
+        </SectionCard>
+
+        <SectionCard title="PRODES Cerrado" color="#10B981" live={!prodes.loading && !!prodes.kpis}>
+          <MiniKpi
+            label="Irregular PRODES"
+            value={prodes.kpis ? fmtHa(prodes.kpis.ha_irregular_total) : '—'}
+            sub={`${prodes.kpis?.n_municipios ?? 0} / ${N_MUNICIPIOS} munic. PRODES`}
+            color="var(--irr)"
+          />
+          <MiniKpi
+            label="Total Mapeado"
+            value={prodes.kpis ? fmtHa(prodes.kpis.ha_total) : '—'}
+            sub="Irreg. + autorizado"
+            color="var(--t1)"
+          />
+          <MiniKpi
+            label="% do Irreg. PI"
+            value={prodes.kpis ? `${prodes.kpis.pct_do_estado_irr.toFixed(1)}%` : '—'}
+            sub="participação MATOPIBA"
+            color={MAT_COLOR}
+          />
+          <MiniKpi
+            label="Munic. Reincidentes"
+            value={prodes.kpis ? String(prodes.kpis.n_reincidentes) : '—'}
+            sub="≥ 3 anos IRR PRODES"
+            color={MAT_COLOR_2}
+          />
+        </SectionCard>
+
+        <SectionCard title="Queimadas BD-INPE" color="#EF4444" live={qbLive}>
+          <MiniKpi
+            label="Área Queimada"
+            value={qbLive ? fmtHa(qb!.kpis.area_queimada_total_ha) : '—'}
+            sub={`Cicatrizes ${ano} · AQ1km V6`}
+            color="#EF4444"
+          />
+          <MiniKpi
+            label="Nº Cicatrizes"
+            value={qbLive ? fmtNum(qb!.kpis.n_cicatrizes_total) : '—'}
+            sub="polígonos detectados"
+            color="var(--t1)"
+          />
+          <MiniKpi
+            label="Munic. Afetados"
+            value={qbLive ? `${qb!.kpis.municipios_afetados} / ${N_MUNICIPIOS}` : '—'}
+            sub="no recorte MATOPIBA"
+            color={MAT_COLOR}
+          />
+          <MiniKpi
+            label="% Classe Crítica"
+            value={qbLive ? `${(qb!.kpis.pct_em_prioritarias ?? 0).toFixed(1)}%` : '—'}
+            sub="prioridade AHP 4 + 5"
+            color={qbLive && (qb!.kpis.pct_em_prioritarias ?? 0) > 50 ? 'var(--irr)' : MAT_COLOR_2}
+          />
+        </SectionCard>
+
+        <SectionCard title="Áreas Prioritárias REDD+" color="#10B981" live={apLive}>
+          <MiniKpi
+            label="Floresta Mapeada"
+            value={apLive ? fmtHa(ap!.kpis.prodes.area_floresta_total_ha ?? 0) : '—'}
+            sub={`Máscara florestal · ${ano}`}
+            color="var(--aut)"
+          />
+          <MiniKpi
+            label="Desmat. PRODES"
+            value={apLive ? fmtHa(ap!.kpis.prodes.area_desmat_total_ha ?? 0) : '—'}
+            sub={`${ap?.kpis.prodes.pct_desmat_recorte?.toFixed(2) ?? '—'}% da área`}
+            color="var(--irr)"
+          />
+          <MiniKpi
+            label="Biomassa Total"
+            value={apLive && ap!.kpis.prodes.biomassa_total_tc != null
+              ? `${(ap!.kpis.prodes.biomassa_total_tc / 1_000_000).toFixed(1)} M tC`
+              : '—'}
+            sub="AGB acumulado"
+            color={MAT_COLOR_2}
+          />
+          <MiniKpi
+            label="Munic. Classe 5"
+            value={apLive ? `${ap!.kpis.prodes.n_municipios_classe_max} / ${N_MUNICIPIOS}` : '—'}
+            sub="prioridade Muito Alto"
+            color="var(--irr)"
+          />
+        </SectionCard>
       </div>
 
-      {/* ── Bloco 2: PRODES Cerrado ─────────────────────────────────── */}
-      <SectionHeader title="PRODES Cerrado / INPE" color="#10B981" />
-      <div className="bento" style={{ marginBottom: 16 }}>
-        <KpiCard
-          label={<>Irregular PRODES <StatusBadge live={!prodes.loading && !!prodes.kpis} /></>}
-          value={prodes.kpis ? fmtHa(prodes.kpis.ha_irregular_total) : '—'}
-          sub={`${prodes.kpis?.n_municipios ?? 0} de ${N_MUNICIPIOS} municípios com PRODES`}
-          color="var(--irr)"
-        />
-        <KpiCard
-          label="Total Mapeado"
-          value={prodes.kpis ? fmtHa(prodes.kpis.ha_total) : '—'}
-          sub={`Irregular + autorizado · ${ano}`}
-          color="var(--t1)"
-        />
-        <KpiCard
-          label="% do Irregular PI"
-          value={prodes.kpis ? `${prodes.kpis.pct_do_estado_irr.toFixed(1)}%` : '—'}
-          sub="participação do MATOPIBA"
-          color={MAT_COLOR}
-        />
-        <KpiCard
-          label="Municípios Reincidentes"
-          value={prodes.kpis ? String(prodes.kpis.n_reincidentes) : '—'}
-          sub="≥ 3 anos com IRR no PRODES"
-          color={MAT_COLOR_2}
-        />
-      </div>
-
-      {/* ── Bloco 3: Queimadas ──────────────────────────────────────── */}
-      <SectionHeader title="Queimadas BD-INPE" color="#EF4444" />
-      <div className="bento" style={{ marginBottom: 16 }}>
-        <KpiCard
-          label={<>Área Queimada <StatusBadge live={qbLive} /></>}
-          value={qbLive ? fmtHa(qb!.kpis.area_queimada_total_ha) : '—'}
-          sub={`Cicatrizes ${ano} · AQ1km V6`}
-          color="#EF4444"
-        />
-        <KpiCard
-          label="Nº Cicatrizes"
-          value={qbLive ? fmtNum(qb!.kpis.n_cicatrizes_total) : '—'}
-          sub="polígonos detectados"
-          color="var(--t1)"
-        />
-        <KpiCard
-          label="Municípios Afetados"
-          value={qbLive ? `${qb!.kpis.municipios_afetados} / ${N_MUNICIPIOS}` : '—'}
-          sub="no recorte MATOPIBA"
-          color={MAT_COLOR}
-        />
-        <KpiCard
-          label="% em Classe Crítica"
-          value={qbLive ? `${(qb!.kpis.pct_em_prioritarias ?? 0).toFixed(1)}%` : '—'}
-          sub="prioridade AHP 4 + 5"
-          color={qbLive && (qb!.kpis.pct_em_prioritarias ?? 0) > 50 ? 'var(--irr)' : MAT_COLOR_2}
-        />
-      </div>
-
-      {/* ── Bloco 4: Áreas Prioritárias REDD+ ───────────────────────── */}
-      <SectionHeader title="Áreas Prioritárias REDD+" color="#10B981" />
-      <div className="bento">
-        <KpiCard
-          label={<>Floresta Mapeada <StatusBadge live={apLive} /></>}
-          value={apLive ? fmtHa(ap!.kpis.prodes.area_floresta_total_ha ?? 0) : '—'}
-          sub={`Máscara florestal · ${ano}`}
-          color="var(--aut)"
-        />
-        <KpiCard
-          label="Desmatamento PRODES"
-          value={apLive ? fmtHa(ap!.kpis.prodes.area_desmat_total_ha ?? 0) : '—'}
-          sub={`${ap?.kpis.prodes.pct_desmat_recorte?.toFixed(2) ?? '—'}% da área`}
-          color="var(--irr)"
-        />
-        <KpiCard
-          label="Biomassa Total"
-          value={apLive && ap!.kpis.prodes.biomassa_total_tc != null
-            ? `${(ap!.kpis.prodes.biomassa_total_tc / 1_000_000).toFixed(1)} M tC`
-            : '—'}
-          sub="AGB acumulado"
-          color={MAT_COLOR_2}
-        />
-        <KpiCard
-          label="Munic. Classe Máxima"
-          value={apLive ? `${ap!.kpis.prodes.n_municipios_classe_max} / ${N_MUNICIPIOS}` : '—'}
-          sub="prioridade Muito Alto (5)"
-          color="var(--irr)"
-        />
-      </div>
-
-      <div style={{ color: 'var(--t3)', fontSize: 10, marginTop: 16, textAlign: 'center' }}>
+      <div style={{ color: 'var(--t3)', fontSize: 10, marginTop: 12, textAlign: 'center' }}>
         Use as abas no topo para abrir o detalhamento de cada módulo no recorte MATOPIBA.
       </div>
+
+      <style>{`
+        .matopiba-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 12px;
+        }
+        @media (max-width: 1180px) {
+          .matopiba-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 640px) {
+          .matopiba-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
     </div>
   )
 }
 
 /* ── Subcomponentes ─────────────────────────────────────────────────── */
 
-function SectionHeader({ title, color }: { title: string; color: string }) {
+function SectionCard({
+  title, color, live, children,
+}: {
+  title:    string
+  color:    string
+  live:     boolean
+  children: React.ReactNode
+}) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8,
-      margin: '4px 4px 8px', paddingBottom: 4,
-      borderBottom: '1px solid var(--sep)',
+    <div className="card" style={{
+      padding: 12, display: 'flex', flexDirection: 'column', gap: 8,
+      borderTop: `2px solid ${color}`,
     }}>
-      <span style={{
-        display: 'inline-block', width: 8, height: 8, borderRadius: 2,
-        background: color, boxShadow: `0 0 6px ${color}66`,
-      }} />
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t2)', letterSpacing: '.04em', textTransform: 'uppercase' }}>
-        {title}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        paddingBottom: 6, borderBottom: '1px solid var(--sep)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{
+            display: 'inline-block', width: 8, height: 8, borderRadius: 2,
+            background: color, boxShadow: `0 0 6px ${color}66`,
+          }} />
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: 'var(--t2)',
+            letterSpacing: '.04em', textTransform: 'uppercase',
+          }}>
+            {title}
+          </div>
+        </div>
+        <StatusBadge live={live} />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {children}
       </div>
     </div>
   )
 }
 
-function KpiCard({
+function MiniKpi({
   label, value, sub, color,
 }: {
-  label: React.ReactNode
+  label: string
   value: string
   sub:   string
   color: string
 }) {
   return (
-    <div className="kpi-card b-3">
-      <div className="kpi-label">{label}</div>
-      <div className="kpi-value" style={{ color, fontSize: 24 }}>{value}</div>
-      <div className="kpi-sub">{sub}</div>
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr auto',
+      alignItems: 'baseline',
+      gap: 6,
+      padding: '6px 8px',
+      borderRadius: 6,
+      background: 'rgba(255,255,255,.02)',
+    }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{
+          fontSize: 9.5, fontWeight: 600,
+          color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.04em',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {label}
+        </div>
+        <div style={{ fontSize: 9.5, color: 'var(--t3)', marginTop: 1 }}>
+          {sub}
+        </div>
+      </div>
+      <div style={{
+        fontSize: 18, fontWeight: 800, color,
+        fontVariantNumeric: 'tabular-nums', lineHeight: 1.1,
+        whiteSpace: 'nowrap',
+      }}>
+        {value}
+      </div>
     </div>
   )
 }

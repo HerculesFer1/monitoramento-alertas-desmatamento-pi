@@ -1,5 +1,5 @@
 import React, { Suspense, useState, useRef, useEffect } from 'react'
-import { Sun, Moon, Calendar, ChevronDown, Check } from 'lucide-react'
+import { Sun, Moon, Calendar, Check } from 'lucide-react'
 import { useAppStore, type AnoFiltro, type Module } from '../store/useAppStore'
 import { PrimaryRail }       from './PrimaryRail'
 import { DataStatusBadge }   from '../../shared/components/DataStatusBadge'
@@ -156,23 +156,27 @@ function AnoDropdown() {
   return (
     <div className="ano-dropdown" ref={ref}>
       <button
-        className={`ano-btn${hasFilter ? ' has-filter' : ''}`}
+        className={`ano-btn ano-btn-compact${hasFilter ? ' has-filter' : ''}`}
         onClick={() => setOpen(o => !o)}
-        title="Filtrar por ano"
+        title={`Filtrar por ano · ${label}`}
+        aria-label={`Filtrar por ano · ${label}`}
         aria-expanded={open}
         aria-haspopup="listbox"
       >
-        <Calendar size={12} strokeWidth={1.4} />
-        <span>{label}</span>
-        <ChevronDown
-          size={10}
-          strokeWidth={1.8}
-          style={{
-            opacity: .6,
-            transform: open ? 'rotate(180deg)' : 'none',
-            transition: 'transform .15s',
-          }}
-        />
+        <Calendar size={14} strokeWidth={1.6} />
+        {hasFilter && (
+          <span
+            aria-hidden="true"
+            style={{
+              fontSize: 10, fontWeight: 700, lineHeight: 1,
+              padding: '2px 4px', borderRadius: 4,
+              background: 'var(--mat, #F59E0B)', color: '#111',
+              marginLeft: 2,
+            }}
+          >
+            {label}
+          </span>
+        )}
       </button>
 
       {open && (
@@ -249,7 +253,9 @@ export function AppShell() {
             </div>
           </div>
 
-          <div className="topbar-sep" />
+          {/* Spacer empurra os controles para a direita; os tabs ficam
+              flutuando no centro via position absolute (.topbar-tabs). */}
+          <div style={{ flex: 1, minWidth: 0 }} aria-hidden="true" />
 
           <nav className="topbar-tabs" role="tablist" aria-label="Visualizações">
             {views.map(v => (

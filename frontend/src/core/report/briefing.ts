@@ -128,23 +128,75 @@ export function buildBriefingMarkdown(snapshot: ReportSnapshot): string {
     linhas.push('')
   }
 
-  // Perguntas sugeridas para a IA
+  // Perguntas sugeridas para a IA — específicas por módulo
   linhas.push('---')
   linhas.push('')
-  linhas.push('## Perguntas para análise crítica')
+  linhas.push('## Perguntas para análise')
   linhas.push('')
-  linhas.push(
-    'Com base no briefing acima, considere especialmente:',
-  )
+  linhas.push('Responda objetivamente, citando os números do briefing acima:')
   linhas.push('')
-  linhas.push('1. Os indicadores são consistentes entre si? Há contradições ou tensões?')
-  linhas.push('2. Quais os principais riscos metodológicos para a tomada de decisão?')
-  linhas.push('3. Que recortes adicionais (temporal, geográfico, classe) ajudariam a refinar o diagnóstico?')
-  linhas.push('4. O resultado é compatível com a literatura científica sobre desmatamento no Cerrado/Caatinga?')
-  linhas.push('5. Que pontos do briefing parecem incompletos ou exigem dados externos para validação?')
+  for (const p of perguntasPorModulo(snapshot.modulo)) linhas.push(p)
   linhas.push('')
 
   return linhas.join('\n')
+}
+
+/**
+ * Conjunto de perguntas objetivas por módulo. Cada item força a IA a olhar
+ * para um dado específico do briefing e produzir leitura interpretativa
+ * (em vez de divagação metodológica genérica).
+ */
+function perguntasPorModulo(modulo: string): string[] {
+  switch (modulo) {
+    case 'mapbiomas':
+      return [
+        '1. Qual foi a variação absoluta e percentual do IPI entre 2022 e 2025? A tendência é de queda sustentada ou oscilatória?',
+        '2. Qual a participação relativa de AUTORIZADO_PARCIALMENTE no total autorizado? Esse padrão sugere ASVs subdimensionadas ou alertas que extrapolam o polígono autorizado?',
+        '3. Entre os municípios reincidentes listados, quais concentram o maior volume de área irregular acumulada (2022–2025)?',
+        '4. O vetor de pressão dominante muda entre Cerrado e Caatinga? Como isso afeta a priorização de fiscalização?',
+        '5. Qual a defasagem média entre detecção e publicação? Esse atraso compromete a janela útil para autuação preventiva?',
+      ]
+    case 'prodes':
+      return [
+        '1. A concordância PRODES × MapBiomas (atual no briefing) é compatível com a literatura para o Cerrado piauiense?',
+        '2. A tendência de concordância está crescendo ou caindo ano a ano? O que isso sinaliza sobre maturidade das duas plataformas?',
+        '3. Entre os vetores de pressão, qual tem MENOR concordância PRODES? Existe explicação plausível (resolução espacial, sazonalidade)?',
+        '4. Os municípios com maior área irregular PRODES-confirmada coincidem com os reincidentes do MapBiomas? Lista os 3 principais.',
+        '5. A coluna "SEM_PRODES_NO_CICLO" representa alertas pós-julho/2025. Esse vácuo institucional impacta a tomada de decisão de 2026?',
+      ]
+    case 'queimadas_bdq':
+      return [
+        '1. Em que mês ocorre o pico de área queimada? A sazonalidade observada confirma o padrão clássico do Cerrado piauiense (agosto–outubro)?',
+        '2. Quais municípios concentram >50% da área queimada total no recorte? Eles coincidem com os de maior área irregular MapBiomas?',
+        '3. Que fração da área queimada cai em classes de prioridade 4–5 (Alto e Muito Alto)? Isso indica fogo concentrado em áreas críticas para conservação?',
+        '4. A relação cicatrizes × área média indica eventos pequenos e dispersos ou poucos focos grandes? Como isso muda a resposta operacional?',
+        '5. Há municípios com classe_max_queimada=5 (Muito Alto) que ainda NÃO aparecem em outras camadas (alertas, PRODES)? Eles devem entrar em monitoramento preventivo?',
+      ]
+    case 'areas_prioritarias':
+      return [
+        '1. Qual a relação entre área florestal total e desmatamento PRODES no recorte? O percentual desmatado é compatível com a média do bioma?',
+        '2. Em que classe de prioridade (1 a 5) está concentrada a maior biomassa AGB? Essa concentração reforça a urgência de proteção dessa classe?',
+        '3. Quantos municípios têm classe máxima = 5 (Muito Alto)? Esses são alvos prioritários para créditos REDD+ ou para fiscalização?',
+        '4. O DETER (alertas pós-PRODES) sinaliza desmatamento ativo em municípios que estavam estáveis? Lista os principais.',
+        '5. A biomassa total (em tC) do recorte equivale aproximadamente a quantos MtCO₂eq se o desmatamento atual continuar? Use o fator 3,67.',
+      ]
+    case 'matopiba':
+      return [
+        '1. **Alertas MapBiomas**: o IPI MATOPIBA está acima ou abaixo do IPI estadual? A diferença sugere pressão concentrada ou distribuída?',
+        '2. **PRODES**: qual a participação do MATOPIBA-PI no irregular PRODES total do estado? Esse percentual é proporcional à área territorial (~15% do PI)?',
+        '3. **Queimadas**: quantos dos 33 municípios MATOPIBA estão afetados por fogo? A % em classe crítica (4+5) ultrapassa 50%?',
+        '4. **Áreas Prioritárias**: quantos municípios MATOPIBA estão em classe 5 (Muito Alto)? Quanta biomassa total está nessa região (em MtC)?',
+        '5. **Cruzamento**: existem municípios que aparecem como críticos em TODOS os quatro módulos? Eles seriam os candidatos a intervenção prioritária imediata.',
+      ]
+    default:
+      return [
+        '1. Os números apresentados são consistentes entre os indicadores? Identifique qualquer divergência aparente.',
+        '2. Qual o KPI mais alarmante deste recorte e o que ele exige de resposta institucional?',
+        '3. Que tendência temporal pode ser inferida dos dados (alta, queda, estabilidade)?',
+        '4. Quais municípios listados na tabela demandam ação prioritária e por quê?',
+        '5. Há informação faltante neste briefing que impediria uma decisão de gestão? Especifique.',
+      ]
+  }
 }
 
 /**
