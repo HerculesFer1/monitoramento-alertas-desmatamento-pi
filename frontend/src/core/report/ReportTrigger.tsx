@@ -12,23 +12,16 @@
  * O PDF permanece intacto (fluxo legado preservado).
  */
 import { useState, useRef, useEffect } from 'react'
-import { FileText, FileBarChart, Download, Sparkles, Copy, Check, ExternalLink } from 'lucide-react'
+import { FileText, FileBarChart, Download, Copy, Check } from 'lucide-react'
 import { ReportPreviewModal } from './ReportPreviewModal'
 import { useReportData }      from './useReportData'
 import { useReportPage }      from './useReportPage'
-import { buildBriefingMarkdown, buildPromptOrientador } from './briefing'
-
-// chatgpt.com (não chat.openai.com): mantém a sessão logada do usuário,
-// passa o prompt via ?q= e ?model= opcional. O endpoint antigo `chat.openai.com`
-// redireciona para login anônimo e perde o vínculo de conta.
-const PROVEDORES = [
-  { id: 'chatgpt' as const, nome: 'ChatGPT', url: (p: string) => `https://chatgpt.com/?q=${encodeURIComponent(p)}`, cor: '#10A37F' },
-]
+import { buildBriefingMarkdown } from './briefing'
 
 export function ReportTrigger() {
   const [open,     setOpen]      = useState(false)
   const [pdfModalOpen, setPdfModalOpen] = useState(false)
-  const [copied,   setCopied]    = useState<string | null>(null)
+  const [copied,   setCopied]    = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
   const { snapshot } = useReportData()
   const { openReport } = useReportPage()
@@ -56,29 +49,14 @@ export function ReportTrigger() {
     setPdfModalOpen(true)
     setOpen(false)
   }
-  async function acionarIA(prov: typeof PROVEDORES[number] | 'copy') {
+  async function copiarBriefing() {
     if (!snapshot) return
     const briefing = buildBriefingMarkdown(snapshot)
-
-    // Sempre copia o briefing para o clipboard — serve como fallback caso
-    // a URL seja truncada pelo navegador ou pelo servidor do ChatGPT.
     try {
       await navigator.clipboard.writeText(briefing)
     } catch (err) { console.warn('Clipboard indisponível:', err) }
-
-    const tag = prov === 'copy' ? 'copy' : prov.id
-    setCopied(tag)
-    setTimeout(() => setCopied(null), 2200)
-
-    if (prov !== 'copy') {
-      // IMPORTANTE: a URL leva APENAS o orientador curto.
-      // O briefing completo (3-8 KB) ja foi para o clipboard acima — colar
-      // tudo no `?q=` derruba o ChatGPT com HTTP 431 (Request Header Too
-      // Large). O orientador instrui o usuario a colar com Ctrl+V.
-      const orientador = buildPromptOrientador(snapshot)
-      window.open(prov.url(orientador), '_blank', 'noopener,noreferrer')
-    }
-
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2200)
     setTimeout(() => setOpen(false), 900)
   }
 
@@ -152,33 +130,16 @@ export function ReportTrigger() {
               letterSpacing: '.08em', textTransform: 'uppercase',
               borderTop: '1px solid var(--sep)', marginTop: 4,
             }}>
-              Analisar com IA externa
+              Briefing para IA
             </div>
 
-            {PROVEDORES.map(p => (
-              <Item
-                key={p.id}
-                icon={<Sparkles size={13} strokeWidth={1.8} />}
-                label={p.nome}
-                hint="Abre nova aba com briefing ja no prompt"
-                onClick={() => acionarIA(p)}
-                accent={p.cor}
-                trailing={
-                  copied === p.id
-                    ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#10B981', fontSize: 10 }}>
-                        <Check size={11} /><span>Aberto</span>
-                      </span>
-                    : <ExternalLink size={11} style={{ color: 'var(--t3)' }} />
-                }
-              />
-            ))}
             <Item
               icon={<Copy size={13} strokeWidth={1.8} />}
               label="Copiar briefing"
-              hint="Para colar em outro destino"
-              onClick={() => acionarIA('copy')}
-              accent="#6B7280"
-              trailing={copied === 'copy'
+              hint="Cole em ChatGPT/Claude/Gemini para análise"
+              onClick={copiarBriefing}
+              accent="#10A37F"
+              trailing={copied
                 ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#10B981', fontSize: 10 }}>
                     <Check size={11} /><span>Copiado</span>
                   </span>

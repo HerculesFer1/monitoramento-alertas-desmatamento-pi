@@ -199,21 +199,3 @@ function perguntasPorModulo(modulo: string): string[] {
   }
 }
 
-/**
- * Prompt curto orientador para IA — vai como query string. Mantém embaixo
- * de ~600 caracteres para caber confortavelmente em URLs (HTTP 431 estoura
- * acima de ~8 KB de header).
- *
- * O briefing inteiro vai por outro caminho: copiado para o clipboard
- * automaticamente. O orientador instrui o usuário a colar com Ctrl+V.
- */
-export function buildPromptOrientador(snapshot: ReportSnapshot): string {
-  return (
-    `Olá! Acabei de copiar para o clipboard um briefing do dashboard de ` +
-    `monitoramento REDD+ Piauí (módulo ${snapshot.nomeModulo}). ` +
-    `Por favor cole o briefing com Ctrl+V/Cmd+V e me ajude com uma ` +
-    `análise crítica: principais riscos, contradições nos indicadores ` +
-    `e recomendações para gestão ambiental. Responda em português com ` +
-    `bullets concisos. (Briefing aguarda no seu clipboard.)`
-  )
-}

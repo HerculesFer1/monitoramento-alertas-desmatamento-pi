@@ -1,210 +1,69 @@
 /**
- * AnaliseIADropdown.tsx — Botão "Analisar com IA" com submenu.
+ * AnaliseIADropdown.tsx — Botão "Copiar briefing para IA".
  *
- * Estratégia atual (simplificada):
- *   - **ChatGPT**: o briefing inteiro vai direto na URL via `?q=`; a aba
- *     abre com o prompt já preenchido no campo de mensagem.
- *   - **Copiar briefing**: copia para o clipboard, sem abrir IA.
+ * Antes oferecia abertura direta no ChatGPT via `?q=`. Removido porque o
+ * briefing (3-8 KB) estourava o limite de header do servidor (HTTP 431
+ * Request Header Fields Too Large), e o caminho de "abrir ChatGPT só com
+ * orientador" também era frágil dependendo da sessão do usuário.
  *
- * Limite prático de URL: a maioria dos navegadores aceita até ~8 KB.
- * Como fallback, mesmo no fluxo do ChatGPT o briefing tambem é copiado
- * para o clipboard — assim, se a URL for truncada, o usuario tem como
- * recuperar o conteúdo com Ctrl+V.
+ * Fluxo simplificado:
+ *   1. Usuário clica em "Copiar briefing"
+ *   2. Briefing inteiro vai para o clipboard
+ *   3. Usuário abre o ChatGPT/Claude/Gemini de sua preferência e cola (Ctrl+V)
  */
-import { useState, useRef, useEffect } from 'react'
-import { Sparkles, ChevronDown, Check, Copy, ExternalLink } from 'lucide-react'
+import { useState } from 'react'
+import { Copy, Check } from 'lucide-react'
 import type { ReportSnapshot } from './types'
-import { buildBriefingMarkdown, buildPromptOrientador } from './briefing'
-
-interface Provedor {
-  id:    'chatgpt' | 'copy'
-  nome:  string
-  url?:  (prompt: string) => string
-  cor:   string
-}
-
-const PROVEDORES: Provedor[] = [
-  {
-    id: 'chatgpt',
-    nome: 'ChatGPT',
-    url: (p) => `https://chat.openai.com/?q=${encodeURIComponent(p)}`,
-    cor: '#10A37F',
-  },
-  {
-    id: 'copy',
-    nome: 'Copiar briefing',
-    cor: '#6B7280',
-  },
-]
+import { buildBriefingMarkdown } from './briefing'
 
 interface Props {
   snapshot: ReportSnapshot
 }
 
 export function AnaliseIADropdown({ snapshot }: Props) {
-  const [open, setOpen]       = useState(false)
-  const [copied, setCopied]   = useState<string | null>(null)
-  const wrapRef               = useRef<HTMLDivElement>(null)
+  const [copied, setCopied] = useState(false)
 
-  // Fecha ao clicar fora
-  useEffect(() => {
-    if (!open) return
-    const onDoc = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
-    }
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
-
-  async function acionar(p: Provedor) {
+  async function copiarBriefing() {
     const briefing = buildBriefingMarkdown(snapshot)
-
-    // Sempre copia o briefing para o clipboard — serve como fallback caso
-    // a URL seja truncada pelo navegador ou pelo servidor da IA.
     try {
       await navigator.clipboard.writeText(briefing)
     } catch (err) {
       console.warn('Clipboard indisponível:', err)
     }
-    setCopied(p.id)
-    setTimeout(() => setCopied(null), 2200)
-
-    if (p.url) {
-      // Para o ChatGPT, montamos um prompt completo: orientador + briefing
-      // inteiro. Assim o usuario ja vê tudo pronto no campo de mensagem,
-      // sem precisar voltar ao dashboard ou colar manualmente.
-      const orientador = buildPromptOrientador(snapshot)
-      const promptCompleto = `${orientador}\n\n---\n\n${briefing}`
-      window.open(p.url(promptCompleto), '_blank', 'noopener,noreferrer')
-    }
-
-    // Mantém menu aberto por 1.2s para o usuário ver o "Copiado".
-    setTimeout(() => setOpen(false), 1200)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2200)
   }
 
   return (
-    <div ref={wrapRef} style={{ position: 'relative' }}>
-      <button
-        onClick={() => setOpen(v => !v)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '8px 14px',
-          background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-          border: 'none',
-          color: '#FFFFFF',
-          borderRadius: 8,
-          cursor: 'pointer',
-          fontSize: 13, fontWeight: 600,
-          boxShadow: '0 2px 8px rgba(99,102,241,.35)',
-          transition: 'transform .12s, box-shadow .12s',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform   = 'translateY(-1px)'
-          e.currentTarget.style.boxShadow   = '0 4px 14px rgba(99,102,241,.45)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)'
-          e.currentTarget.style.boxShadow = '0 2px 8px rgba(99,102,241,.35)'
-        }}
-      >
-        <Sparkles size={14} />
-        <span>Analisar com IA</span>
-        <ChevronDown size={12} style={{ opacity: .85, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
-      </button>
-
-      {open && (
-        <div
-          role="menu"
-          aria-label="Escolha o assistente de IA"
-          style={{
-            position: 'absolute', top: '100%', right: 0,
-            marginTop: 8,
-            minWidth: 240,
-            padding: 6,
-            background: 'var(--bg3)',
-            border: '1px solid var(--sep)',
-            borderRadius: 10,
-            boxShadow: '0 12px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.08)',
-            zIndex: 100,
-            display: 'flex', flexDirection: 'column', gap: 2,
-            animation: 'ia-pop-in .16s cubic-bezier(.2,.7,.2,1)',
-          }}
-        >
-          <div style={{
-            padding: '6px 10px 8px',
-            fontSize: 10, color: 'var(--t3)',
-            letterSpacing: '.06em', textTransform: 'uppercase',
-          }}>
-            Briefing → IA externa
-          </div>
-
-          {PROVEDORES.map(p => (
-            <button
-              key={p.id}
-              role="menuitem"
-              onClick={() => acionar(p)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 10px',
-                background: 'transparent',
-                border: 'none',
-                borderRadius: 7,
-                color: 'var(--t1)',
-                cursor: 'pointer',
-                fontSize: 12.5, fontWeight: 500,
-                textAlign: 'left',
-                transition: 'background .12s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(99,102,241,.08)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-              }}
-            >
-              <span style={{
-                width: 22, height: 22, borderRadius: 6,
-                background: `${p.cor}22`, color: p.cor,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-              }}>
-                {p.id === 'copy' ? <Copy size={12} /> : <Sparkles size={12} />}
-              </span>
-              <span style={{ flex: 1 }}>{p.nome}</span>
-              {copied === p.id ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#10B981', fontSize: 11 }}>
-                  <Check size={12} />
-                  <span>Copiado</span>
-                </span>
-              ) : p.url ? (
-                <ExternalLink size={11} style={{ color: 'var(--t3)' }} />
-              ) : null}
-            </button>
-          ))}
-
-          <div style={{
-            padding: '8px 10px 6px',
-            fontSize: 10, color: 'var(--t3)', lineHeight: 1.5,
-            borderTop: '1px solid var(--sep)', marginTop: 4,
-          }}>
-            No ChatGPT, o briefing vai direto na URL. Também fica no clipboard como fallback (Ctrl+V) caso o navegador trunque o link.
-          </div>
-
-          <style>{`
-            @keyframes ia-pop-in {
-              from { transform: translateY(-4px); opacity: 0; }
-              to   { transform: translateY(0);    opacity: 1; }
-            }
-          `}</style>
-        </div>
-      )}
-    </div>
+    <button
+      onClick={copiarBriefing}
+      aria-label="Copiar briefing para análise por IA"
+      title="Copia o briefing inteiro para o clipboard. Cole em ChatGPT/Claude/Gemini para análise."
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 8,
+        padding: '8px 14px',
+        background: copied
+          ? 'linear-gradient(135deg, #10B981 0%, #34D399 100%)'
+          : 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+        border: 'none',
+        color: '#FFFFFF',
+        borderRadius: 8,
+        cursor: 'pointer',
+        fontSize: 13, fontWeight: 600,
+        boxShadow: copied
+          ? '0 2px 8px rgba(16,185,129,.35)'
+          : '0 2px 8px rgba(99,102,241,.35)',
+        transition: 'transform .12s, box-shadow .12s, background .25s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-1px)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)'
+      }}
+    >
+      {copied ? <Check size={14} /> : <Copy size={14} />}
+      <span>{copied ? 'Briefing copiado · cole no ChatGPT' : 'Copiar briefing para IA'}</span>
+    </button>
   )
 }
