@@ -4,7 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { useMunicipiosGeoJSON } from '../../../core/lib/hooks'
 import { useAgregado } from '../../../core/lib/hooks'
 import { useAppStore } from '../../../core/store/useAppStore'
-import { fmtHa, MATOPIBA_SET } from '../../../core/lib/constants'
+import { fmtHa, MATOPIBA_SET, MATOPIBA_N_MUNICIPIOS, PI_N_MUNICIPIOS_TOTAL } from '../../../core/lib/constants'
 import { BREAKS_IPI } from '../../../modules/areas_prioritarias/types'
 import { hideNonCapitalLabels } from './basemapLabels'
 
@@ -112,11 +112,13 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
   }, [municipiosRaw, statsMap])
 
   // M10: lista textual ranqueada para fallback acessível (Top 10 por IPI).
+  // mode='matopiba' restringe o ranking aos 26 municípios do recorte.
   const top10 = useMemo(() => {
     if (!enriched) return []
     return enriched.features
       .map(f => f.properties as Record<string, unknown>)
       .filter(p => (p._ipi as number) >= 0)
+      .filter(p => mode === 'matopiba' ? Boolean(p._matopiba) : true)
       .sort((a, b) => (b._ipi as number) - (a._ipi as number))
       .slice(0, 10)
       .map(p => ({
@@ -126,7 +128,7 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
         haTotal: p._haTotal as number,
         matopiba: Boolean(p._matopiba),
       }))
-  }, [enriched])
+  }, [enriched, mode])
 
   // A4: throttle hover via requestAnimationFrame — limita a 60 FPS sem jank.
   const onMouseMove = useCallback((e: { point: { x: number; y: number }; features?: GeoJSON.Feature[] }) => {
@@ -159,8 +161,15 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
     }
   }, [focusedIdx, top10])
 
+  // mode='matopiba': colore os 26 municípios MATOPIBA pelo IPI (mesma escala
+  // BREAKS_IPI do modo 'ipi') e deixa cinza fora do recorte.
   const fillColor = mode === 'matopiba'
-    ? ['case', ['==', ['get', '_matopiba'], true], '#F59E0B', '#2C2C2C'] as unknown as string
+    ? [
+        'case',
+        ['!=', ['get', '_matopiba'], true], '#2C2C2C',
+        ['<', ['get', '_ipi'], 0],         '#3C3C3C',
+        IPI_PAINT_INTERPOLATE,
+      ] as unknown as string
     : [
         'case',
         ['<', ['get', '_ipi'], 0], '#2C2C2C',
@@ -168,7 +177,12 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
       ] as unknown as string
 
   const fillOpacity = mode === 'matopiba'
-    ? ['case', ['==', ['get', '_matopiba'], true], 0.75, 0.2] as unknown as number
+    ? [
+        'case',
+        ['!=', ['get', '_matopiba'], true], 0.12,   // fora do recorte: bem suave
+        ['<', ['get', '_ipi'], 0],          0.35,   // dentro mas sem dado
+        0.82,                                       // dentro com IPI: destaque
+      ] as unknown as number
     : ['case', ['<', ['get', '_ipi'], 0], 0.15, 0.72] as unknown as number
 
   return (
@@ -301,13 +315,19 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
           </>
         ) : (
           <>
-            <div style={{ color: textLabel, fontWeight: 600, marginBottom: 6, fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>Território</div>
-            {([['#F59E0B','MATOPIBA-PI'],[theme === 'light' ? '#CCCCCC' : '#2C2C2C','Demais municípios']] as [string,string][]).map(([c,l]) => (
-              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                <span style={{ width: 12, height: 12, borderRadius: 2, background: c, border: `1px solid ${panelBorder}`, flexShrink: 0, display: 'inline-block' }} aria-hidden="true" />
-                <span style={{ color: textMuted }}>{l}</span>
+            <div style={{ color: textLabel, fontWeight: 600, marginBottom: 6, fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+              IPI no MATOPIBA-PI ({BREAKS_IPI.unit})
+            </div>
+            {BREAKS_IPI.colors.map((c, i) => (
+              <div key={BREAKS_IPI.labels[i]} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <span style={{ width: 12, height: 12, borderRadius: 2, background: c, flexShrink: 0, display: 'inline-block' }} aria-hidden="true" />
+                <span style={{ color: textMuted }}>{BREAKS_IPI.labels[i]}</span>
               </div>
             ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, paddingTop: 6, borderTop: `1px solid ${panelBorder}` }}>
+              <span style={{ width: 12, height: 12, borderRadius: 2, background: theme === 'light' ? '#CCCCCC' : '#2C2C2C', opacity: 0.4, border: `1px solid ${panelBorder}`, flexShrink: 0, display: 'inline-block' }} aria-hidden="true" />
+              <span style={{ color: textMuted, fontSize: 10 }}>Fora do recorte ({PI_N_MUNICIPIOS_TOTAL - MATOPIBA_N_MUNICIPIOS} demais)</span>
+            </div>
           </>
         )}
       </div>

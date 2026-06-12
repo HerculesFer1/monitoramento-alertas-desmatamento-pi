@@ -232,15 +232,18 @@ add_para(doc,
     "dois biomas predominantes — Cerrado e Caatinga — e o período de 2022 a 2025. "
     "Dentro desse recorte, existe um sub-recorte de especial relevância jurídica:")
 
-add_bullet(doc, "MATOPIBA — região agrícola de fronteira definida pelo Decreto Federal nº 8.447/2015, que abrange 26 municípios do sudoeste piauiense. Este recorte é monitorado separadamente por sua alta incidência de desmatamento e relevância para políticas de regularização fundiária.")
+add_bullet(doc, "MATOPIBA — região agrícola de fronteira instituída pelo Decreto Federal nº 8.447/2015 e delimitada pela Portaria MAPA nº 244/2015, que abrange 33 municípios do sudoeste piauiense. Este recorte é monitorado separadamente por sua alta incidência de desmatamento e relevância para políticas de regularização fundiária.")
 
-add_para(doc, "Os 26 municípios piauienses do MATOPIBA são:")
+add_para(doc, "Os 33 municípios piauienses do MATOPIBA são:")
 add_para(doc,
-    "Alvorada do Gurguéia · Avelino Lopes · Baixa Grande do Ribeiro · Bom Jesus · Caracol · "
-    "Colônia do Gurguéia · Corrente · Cristino Castro · Curimatá · Currais · Eliseu Martins · "
-    "Gilbués · Guadalupe · Jurema · Landri Sales · Manoel Emídio · Monteiro do Piauí · "
-    "Monte Alegre do Piauí · Palmeira do Piauí · Parnaguá · Redenção do Gurguéia · "
-    "Santa Filomena · Santa Luz · São Gonçalo do Gurguéia · Sebastião Barros · Uruçuí",
+    "Alvorada do Gurguéia · Antônio Almeida · Avelino Lopes · Baixa Grande do Ribeiro · "
+    "Barreiras do Piauí · Bertolínia · Bom Jesus · Colônia do Gurguéia · Corrente · "
+    "Cristalândia do Piauí · Cristino Castro · Curimatá · Currais · Eliseu Martins · "
+    "Gilbués · Júlio Borges · Landri Sales · Manoel Emídio · Marcos Parente · "
+    "Monte Alegre do Piauí · Morro Cabeça no Tempo · Palmeira do Piauí · Parnaguá · "
+    "Porto Alegre do Piauí · Redenção do Gurguéia · Riacho Frio · Ribeiro Gonçalves · "
+    "Santa Filomena · Santa Luz · São Gonçalo do Gurguéia · Sebastião Barros · "
+    "Sebastião Leal · Uruçuí",
     color=CINZA_MED, indent=True)
 
 doc.add_paragraph()

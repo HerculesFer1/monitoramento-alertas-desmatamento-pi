@@ -6,9 +6,13 @@ import {
 import { ErrorBoundary }  from '../../shared/components/ErrorBoundary'
 import { StatusBadge }    from '../../shared/components/StatusBadge'
 import { ChoroplethMap }  from '../../shared/components/Map/ChoroplethMap'
-import { useResumoMatopiba, useMatopibaMunicipios, useResumoAnual } from '../../core/lib/hooks'
+import {
+  useResumoMatopibaClient as useResumoMatopiba,
+  useMatopibaMunicipiosClient as useMatopibaMunicipios,
+} from '../matopiba/hooks/useMatopibaAlertasClient'
+import { useResumoAnual } from '../../core/lib/hooks'
 import { isSupabaseConfigured }                                      from '../../core/lib/supabase'
-import { ipiYr, matopibaYr, YEARS, fmtHa }                          from '../../core/lib/constants'
+import { ipiYr, matopibaYr, YEARS, fmtHa, MATOPIBA_N_MUNICIPIOS }   from '../../core/lib/constants'
 
 const TT = {
   background: '#222222', border: '1px solid rgba(255,255,255,.08)',
@@ -16,7 +20,6 @@ const TT = {
 }
 
 const MAT_COLOR = '#F59E0B'
-const MAT_BG    = 'rgba(245,158,11,.1)'
 
 function DeltaBadge({ v }: { v: number | null }) {
   if (v === null) return <span style={{ color: 'var(--t3)', fontSize: 10 }}>—</span>
@@ -69,7 +72,11 @@ export function MatopibaView() {
     'Restante PI': getHaIrrRest(a),
   }))
 
-  const topMunicipios = (municipios ?? []).slice(0, 10)
+  // Top 10 do recorte ordenados por IPI (pct_irregular) — independente
+  // do ranking padrão do RPC, que ordena por ha_irregular.
+  const topMunicipios = [...(municipios ?? [])]
+    .sort((a, b) => (b.pct_irregular ?? 0) - (a.pct_irregular ?? 0))
+    .slice(0, 10)
 
   return (
     <div className="view-with-map">
@@ -77,7 +84,7 @@ export function MatopibaView() {
 
         {/* KPIs */}
         <div className="bento">
-          <div className="kpi-card b-3" style={{ borderColor: 'rgba(245,158,11,.25)', background: MAT_BG }}>
+          <div className="kpi-card b-3">
             <div className="kpi-label">IPI MATOPIBA 2025 <StatusBadge live={isLive} /></div>
             <div className="kpi-value" style={{ color: MAT_COLOR, fontSize: 30 }}>
               {isLive ? `${ipiMat2025.toFixed(1)}%` : '—'}
@@ -93,8 +100,8 @@ export function MatopibaView() {
 
           <div className="kpi-card b-3">
             <div className="kpi-label">Municípios MATOPIBA-PI</div>
-            <div className="kpi-value" style={{ color: MAT_COLOR }}>26</div>
-            <div className="kpi-sub">Decreto Federal 8.447/2015</div>
+            <div className="kpi-value" style={{ color: MAT_COLOR }}>{MATOPIBA_N_MUNICIPIOS}</div>
+            <div className="kpi-sub">Portaria MAPA 244/2015</div>
           </div>
 
           <div className="kpi-card b-3">

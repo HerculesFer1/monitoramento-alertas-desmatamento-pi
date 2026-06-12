@@ -126,7 +126,7 @@ function defaultView(m: Module): string {
   switch (m) {
     case 'mapbiomas': return 'executiva'
     case 'prodes':    return 'visao_geral'
-    case 'matopiba':  return 'territorial'
+    case 'matopiba':  return 'visao_geral'
     case 'dados':     return 'gestao'
     case 'areas_prioritarias': return 'visao_geral'
     case 'queimadas_bdq':      return 'visao_geral'

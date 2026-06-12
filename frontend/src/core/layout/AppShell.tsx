@@ -22,8 +22,14 @@ const ProdesTemporal     = React.lazy(() => import('../../modules/prodes_cerrado
 const ProdesMunicipal    = React.lazy(() => import('../../modules/prodes_cerrado/views/MunicipalView').then(m => ({ default: m.MunicipalView })))
 const ProdesComparativa  = React.lazy(() => import('../../modules/prodes_cerrado/views/ComparativaView').then(m => ({ default: m.ComparativaView })))
 const ProdesRanking      = React.lazy(() => import('../../modules/prodes_cerrado/views/RankingView').then(m => ({ default: m.RankingView })))
-const MatopibaView    = React.lazy(() => import('../../modules/alertas_mapbiomas/MatopibaView').then(m => ({ default: m.MatopibaView })))
 const DadosView       = React.lazy(() => import('../../modules/dados/DadosView').then(m => ({ default: m.DadosView })))
+
+// ── Lazy views — matopiba (panorama transversal) ───────────────────────────
+const MAT_VisaoGeral         = React.lazy(() => import('../../modules/matopiba').then(m => ({ default: m.VisaoGeralView })))
+const MAT_Alertas            = React.lazy(() => import('../../modules/matopiba').then(m => ({ default: m.AlertasView })))
+const MAT_Prodes             = React.lazy(() => import('../../modules/matopiba').then(m => ({ default: m.ProdesView })))
+const MAT_Queimadas          = React.lazy(() => import('../../modules/matopiba').then(m => ({ default: m.QueimadasView })))
+const MAT_AreasPrioritarias  = React.lazy(() => import('../../modules/matopiba').then(m => ({ default: m.AreasPrioritariasView })))
 
 // ── Lazy views — queimadas_bdq ─────────────────────────────────────────────
 const QB_VisaoGeralView  = React.lazy(() => import('../../modules/queimadas_bdq/views/VisaoGeralView').then(m => ({ default: m.VisaoGeralView })))
@@ -74,7 +80,13 @@ const MODULE_VIEWS: Record<Module, { id: string; label: string }[]> = {
     { id: 'ranking',      label: 'Top Municípios' },
     { id: 'concordancia', label: 'PRODES vs MapBiomas' },
   ],
-  matopiba: [{ id: 'territorial',  label: 'Visão Territorial' }],
+  matopiba: [
+    { id: 'visao_geral',         label: 'Visão Geral' },
+    { id: 'alertas',             label: 'Alertas MapBiomas' },
+    { id: 'prodes',              label: 'PRODES Cerrado' },
+    { id: 'queimadas',           label: 'Queimadas BD-INPE' },
+    { id: 'areas_prioritarias',  label: 'Áreas Prioritárias' },
+  ],
   dados:    [],
   areas_prioritarias: [
     { id: 'visao_geral',       label: 'Visão Geral' },
@@ -198,6 +210,11 @@ export function AppShell() {
     if (activeModule === 'queimadas_bdq' && activeView === 'metodologia') {
       setActiveView('visao_geral')
     }
+    // Migracao: MATOPIBA deixou de ter uma unica view `territorial` e virou
+    // panorama transversal com 5 abas. Aponta o usuario para a Visao Geral.
+    if (activeModule === 'matopiba' && activeView === 'territorial') {
+      setActiveView('visao_geral')
+    }
   }, [activeModule, activeView, setActiveView])
 
   // Limpa a selecao de Metodologia quando o usuario troca de modulo
@@ -279,7 +296,11 @@ export function AppShell() {
                 {activeModule === 'prodes'    && activeView === 'comparativa'  && <ProdesComparativa />}
                 {activeModule === 'prodes'    && activeView === 'ranking'      && <ProdesRanking />}
                 {activeModule === 'prodes'    && activeView === 'concordancia' && <ProdesView />}
-                {activeModule === 'matopiba'  && <MatopibaView />}
+                {activeModule === 'matopiba'  && activeView === 'visao_geral'        && <MAT_VisaoGeral />}
+                {activeModule === 'matopiba'  && activeView === 'alertas'            && <MAT_Alertas />}
+                {activeModule === 'matopiba'  && activeView === 'prodes'             && <MAT_Prodes />}
+                {activeModule === 'matopiba'  && activeView === 'queimadas'          && <MAT_Queimadas />}
+                {activeModule === 'matopiba'  && activeView === 'areas_prioritarias' && <MAT_AreasPrioritarias />}
                 {activeModule === 'dados'     && <DadosView />}
                 {activeModule === 'areas_prioritarias' && activeView === 'visao_geral'       && <VisaoGeralView />}
                 {activeModule === 'areas_prioritarias' && activeView === 'municipal'         && <MunicipalView_AP />}

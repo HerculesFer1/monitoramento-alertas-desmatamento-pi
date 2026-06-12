@@ -5,6 +5,7 @@ import type { ReportSnapshot } from '../../types'
 import type { MatopibaResumo, MatopibaMunicipio } from '../../../lib/queries'
 import { METODOLOGIAS } from '../../../methodology/content'
 import { fmtHectares, fmtPct, fmtNumero, citaFonte } from '../prose'
+import { MATOPIBA_N_MUNICIPIOS, PI_N_MUNICIPIOS_TOTAL } from '../../../lib/constants'
 
 interface MatopibaInput {
   ano: number | 'all'
@@ -56,7 +57,7 @@ export function buildMatopibaSnapshot(input: MatopibaInput): ReportSnapshot {
     {
       rotulo: 'Municípios reincidentes',
       valor:  fmtNumero(nReinc),
-      contexto: nMun > 0 ? `${fmtPct((nReinc / 26) * 100)} dos 26 municípios MATOPIBA-PI` : undefined,
+      contexto: nMun > 0 ? `${fmtPct((nReinc / MATOPIBA_N_MUNICIPIOS) * 100)} dos ${MATOPIBA_N_MUNICIPIOS} municípios MATOPIBA-PI` : undefined,
       cor: '#F59E0B',
     },
   ]
@@ -70,23 +71,23 @@ export function buildMatopibaSnapshot(input: MatopibaInput): ReportSnapshot {
   const muniCritico = topMun[0]
 
   const resumoExecutivo: string[] = [
-    `Em ${anoRef}, os 26 municípios piauienses pertencentes à região MATOPIBA registraram área total alertada de ${fmtHectares(haTotal)}. Dessa área, ${fmtHectares(haIrr)} (${fmtPct(haTotal > 0 ? (haIrr / haTotal) * 100 : 0)}) foi classificada como IRREGULAR.`,
-    `O Índice de Pressão Irregular (IPI) da região atingiu ${fmtPct(ipi)}${deltaYoY != null
+    `Este relatório consolida o Panorama MATOPIBA-PI: um recorte transversal dos quatro módulos do dashboard (Alertas MapBiomas, PRODES Cerrado, Queimadas BD-INPE e Áreas Prioritárias REDD+) limitado aos ${MATOPIBA_N_MUNICIPIOS} municípios piauienses definidos pela Portaria MAPA nº 244/2015, anexa ao Decreto Federal nº 8.447/2015.`,
+    `Em ${anoRef}, esses ${MATOPIBA_N_MUNICIPIOS} municípios registraram área total alertada (MapBiomas) de ${fmtHectares(haTotal)}. Dessa área, ${fmtHectares(haIrr)} (${fmtPct(haTotal > 0 ? (haIrr / haTotal) * 100 : 0)}) foi classificada como IRREGULAR — o Índice de Pressão Irregular (IPI) da região atingiu ${fmtPct(ipi)}${deltaYoY != null
       ? `, variando ${deltaYoY >= 0 ? '+' : ''}${fmtNumero(deltaYoY, 1)} pp em relação a ${anoRef - 1}.`
       : '.'
     }`,
-    `Foram identificados ${fmtNumero(nReinc)} municípios em estado de reincidência (IRREGULAR detectado em 3 ou mais anos consecutivos no período monitorado).`,
+    `Foram identificados ${fmtNumero(nReinc)} municípios em estado de reincidência (IRREGULAR detectado em 3 ou mais anos consecutivos). As métricas de PRODES, Queimadas e Áreas Prioritárias para o mesmo recorte estão disponíveis nas abas correspondentes do dashboard (Panorama MATOPIBA › Visão Geral) e nas RPCs _matopiba do Supabase (migration 015).`,
   ]
 
   const analise: string[] = [
-    'A região MATOPIBA-PI, definida pelo Decreto Federal nº 8.447/2015, concentra 26 dos 224 municípios do Piauí. É uma fronteira agrícola estratégica para o país, com pressão antrópica consolidada sobre Cerrado.',
+    `A região MATOPIBA-PI, instituída pelo Decreto Federal nº 8.447/2015 e delimitada pela Portaria MAPA nº 244/2015, concentra ${MATOPIBA_N_MUNICIPIOS} dos ${PI_N_MUNICIPIOS_TOTAL} municípios do Piauí. É uma fronteira agrícola estratégica para o país, com pressão antrópica consolidada sobre Cerrado, o que justifica seu tratamento como camada de análise (não filtro opcional) em todos os módulos do dashboard.`,
     muniCritico
-      ? `O município com maior área IRREGULAR no período foi ${muniCritico.municipio}, com ${fmtHectares(muniCritico.ha_irregular)} (${fmtPct(muniCritico.pct_irregular ?? 0)} do total alertado nesse município). Este valor representa uma referência operacional para priorização de fiscalização — não atestado de responsabilização institucional.`
+      ? `O município com maior área IRREGULAR no período (recorte MapBiomas) foi ${muniCritico.municipio}, com ${fmtHectares(muniCritico.ha_irregular)} (${fmtPct(muniCritico.pct_irregular ?? 0)} do total alertado nesse município). Este valor representa uma referência operacional para priorização de fiscalização — não atestado de responsabilização institucional.`
       : 'Não há dados de municípios disponíveis para o período selecionado.',
     nReinc > 0
-      ? `A presença de ${fmtNumero(nReinc)} municípios reincidentes (alerta IRREGULAR em pelo menos 3 anos consecutivos) sugere padrão estrutural de pressão — diferente de eventos pontuais. Recomenda-se análise institucional dedicada para esses casos.`
+      ? `A presença de ${fmtNumero(nReinc)} municípios reincidentes (alerta IRREGULAR em pelo menos 3 anos consecutivos) sugere padrão estrutural de pressão — diferente de eventos pontuais. Recomenda-se cruzar este resultado com (i) o ranking PRODES Cerrado, (ii) a sazonalidade de queimadas e (iii) a classe de prioridade REDD+ desses mesmos municípios, todos disponíveis nas demais abas do panorama.`
       : 'Não há municípios em reincidência no período monitorado.',
-    'A comparação com outros estados da região MATOPIBA (Maranhão, Tocantins, Bahia) não está implementada nesta versão — o escopo institucional atual cobre apenas o Piauí.',
+    'A comparação com outros estados da região MATOPIBA (Maranhão, Tocantins, Bahia) não está implementada — o escopo institucional atual cobre apenas o Piauí. As tabelas detalhadas de PRODES, Queimadas e Áreas Prioritárias no recorte MATOPIBA não são reproduzidas neste PDF, sendo acessíveis exclusivamente pelas abas correspondentes no dashboard.',
   ]
 
   let tabela: ReportSnapshot['tabela']
@@ -108,7 +109,7 @@ export function buildMatopibaSnapshot(input: MatopibaInput): ReportSnapshot {
 
   return {
     modulo:      'matopiba',
-    nomeModulo:  'Panorama MATOPIBA',
+    nomeModulo:  'Panorama MATOPIBA — recorte transversal',
     moduloChave: 'MATOPIBA',
     corModulo:   '#D97706',
     ano,
@@ -125,6 +126,9 @@ export function buildMatopibaSnapshot(input: MatopibaInput): ReportSnapshot {
     limitacoes: meto.limitacoes.paragrafos,
     fontes: [
       citaFonte('MapBiomas Alerta (GraphQL API v2)'),
+      citaFonte('PRODES Cerrado / INPE (TerraBrasilis WFS)'),
+      citaFonte('Banco de Dados de Queimadas / INPE (AQ1km V6 Coleção 2)'),
+      citaFonte('Áreas Prioritárias REDD+ (5 classes AHP × PRODES × biomassa)'),
       citaFonte('SINAFLOR+ / IBAMA (WFS ArcGIS)'),
       citaFonte('SEMARH-PI (DERADSAs 2024–2025)'),
       citaFonte('Decreto Federal nº 8.447/2015 (delimitação MATOPIBA)'),

@@ -49,35 +49,43 @@ SUFIXO_CLASSE: Final[dict[str, str]] = {
     "IRREGULAR":               "IRR",
 }
 
-# ── Municípios MATOPIBA — Piauí (Decreto Federal nº 8.447/2015) ───────────
+# ── Municípios MATOPIBA — Piauí (Portaria MAPA nº 244/2015) ───────────────
+# Lei base: Decreto Federal nº 8.447/2015 (criou o PDA-Matopiba);
+# Anexo com a lista: Portaria MAPA nº 244, de 12/11/2015 — 33 municípios PI.
 # frozenset: imutável, O(1) de lookup, hashável.
-# 26 municípios piauienses da região MATOPIBA.
 MATOPIBA_PI: Final[frozenset[str]] = frozenset({
     "Alvorada do Gurguéia",
+    "Antônio Almeida",
     "Avelino Lopes",
     "Baixa Grande do Ribeiro",
+    "Barreiras do Piauí",
+    "Bertolínia",
     "Bom Jesus",
-    "Caracol",
     "Colônia do Gurguéia",
     "Corrente",
+    "Cristalândia do Piauí",
     "Cristino Castro",
     "Curimatá",
     "Currais",
     "Eliseu Martins",
     "Gilbués",
-    "Guadalupe",
-    "Jurema",
+    "Júlio Borges",
     "Landri Sales",
     "Manoel Emídio",
-    "Monteiro do Piauí",
+    "Marcos Parente",
     "Monte Alegre do Piauí",
+    "Morro Cabeça no Tempo",
     "Palmeira do Piauí",
     "Parnaguá",
+    "Porto Alegre do Piauí",
     "Redenção do Gurguéia",
+    "Riacho Frio",
+    "Ribeiro Gonçalves",
     "Santa Filomena",
     "Santa Luz",
     "São Gonçalo do Gurguéia",
     "Sebastião Barros",
+    "Sebastião Leal",
     "Uruçuí",
 })
 

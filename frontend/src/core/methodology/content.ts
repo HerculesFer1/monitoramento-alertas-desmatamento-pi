@@ -142,14 +142,14 @@ export const METODOLOGIAS: Record<Module, Metodologia> = {
     pergunta: {
       titulo: 'O que este módulo responde',
       paragrafos: [
-        'Como está a pressão de desmatamento nos 26 municípios piauienses que pertencem à região MATOPIBA — fronteira agrícola estratégica do Brasil.',
+        'Como está a pressão de desmatamento nos 33 municípios piauienses que pertencem à região MATOPIBA — fronteira agrícola estratégica do Brasil.',
         'Permite comparar a região MATOPIBA com o restante do estado, identificar municípios reincidentes e acompanhar a variação ano a ano.',
       ],
     },
     fontes: {
       titulo: 'De onde vêm os dados',
       paragrafos: [
-        'A delimitação dos 26 municípios MATOPIBA piauienses vem do Decreto Federal nº 8.447/2015.',
+        'A delimitação dos 33 municípios MATOPIBA piauienses vem da Portaria MAPA nº 244/2015, anexa ao Decreto Federal nº 8.447/2015.',
         'Os dados de desmatamento são os mesmos do módulo MapBiomas Alertas, filtrados para esses municípios.',
         'Nenhuma fonte adicional — é um recorte territorial sobre dados existentes.',
       ],
@@ -157,7 +157,7 @@ export const METODOLOGIAS: Record<Module, Metodologia> = {
     como_calcula: {
       titulo: 'Como o cálculo é feito',
       paragrafos: [
-        '1. Filtra a tabela agregada por município × ano apenas para os 26 municípios MATOPIBA.',
+        '1. Filtra a tabela agregada por município × ano apenas para os 33 municípios MATOPIBA.',
         '2. Calcula um ranking interno de pressão irregular dentro da região (cada município ganha posição).',
         '3. Calcula o "delta IPI year-over-year" — variação do índice de pressão de um ano para o próximo (positivo = piora, negativo = melhora).',
         '4. Marca como REINCIDENTE qualquer município com IRREGULAR em 3 ou mais anos consecutivos.',
