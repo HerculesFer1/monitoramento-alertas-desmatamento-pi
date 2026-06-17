@@ -11,18 +11,20 @@ import { createClient } from '@supabase/supabase-js'
 //   1. import.meta.env.VITE_* e substituido em build-time pelo Vite.
 //   2. Se o ambiente de build (GitHub Actions / Vercel) tiver o secret
 //      vazio, errado ou apontando para outro projeto, todo o dashboard
-//      cai (foi exatamente o que aconteceu em 2026-06-03 quando o
-//      Vercel build pegou o secret antigo apontando para ubcejvbnpuyouwpphryc).
-//   3. Com este fallback, o frontend SEMPRE aponta para o projeto correto
-//      enquanto os secrets servem apenas para staging/preview eventual.
-//   4. Migracao futura: trocar estas 2 constantes e fazer redeploy.
+//      cai. O fallback garante que o site sempre encontre dados.
+//   3. Migracao futura: trocar estas 2 constantes e fazer redeploy.
 //
-// Anon key abaixo expira em 2036-04-26 (exp: 2093076476).
-const FALLBACK_SUPABASE_URL  = 'https://ssqriwgrxievcmxauegv.supabase.co'
+// Projeto correto: ubcejvbnpuyouwpphryc (org "SEMARH" / "Monitoramento de
+// Alertas de Desmatamento"). O projeto pessoal ssqriwgrxievcmxauegv
+// (org "HerculesFer's Org") foi usado por engano em 2026-06-02..06-17;
+// historico corrigido na sessao de 2026-06-17.
+//
+// Anon key abaixo expira em 2036-... (exp: 2094780076).
+const FALLBACK_SUPABASE_URL  = 'https://ubcejvbnpuyouwpphryc.supabase.co'
 const FALLBACK_SUPABASE_ANON =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' +
-  '.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzcXJpd2dyeGlldmNteGF1ZWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MDA0NzYsImV4cCI6MjA5MzA3NjQ3Nn0' +
-  '.AqVdc_n9R_OfWNkl8fKMdA4IhUlaDhoz3YaElCuugaM'
+  '.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViY2VqdmJucHV5b3V3cHBocnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMDQwNzYsImV4cCI6MjA5NDc4MDA3Nn0' +
+  '.B2TpDY9ta2y0xPplgKDF54JuTHR-nmzUpozZHxI0yP8'
 
 const envUrl = import.meta.env.VITE_SUPABASE_URL  as string | undefined
 const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
@@ -30,7 +32,7 @@ const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 // URL e key sao SEMPRE pareadas — ou ambas vem do secret (so se a URL apontar
 // para o projeto correto), ou ambas caem no fallback. Misturar URL nova com
 // key velha causa 401 "Invalid API key" e quebra silenciosamente o frontend.
-const envIsValid = Boolean(envUrl && envUrl.includes('ssqriwgrxievcmxauegv') && envKey)
+const envIsValid = Boolean(envUrl && envUrl.includes('ubcejvbnpuyouwpphryc') && envKey)
 const url = envIsValid ? envUrl! : FALLBACK_SUPABASE_URL
 const key = envIsValid ? envKey! : FALLBACK_SUPABASE_ANON
 
@@ -38,7 +40,7 @@ export const isSupabaseConfigured = Boolean(url && key)
 
 if (envUrl && !envIsValid) {
   console.warn(
-    `[supabase] VITE_SUPABASE_URL/KEY incompativeis com o projeto atual (${envUrl}). ` +
+    `[supabase] VITE_SUPABASE_URL/KEY incompativeis com o projeto institucional (${envUrl}). ` +
     `Usando fallback ${FALLBACK_SUPABASE_URL}.`,
   )
 }
