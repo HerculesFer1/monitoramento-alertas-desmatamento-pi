@@ -1,6 +1,6 @@
 /**
  * index.tsx — módulo queimadas_bdq
- * Exports das 5 views + tipos para consumo pelo AppShell.
+ * Exports das 7 views + tipos para consumo pelo AppShell.
  */
 export { VisaoGeralView }  from './views/VisaoGeralView'
 export { ClassesView }     from './views/ClassesView'
