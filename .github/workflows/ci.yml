@@ -43,8 +43,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Instalar ruff
-        run: pip install ruff
+      - name: Instalar ruff + dotenv
+        # python-dotenv é importado por core/config.py, que é importado pelos
+        # manifests dos módulos no step "Validar manifests" abaixo.
+        run: pip install ruff python-dotenv
 
       - name: Lint core/ modules/
         run: ruff check core/ modules/ --select E,F,W,I --ignore E501
