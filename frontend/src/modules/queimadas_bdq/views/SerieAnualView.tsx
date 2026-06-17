@@ -94,11 +94,12 @@ export function SerieAnualView() {
                   label={{ value: '% prio.', angle: 90, position: 'insideRight', fill: 'var(--t3)', fontSize: 10 }} />
                 <Tooltip
                   contentStyle={{ background: '#0A0A0A', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 11 }}
-                  formatter={(v: unknown, name: string) => {
-                    if (typeof v !== 'number') return ['—', name]
-                    if (name === 'pct_prioritaria') return [`${fmt(v, 1)}%`, '% em prioritárias']
-                    if (name === 'area_ha') return [`${fmt(v)} ha`, 'Área queimada']
-                    return [fmt(v), name]
+                  formatter={(v, name) => {
+                    const label = String(name ?? '')
+                    if (typeof v !== 'number') return ['—', label]
+                    if (label === 'pct_prioritaria') return [`${fmt(v, 1)}%`, '% em prioritárias']
+                    if (label === 'area_ha')        return [`${fmt(v)} ha`,   'Área queimada']
+                    return [fmt(v), label]
                   }}
                   labelStyle={{ color: 'var(--t1)', fontWeight: 600 }}
                 />
