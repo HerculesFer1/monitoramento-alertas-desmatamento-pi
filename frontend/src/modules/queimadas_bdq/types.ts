@@ -14,7 +14,30 @@ export type QueimadasViewId =
   | 'classes'
   | 'municipal'
   | 'temporal'
+  | 'serie_anual'
+  | 'recorrencia'
   | 'metodologia'
+
+// ── Série anual (multi-ano 2022–2025) ─────────────────────────────────────────
+
+export interface QueimadasSerieAnualItem {
+  ano:                  number
+  area_ha:              number
+  n_cicatrizes:         number
+  municipios_afetados:  number
+  area_prioritaria_ha:  number
+  pct_prioritaria:      number
+}
+
+// ── Recorrência de fogo (IRF) ────────────────────────────────────────────────
+
+export interface QueimadasRecorrenciaItem {
+  municipio_cod:  string
+  municipio_nome: string
+  anos_com_fogo:  number
+  irf:            number   // 0..1
+  area_total_ha:  number
+}
 
 // ── Escala de cor choropleth (área queimada) ──────────────────────────────────
 

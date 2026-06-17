@@ -14,7 +14,7 @@ export type ProdesView    = 'visao_geral' | 'temporal' | 'ranking' | 'concordanc
 export type MatopibaView  = 'territorial'
 export type DadosView     = 'gestao'
 export type AreasViewId      = 'visao_geral' | 'municipal' | 'prodes_prioridade' | 'ranking' | 'biomassa'
-export type QueimadasViewId  = 'visao_geral' | 'classes' | 'municipal' | 'temporal' | 'metodologia'
+export type QueimadasViewId  = 'visao_geral' | 'classes' | 'municipal' | 'temporal' | 'serie_anual' | 'recorrencia' | 'metodologia'
 
 /** Município selecionado — payload para fitBounds no MapLibre GL */
 export interface MunicipioSelecionado {

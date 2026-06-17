@@ -2,12 +2,13 @@
  * MunicipalView.tsx — queimadas_bdq
  * Mapa interativo + card lateral + seletor de mês.
  */
-import { useState }                  from 'react'
+import { useState, useMemo }         from 'react'
 import { useAppStore }               from '../../../core/store/useAppStore'
 import { useQueimadasMunicipiosMes } from '../hooks/useQueimadasMunicipiosMes'
 import { QueimadasMap }              from '../components/QueimadasMap'
 import { QueimadasCard }             from '../components/QueimadasCard'
 import { MesSeletor }                from '../components/MesSeletor'
+import { PriorityToggle }            from '../components/PriorityToggle'
 import type { QueimadasMunicipio }   from '../types'
 
 export function MunicipalView() {
@@ -16,10 +17,25 @@ export function MunicipalView() {
   const ano        = anoFiltro === 'all' ? 2025 : anoFiltro
 
   const [selectedMun, setSelectedMun] = useState<QueimadasMunicipio | null>(null)
+  const [priorityOnly, setPriorityOnly] = useState(false)
 
   // useQueimadasMunicipiosMes: quando selectedMes está definido, busca dados
   // do mês via get_qb_municipios_mes (Migration 012); caso contrário usa dados anuais.
   const { data: muns, isLoading } = useQueimadasMunicipiosMes(ano, selectedMes ?? null)
+
+  // Filtro "Prioridade alta": mesmo critério da Visão Geral —
+  // classe_max_queimada ∈ {4,5} E pct_area_prioritaria > 50%.
+  const destacadosMuns = useMemo(() => {
+    if (!muns) return null
+    return muns.filter(m =>
+      m.classe_max_queimada != null && m.classe_max_queimada >= 4 &&
+      m.pct_area_prioritaria != null && m.pct_area_prioritaria > 50,
+    )
+  }, [muns])
+  const highlightCods = useMemo<Set<string> | null>(() => {
+    if (!priorityOnly || !destacadosMuns) return null
+    return new Set(destacadosMuns.map(m => m.municipio_cod))
+  }, [priorityOnly, destacadosMuns])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%' }}>
@@ -50,8 +66,17 @@ export function MunicipalView() {
                 municipios={muns ?? []}
                 selectedMes={selectedMes}
                 onSelectMunicipio={setSelectedMun}
+                highlightCods={highlightCods}
               />
           }
+
+          {/* Toggle "Prioridade alta" — mesmo da Visão Geral */}
+          <PriorityToggle
+            active={priorityOnly}
+            disabled={isLoading || !destacadosMuns}
+            count={destacadosMuns?.length ?? 0}
+            onToggle={() => setPriorityOnly(v => !v)}
+          />
         </div>
 
         {/* Card lateral */}

@@ -36,6 +36,8 @@ const QB_VisaoGeralView  = React.lazy(() => import('../../modules/queimadas_bdq/
 const QB_ClassesView     = React.lazy(() => import('../../modules/queimadas_bdq/views/ClassesView').then(m => ({ default: m.ClassesView })))
 const QB_MunicipalView   = React.lazy(() => import('../../modules/queimadas_bdq/views/MunicipalView').then(m => ({ default: m.MunicipalView })))
 const QB_TemporalView    = React.lazy(() => import('../../modules/queimadas_bdq/views/TemporalView').then(m => ({ default: m.TemporalView })))
+const QB_SerieAnualView  = React.lazy(() => import('../../modules/queimadas_bdq/views/SerieAnualView').then(m => ({ default: m.SerieAnualView })))
+const QB_RecorrenciaView = React.lazy(() => import('../../modules/queimadas_bdq/views/RecorrenciaView').then(m => ({ default: m.RecorrenciaView })))
 // Aba "Metodologia" do queimadas foi removida em 2026-06-03 — conteudo
 // migrado para o drawer global de Metodologia (acessivel pelo gear).
 
@@ -100,6 +102,8 @@ const MODULE_VIEWS: Record<Module, { id: string; label: string }[]> = {
     { id: 'classes',      label: 'Por Classe' },
     { id: 'municipal',    label: 'Municipal' },
     { id: 'temporal',     label: 'Evolução Mensal' },
+    { id: 'serie_anual',  label: 'Série Anual' },
+    { id: 'recorrencia',  label: 'Recorrência' },
     // Metodologia removida — agora disponivel pelo drawer global (gear)
   ],
 }
@@ -114,7 +118,7 @@ const MODULE_TITLES: Record<Module, { prefix: string; key: string; suffix?: stri
   prodes:             { prefix: 'Monitoramento de Alertas',                 key: 'PRODES',    color: '#10B981' }, // esmeralda INPE
   matopiba:           { prefix: 'Panorama',                                  key: 'MATOPIBA',  color: '#D97706' }, // âmbar escuro Cerrado
   areas_prioritarias: { prefix: 'Análise de Áreas Prioritárias',             key: 'REDD+',     color: '#10B981' }, // verde REDD+
-  queimadas_bdq:      { prefix: 'Análise de Áreas Prioritárias em Áreas de', key: 'QUEIMADAS', color: '#EF4444' }, // vermelho fogo
+  queimadas_bdq:      { prefix: 'Análise de',                                key: 'QUEIMADAS', suffix: ' em Áreas Prioritárias', color: '#EF4444' }, // vermelho fogo
   dados:              { prefix: 'Gestão de',                                 key: 'DADOS',     color: '#94A3B8' }, // cinza neutro
 }
 
@@ -317,6 +321,8 @@ export function AppShell() {
                 {activeModule === 'queimadas_bdq' && activeView === 'classes'      && <QB_ClassesView />}
                 {activeModule === 'queimadas_bdq' && activeView === 'municipal'    && <QB_MunicipalView />}
                 {activeModule === 'queimadas_bdq' && activeView === 'temporal'     && <QB_TemporalView />}
+                {activeModule === 'queimadas_bdq' && activeView === 'serie_anual'  && <QB_SerieAnualView />}
+                {activeModule === 'queimadas_bdq' && activeView === 'recorrencia'  && <QB_RecorrenciaView />}
               </div>
             </ErrorBoundary>
           </Suspense>

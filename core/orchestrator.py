@@ -280,11 +280,23 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run", action="store_true", help="Processar sem fazer upload")
     parser.add_argument("--skip-download", action="store_true", help="Reutilizar arquivos já baixados")
     parser.add_argument("--ano", type=int, help="Restringir ao ano específico")
+    parser.add_argument("--ano-inicio", type=int, help="Início do intervalo de anos (módulos multi-ano)")
+    parser.add_argument("--ano-fim",    type=int, help="Fim do intervalo de anos (módulos multi-ano)")
+    parser.add_argument("--anos", type=str, help="Lista explícita de anos separados por vírgula (ex.: 2022,2023,2024)")
+    parser.add_argument("--verbose", action="store_true", help="Log detalhado")
     args = parser.parse_args()
 
     cfg = {"dry_run": args.dry_run, "skip_download": args.skip_download}
+    if args.verbose:
+        cfg["verbose"] = True
     if args.ano:
         cfg["ano"] = args.ano
+    if args.ano_inicio:
+        cfg["ano_inicio"] = args.ano_inicio
+    if args.ano_fim:
+        cfg["ano_fim"] = args.ano_fim
+    if args.anos:
+        cfg["anos"] = [int(a.strip()) for a in args.anos.split(",") if a.strip()]
 
     if args.module:
         run_one(args.module, cfg)
