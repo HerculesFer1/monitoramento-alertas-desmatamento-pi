@@ -125,53 +125,62 @@ SET search_path = public
 AS $$
 DECLARE
     v_result JSON;
+    v_area_total NUMERIC;
 BEGIN
-    WITH
-    totais AS (
+    -- Pré-calcula o total para evitar SUM() dentro de json_agg() — Postgres
+    -- não aceita agregação aninhada e a query original quebrava com
+    -- "aggregate function calls cannot be nested". Faz o GROUP BY em CTE
+    -- e depois aplica json_agg em colunas já agregadas.
+    SELECT SUM(area_queimada_ha) INTO v_area_total
+    FROM qb_cicatrizes_classes WHERE ano = p_ano;
+
+    WITH totais AS (
         SELECT
-            SUM(area_queimada_ha)                                        AS area_total_ha,
+            v_area_total                                                 AS area_total_ha,
             SUM(n_cicatrizes)                                            AS n_total,
             COUNT(DISTINCT municipio_cod)                                AS municipios_afetados,
             SUM(CASE WHEN classe_prioridade >= 4 THEN area_queimada_ha ELSE 0 END)
                                                                          AS area_prioritaria_ha,
             ROUND(
                 SUM(CASE WHEN classe_prioridade >= 4 THEN area_queimada_ha ELSE 0 END)
-                / NULLIF(SUM(area_queimada_ha), 0) * 100, 2
+                / NULLIF(v_area_total, 0) * 100, 2
             )                                                            AS pct_prioritaria
         FROM qb_cicatrizes_classes
         WHERE ano = p_ano
     ),
-    por_classe AS (
-        SELECT
-            json_agg(
-                json_build_object(
-                    'classe_prioridade', classe_prioridade,
-                    'prioridade_label',  MAX(prioridade_label),
-                    'area_queimada_ha',  ROUND(SUM(area_queimada_ha)::NUMERIC, 4),
-                    'n_cicatrizes',      SUM(n_cicatrizes),
-                    'pct_do_total',      ROUND(
-                        SUM(area_queimada_ha)
-                        / NULLIF((SELECT SUM(area_queimada_ha) FROM qb_cicatrizes_classes WHERE ano = p_ano), 0)
-                        * 100, 2
-                    )
-                ) ORDER BY classe_prioridade
-            ) AS dados
-        FROM qb_cicatrizes_classes
-        WHERE ano = p_ano
+    por_classe_agg AS (
+        SELECT classe_prioridade,
+               MAX(prioridade_label)                                AS prioridade_label,
+               ROUND(SUM(area_queimada_ha)::NUMERIC, 4)             AS area_queimada_ha,
+               SUM(n_cicatrizes)                                    AS n_cicatrizes,
+               ROUND(SUM(area_queimada_ha) / NULLIF(v_area_total, 0) * 100, 2) AS pct_do_total
+        FROM qb_cicatrizes_classes WHERE ano = p_ano
         GROUP BY classe_prioridade
     ),
-    por_mes AS (
-        SELECT
-            json_agg(
-                json_build_object(
-                    'mes',            mes,
-                    'area_ha',        ROUND(SUM(area_queimada_ha)::NUMERIC, 4),
-                    'n_cicatrizes',   SUM(n_cicatrizes)
-                ) ORDER BY mes
-            ) AS dados
-        FROM qb_cicatrizes_classes
-        WHERE ano = p_ano
+    por_classe AS (
+        SELECT json_agg(json_build_object(
+            'classe_prioridade', classe_prioridade,
+            'prioridade_label',  prioridade_label,
+            'area_queimada_ha',  area_queimada_ha,
+            'n_cicatrizes',      n_cicatrizes,
+            'pct_do_total',      pct_do_total
+        ) ORDER BY classe_prioridade) AS dados
+        FROM por_classe_agg
+    ),
+    por_mes_agg AS (
+        SELECT mes,
+               ROUND(SUM(area_queimada_ha)::NUMERIC, 4)             AS area_ha,
+               SUM(n_cicatrizes)                                    AS n_cicatrizes
+        FROM qb_cicatrizes_classes WHERE ano = p_ano
         GROUP BY mes
+    ),
+    por_mes AS (
+        SELECT json_agg(json_build_object(
+            'mes',          mes,
+            'area_ha',      area_ha,
+            'n_cicatrizes', n_cicatrizes
+        ) ORDER BY mes) AS dados
+        FROM por_mes_agg
     )
     SELECT json_build_object(
         'kpis', json_build_object(
