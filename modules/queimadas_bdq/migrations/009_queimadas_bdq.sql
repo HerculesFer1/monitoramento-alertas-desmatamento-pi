@@ -206,11 +206,16 @@ CREATE OR REPLACE FUNCTION get_qb_municipios(p_ano INT DEFAULT 2025)
 RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+-- 'extensions' obrigatório: ST_AsGeoJSON vem do PostGIS, schema 'extensions'.
+-- Sem isso a função quebra com "function st_asgeojson(extensions.geometry)
+-- does not exist" em ambientes Supabase com search_path padrão.
+SET search_path = public, extensions, pg_catalog
 AS $$
 DECLARE
     v_result JSON;
 BEGIN
+    -- ORDER BY tem que ficar DENTRO do json_agg(), não no SELECT externo.
+    -- A query externa não pode ter ORDER BY junto com agregação sem GROUP BY.
     SELECT json_agg(
         json_build_object(
             'municipio_cod',          municipio_cod,
@@ -228,12 +233,11 @@ BEGIN
                                         THEN ST_AsGeoJSON(geom)::JSON
                                         ELSE NULL
                                       END
-        )
+        ) ORDER BY area_queimada_total_ha DESC
     ) INTO v_result
     FROM qb_municipios_resumo
     WHERE ano = p_ano
-      AND area_queimada_total_ha > 0
-    ORDER BY area_queimada_total_ha DESC;
+      AND area_queimada_total_ha > 0;
 
     RETURN COALESCE(v_result, '[]'::JSON);
 END;

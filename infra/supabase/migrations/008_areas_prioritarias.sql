@@ -369,6 +369,8 @@ CREATE OR REPLACE FUNCTION get_ap_geojson(
 RETURNS JSON
 LANGUAGE sql
 STABLE
+-- 'extensions' obrigatório p/ ST_AsGeoJSON do PostGIS (schema 'extensions')
+SET search_path = public, extensions, pg_catalog
 AS $$
     SELECT json_build_object(
         'type', 'FeatureCollection',
