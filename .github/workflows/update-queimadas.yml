@@ -117,10 +117,13 @@ jobs:
             echo "Veja o comentário no workflow update-queimadas.yml para o setup." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          mkdir -p data/raw
-          echo "Baixando classes_prioritarias.gpkg de Release asset..."
-          curl -fsSL -o data/raw/classes_prioritarias.gpkg "$QB_GPKG_URL"
-          SIZE=$(stat -c%s data/raw/classes_prioritarias.gpkg)
+          # core/config.py:63 espera o GPKG em REDD_DATA_ROOT/16_prioridade_classes_final/
+          DEST_DIR="data/16_prioridade_classes_final"
+          DEST="$DEST_DIR/classes_prioritarias.gpkg"
+          mkdir -p "$DEST_DIR"
+          echo "Baixando classes_prioritarias.gpkg de Release asset → $DEST"
+          curl -fsSL -o "$DEST" "$QB_GPKG_URL"
+          SIZE=$(stat -c%s "$DEST")
           echo "✓ Baixado: $((SIZE / 1024 / 1024)) MB"
           if [ "$SIZE" -lt 1000000 ]; then
             echo "::error::Arquivo baixado tem menos de 1 MB — provável erro 404 ou redirect inválido."
