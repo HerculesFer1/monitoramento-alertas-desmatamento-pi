@@ -1,0 +1,61 @@
+name: "Supabase Keep-Alive"
+
+# Free tier pausa o projeto Supabase após 7 dias sem atividade no Postgres.
+# Este workflow faz um SELECT trivial 1×/dia para manter o projeto ativo.
+# Hits dependem de SUPABASE_URL + SUPABASE_ANON_KEY (já configurados como
+# secrets institucionais — apontam para ubcejvbnpuyouwpphryc).
+
+on:
+  schedule:
+    # 09:00 UTC = 06:00 BRT — janela ociosa, não conflita com cron de update.
+    - cron: "0 9 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    name: "Ping institucional (ubcejvbnpuyouwpphryc)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: "Hit REST: agregado_municipios (1 row)"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::SUPABASE_URL/SUPABASE_ANON_KEY ausentes nos secrets."
+            exit 1
+          fi
+          STATUS=$(curl -sS -o /tmp/resp.json -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/agregado_municipios?select=ano&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+          echo "HTTP ${STATUS}"
+          head -c 200 /tmp/resp.json; echo
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Resposta inesperada (esperado 200)."
+            exit 1
+          fi
+
+      - name: "Hit RPC: get_resumo_anual (acorda PostgREST cache)"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          STATUS=$(curl -sS -o /tmp/rpc.json -w "%{http_code}" -X POST \
+            "${SUPABASE_URL}/rest/v1/rpc/get_resumo_anual" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "HTTP ${STATUS}"
+          head -c 200 /tmp/rpc.json; echo
+          if [ "$STATUS" != "200" ]; then
+            echo "::warning::RPC get_resumo_anual retornou ${STATUS} (não-bloqueante)."
+          fi
