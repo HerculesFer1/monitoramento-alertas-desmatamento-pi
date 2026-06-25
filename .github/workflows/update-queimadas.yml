@@ -90,34 +90,63 @@ jobs:
 
       # ── Pré-requisito: GPKG de classes AHP ─────────────────────────────────
       # O módulo queimadas_bdq cruza com `classes_prioritarias.gpkg` produzido
-      # pelo módulo areas_prioritarias. Se ainda não existe (primeira execução
-      # no runner), o orchestrator vai falhar com mensagem clara.
-      - name: Verificar GPKG de classes prioritárias
+      # localmente pelo módulo areas_prioritarias (~470 MB) — não pode ser
+      # gerado no runner. Distribuímos via GitHub Release.
+      #
+      # Setup (uma vez):
+      #   1. Converter SHP → GPKG no PC com o env desmatamento:
+      #        ogr2ogr -f GPKG classes_prioritarias.gpkg \
+      #                "C:/11. REDD+/16_prioridade_classes_final/classes_prioritarias-REDD+.shp"
+      #   2. Publicar como Release asset:
+      #        gh release create data-assets-v1 classes_prioritarias.gpkg \
+      #          --title "Data assets v1 (GPKG classes prioritárias)" --notes "..."
+      #   3. Adicionar secret QB_GPKG_URL apontando para o asset:
+      #        gh secret set QB_GPKG_URL --body "https://github.com/HerculesFer1/.../classes_prioritarias.gpkg"
+      #
+      # Se QB_GPKG_URL estiver vazio, o workflow falha aqui com erro visível
+      # (em vez de o orchestrator abortar silenciosamente em 0,3s).
+      - name: Baixar GPKG de classes prioritárias (Release asset)
+        env:
+          QB_GPKG_URL: ${{ secrets.QB_GPKG_URL }}
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          import os
-          root = Path(os.environ.get('REDD_DATA_ROOT', 'data'))
-          candidates = [
-              root / 'raw' / 'classes_prioritarias.gpkg',
-              root / 'classes_prioritarias.gpkg',
-          ]
-          for p in candidates:
-              if p.exists():
-                  print(f"✓ {p}")
-                  raise SystemExit(0)
-          print("AVISO: classes_prioritarias.gpkg ausente — execute update-areas-prioritarias primeiro.")
-          PY
-        continue-on-error: true
+          set -euo pipefail
+          if [ -z "${QB_GPKG_URL:-}" ]; then
+            echo "::error::Secret QB_GPKG_URL ausente."
+            echo "::error::Publique classes_prioritarias.gpkg num GitHub Release e configure o secret."
+            echo "## ❌ QB_GPKG_URL ausente" >> "$GITHUB_STEP_SUMMARY"
+            echo "Veja o comentário no workflow update-queimadas.yml para o setup." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          mkdir -p data/raw
+          echo "Baixando classes_prioritarias.gpkg de Release asset..."
+          curl -fsSL -o data/raw/classes_prioritarias.gpkg "$QB_GPKG_URL"
+          SIZE=$(stat -c%s data/raw/classes_prioritarias.gpkg)
+          echo "✓ Baixado: $((SIZE / 1024 / 1024)) MB"
+          if [ "$SIZE" -lt 1000000 ]; then
+            echo "::error::Arquivo baixado tem menos de 1 MB — provável erro 404 ou redirect inválido."
+            exit 1
+          fi
 
       # ── Executar pipeline do módulo ──────────────────────────────────────
       - name: Executar Orquestrador — módulo queimadas_bdq
         env:
           SKIP_DL: ${{ github.event.inputs.skip_download }}
         run: |
+          set -euo pipefail
           ARGS="--module queimadas_bdq --ano ${{ steps.ano.outputs.ano }}"
           if [ "$SKIP_DL" = "true" ]; then ARGS="$ARGS --skip-download"; fi
           conda run -n desmatamento python -m core.orchestrator $ARGS
+
+          # Sanity check: o pipeline tem que produzir saída. Se não produziu,
+          # provavelmente abortou cedo em silêncio (causa raiz do cron 2026-06-05).
+          if [ ! -f data/output/pipeline.log ]; then
+            echo "::error::Orchestrator terminou sem gerar data/output/pipeline.log — aborto silencioso."
+            exit 1
+          fi
+          if ! ls data/output/qb_*.json >/dev/null 2>&1; then
+            echo "::error::Nenhum qb_*.json gerado — pipeline rodou no-op."
+            exit 1
+          fi
 
       - name: Upload artefatos
         if: always()
