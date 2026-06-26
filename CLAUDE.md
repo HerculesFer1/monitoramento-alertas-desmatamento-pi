@@ -1,5 +1,5 @@
 # CLAUDE.md — Memória do Projeto
-## Monitoramento de Alertas de Desmatamento — Piauí 2022–2025
+## Monitoramento de Alertas de Desmatamento — Piauí 2022–presente
 ### CGEO / SEMARH-PI | Pipeline v2
 
 > Este arquivo sintetiza **todas as decisões técnicas acordadas** no projeto.
@@ -13,9 +13,10 @@
 |-------|-------|
 | Nome | Dashboard de Monitoramento de Alertas de Desmatamento PI |
 | Órgão | CGEO — Centro de Geotecnologia Fundiária e Ambiental / SEMARH-PI |
-| Período | 2022–2025 |
+| Período | 2022–presente (ingestão contínua via cron mensal de 2026 em diante) |
 | Versão pipeline | v2 |
 | Público alvo | Geotecnólogos, gestores ambientais e pesquisadores — NÃO desenvolvedores |
+| Supabase canônico | **ubcejvbnpuyouwpphryc** (SEMARH institucional, us-east-1) |
 
 ---
 
@@ -228,7 +229,7 @@ vpressao_dominante, vpressao_dominante_ptbr
 | Etapa | Nome | Ação |
 |-------|------|------|
 | 1 | Leitura | 4 GeoJSONs brutos |
-| 2 | Filtro Temporal | Manter 2022–2025; log alertas 2026 descartados |
+| 2 | Filtro Temporal | Manter 2022 em diante (incluindo ano corrente quando disponível) |
 | 3 | Reprojeção | Todos → EPSG:5880 |
 | 4 | Parse de Campos | Datas, status ASV, flag MATOPIBA, área original |
 | 5 | Fragmentação | Núcleo metodológico (ver seção 4) |
@@ -252,7 +253,7 @@ Todos os 8 devem passar antes de uso institucional:
 | T3 | pct_cobertura em [0, 100] |
 | T4 | AUTORIZADO_PARCIALMENTE com pct_cob ≤ 99% (tolerância float) |
 | T5 | AUTORIZADO com pct_cob ≥ 99% |
-| T6 | Todos os anos 2022–2025 presentes no output |
+| T6 | Todos os anos do range [ANO_MIN, ano_corrente] presentes no output |
 | T7 | Volume mínimo por ano (≥ 1 fragmento) |
 | T8 | REGULARIZADO restrito a 2024–2025 |
 
@@ -355,7 +356,7 @@ export function calcAutTotal(e: { autorizado: number; autorizado_p: number }): n
 | Banco de dados | Supabase PostgreSQL + PostGIS | **PRODUÇÃO** (`infra/supabase/`) |
 | Upload pipeline | `pipeline/_upload_supabase.py` (psycopg2) | **PRODUÇÃO** |
 | Orquestração | Prefect Cloud v3 — 3 deployments (mensal/anual/dry-run) | **CRIADO** (`infra/prefect/`) |
-| CI/CD | GitHub Actions — 5 workflows (ci, deploy, alertas, asvs, prodes) | **CRIADO** (`.github/workflows/`) |
+| CI/CD | GitHub Actions — 8 workflows (ci, deploy-frontend, release-module, supabase-keepalive, update-{alertas,asvs,prodes,queimadas}) | **PRODUÇÃO** (`.github/workflows/`) |
 | Deploy Frontend | Vercel — auto-deploy em push + preview em PR | **CRIADO** (`deploy-frontend.yml` + `vercel.json`) |
 | Versionamento de dados | DVC | PLANEJADO |
 | Containerização | Docker + Docker Compose | **CRIADO** (`Dockerfile`, `docker-compose.yml`) |
@@ -388,7 +389,7 @@ export function calcAutTotal(e: { autorizado: number; autorizado_p: number }): n
 | 10 | Frontend React: 5 abas AO VIVO com Supabase · badge status · filtros · mapa MapLibre | **CONCLUÍDO** |
 | 11 | `monthly_alertas.json` e `resumo_estatico.json` gerados em `frontend/public/data/` | **CONCLUÍDO** (2026-05-21) |
 | 12 | Bug concordância PRODES: 63%→70,9% corrigido em `ProdesPage.tsx` (n_concordantes+n_discordantes) | **CONCLUÍDO** (2026-05-21) |
-| 13 | Migration `004_prodes_rpc_fix.sql` criada — corrige n_total na RPC `get_resumo_prodes` | **PENDENTE aplicar no SQL Editor** |
+| 13 | Migration `004_prodes_rpc_fix.sql` criada — corrige n_total na RPC `get_resumo_prodes` | **CONCLUÍDO** (2026-05-22) |
 | 14 | Dados brutos `base de dados/*.geojson` ausentes neste PC — estão no computador MARCO | **PENDENTE copiar** |
 | 15 | Phase 5: TypeScript cleanup — v:any→v:unknown, calcAutTotal(), n_sem_prodes, hooks cast fix | **CONCLUÍDO** (2026-05-22) |
 | 16 | Phase 4: Aba "Gestão de Dados" — status pipeline, DERADSAs, fontes, guia 8 passos | **CONCLUÍDO** (2026-05-22) |
@@ -401,7 +402,7 @@ export function calcAutTotal(e: { autorizado: number; autorizado_p: number }): n
 | 23 | Dockerfile + docker-compose.yml corrigidos: removida referência a `preprocess.py` (deletado), entrypoint → `python -m pipeline` | **CONCLUÍDO** (2026-05-22) |
 | 24 | Limpeza repositório: removidos .qmd (4), `plano de fundo.png`, `configurar_supabase.ps1` | **CONCLUÍDO** (2026-05-22) |
 | 25 | Aplicar Migration 004 no Supabase SQL Editor (`004_prodes_rpc_fix.sql`) | **CONCLUÍDO** (2026-05-22) |
-| 26 | Adicionar secrets `SUPABASE_URL` e `SUPABASE_ANON_KEY` no GitHub (sem prefixo VITE_) — usados pelos workflows update-alertas, update-asvs, update-prodes | **PENDENTE** |
+| 26 | Adicionar secrets `SUPABASE_URL` e `SUPABASE_ANON_KEY` no GitHub (sem prefixo VITE_) — usados pelos workflows update-alertas, update-asvs, update-prodes | **CONCLUÍDO** (2026-06-17) |
 | 27 | Copiar dados brutos `base de dados/*.geojson` do computador MARCO | **PENDENTE** |
 | 28 | DVC — versionamento de dados | PLANEJADO |
 | 29 | Slide Biomas (Cerrado × Caatinga) — tab futura no frontend | PLANEJADO |
@@ -585,10 +586,17 @@ frontend/public/data/
 ```
 Gerados de `Resultado/alertas_classificados.geojson` em 2026-05-21. Regenerar via pipeline quando os dados brutos estiverem disponíveis.
 
-### Supabase (projeto ssqriwgrxievcmxauegv)
+### Supabase (projeto institucional **ubcejvbnpuyouwpphryc**)
 - 13.638 fragmentos em `alertas_classificados` ✓
 - 812 registros em `agregado_municipios` ✓
 - RPC `get_resumo_prodes` corrigida via Migration 004 ✓ — 5.918 validados | 4.198 concordantes | 70,9%
+- Módulo `queimadas_bdq` com ingestão multi-ano 2022–2026 (cron mensal `update-queimadas.yml`)
+- `matopiba_municipios` MV via migration 020 (bundle 002+015+016 consolidado)
+- `get_alertas_bbox` + `get_alertas_mvt` via migration 021 (Migration 011 só tinha o helper)
+- Migration drift conhecido: 14 migrations aplicadas via SQL Editor sem registro em `supabase_migrations.schema_migrations` — ver `docs/architecture/` para baseline pendente.
+
+### Projeto Supabase abandonado (NÃO USAR)
+- `ssqriwgrxievcmxauegv` (sandbox pessoal HerculesFer) — referências históricas em ADRs antigas. Toda operação institucional vai para `ubcejvbnpuyouwpphryc`.
 
 ---
 
@@ -645,4 +653,4 @@ Os antigos batch SQLs `_batch_ap_*.sql` em `C:\11. REDD+\` são obsoletos (basea
 
 ---
 
-*Última atualização: 2026-05-29 | Pipeline v3 | 20/20 testes OK | 6 abas + áreas prioritárias 5 tabs | Migration 010 aplicada ao Supabase | rasterstats ~5 min (vs 90 min overlay) | dry-run OK: 1097 células 224 municípios | Pipeline real em andamento | Commit 35aaf3a feature/areas-prioritarias-v3 criado | Próximo: QA pós-upload (task 39)*
+*Última atualização: 2026-06-26 | Pipeline v3 | Supabase institucional ubcejvbnpuyouwpphryc com 21 migrations | 5 módulos no frontend (alertas_mapbiomas, prodes_cerrado, matopiba, areas_prioritarias, queimadas_bdq) | Ingestão multi-ano queimadas_bdq inclui 2026 (jan–mai parcial: 93.618 ha, 126 mun afetados) | Filtro de ano agora dinâmico (B0 fix em commit d90a69f) | 8 GitHub workflows ativos + Keep-alive diário | Auditoria tech-debt 2026-06-26 em docs/architecture/AUDIT-2026-06-26.md*

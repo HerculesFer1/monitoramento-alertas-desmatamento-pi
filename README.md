@@ -68,8 +68,8 @@ Inclui validação cruzada com o **PRODES-Cerrado/INPE** e recorte especial para
                              │ upsert via psycopg2
 ┌────────────────────────────▼────────────────────────────────┐
 │  Supabase PostgreSQL + PostGIS                              │
-│  5 tabelas · 8 RPCs · Row Level Security · 5 migrations    │
-│  projeto: ssqriwgrxievcmxauegv                             │
+│  Múltiplos módulos · 30+ RPCs · Row Level Security         │
+│  projeto institucional: ubcejvbnpuyouwpphryc (SEMARH)      │
 └────────────────────────────┬────────────────────────────────┘
                              │ PostgREST (anon key)
 ┌────────────────────────────▼────────────────────────────────┐
