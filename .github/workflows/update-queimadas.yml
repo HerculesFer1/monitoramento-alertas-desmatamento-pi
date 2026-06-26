@@ -138,20 +138,41 @@ jobs:
           set -euo pipefail
           ARGS="--module queimadas_bdq --ano ${{ steps.ano.outputs.ano }}"
           if [ "$SKIP_DL" = "true" ]; then ARGS="$ARGS --skip-download"; fi
-          # Sanity check anti-no-op: capturamos stdout para detectar se o
-          # módulo abortou cedo em silêncio (causa raiz do cron 2026-06-05
-          # — terminava em 0,3s sem processar nada).
-          LOG=$(mktemp)
-          conda run -n desmatamento python -m core.orchestrator $ARGS 2>&1 | tee "$LOG"
-          STATUS="${PIPESTATUS[0]}"
-          if [ "$STATUS" -ne 0 ]; then
-            echo "::error::Orchestrator falhou com exit code $STATUS"
-            exit "$STATUS"
-          fi
-          # No-op detection: pipeline real grava "registros inseridos" no log.
-          if ! grep -qE "registros inseridos|Upload queimadas_bdq concluído" "$LOG"; then
-            echo "::error::Orchestrator terminou sem evidência de upload — provável no-op silencioso."
-            tail -30 "$LOG"
+
+          # Wrapper de retry (T3) para mitigar flake GEOS conhecido — segfault
+          # nativo não-determinístico no overlay de cicatrizes, visto em
+          # 07/2022 (memória project-redd-piaui). Re-execução isolada costuma
+          # destravar. Sanity check anti-no-op acoplada (causa raiz do
+          # cron 2026-06-05: exit 0 sem processar nada).
+          MAX_ATTEMPTS=2
+          for attempt in $(seq 1 $MAX_ATTEMPTS); do
+            LOG=$(mktemp)
+            echo "::group::Tentativa $attempt de $MAX_ATTEMPTS"
+            set +e
+            conda run -n desmatamento python -m core.orchestrator $ARGS 2>&1 | tee "$LOG"
+            STATUS="${PIPESTATUS[0]}"
+            set -e
+            echo "::endgroup::"
+
+            if [ "$STATUS" -eq 0 ] && grep -qE "registros inseridos|Upload queimadas_bdq concluído" "$LOG"; then
+              echo "✓ Pipeline concluído na tentativa $attempt"
+              exit 0
+            fi
+
+            if [ "$STATUS" -ne 0 ]; then
+              echo "::warning::Tentativa $attempt falhou com exit code $STATUS"
+            else
+              echo "::warning::Tentativa $attempt: exit 0 sem evidência de upload (no-op detectado)"
+            fi
+
+            if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+              echo "Aguardando 30s antes de retentar..."
+              sleep 30
+            fi
+          done
+
+          echo "::error::Orchestrator falhou após $MAX_ATTEMPTS tentativas — ver logs acima."
+          tail -50 "$LOG"
             exit 1
           fi
 
