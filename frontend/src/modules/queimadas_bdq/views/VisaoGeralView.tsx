@@ -4,10 +4,14 @@
  */
 import { useState, useMemo } from 'react'
 import { useAppStore }                  from '../../../core/store/useAppStore'
-import { ANO_RECENTE_COMPLETO }         from '../../../core/lib/constants'
+import { ANO_MIN, ANO_DEFAULT, ANO_RECENTE_COMPLETO } from '../../../core/lib/constants'
 import { useQueimadasVisaoGeral }       from '../hooks/useQueimadasVisaoGeral'
 import { useQueimadasMunicipios }       from '../hooks/useQueimadasMunicipios'
 import { useQueimadasRanking }          from '../hooks/useQueimadasRanking'
+import {
+  useQueimadasVisaoGeralMultianual,
+  useQueimadasMunicipiosMultianual,
+} from '../hooks/useQueimadasMultianual'
 import { QueimadasMap }                 from '../components/QueimadasMap'
 import { PrioridadeBadge }             from '../components/PrioridadeBadge'
 import { PriorityToggle }              from '../components/PriorityToggle'
@@ -21,12 +25,30 @@ function fmt(n: number | null | undefined, dec = 0) {
 
 export function VisaoGeralView() {
   const anoFiltro    = useAppStore(s => s.anoFiltro)
-  const ano          = anoFiltro === 'all' ? ANO_RECENTE_COMPLETO : anoFiltro
+  const isMulti      = anoFiltro === 'all'
+  // Single-year fallback (não usado quando isMulti, mas mantém referência estável)
+  const ano          = isMulti ? ANO_RECENTE_COMPLETO : anoFiltro
   const [, setSelected] = useState<QueimadasMunicipio | null>(null)
 
-  const { data: vg,   isLoading: loadKpis } = useQueimadasVisaoGeral(ano)
-  const { data: muns, isLoading: loadMap  } = useQueimadasMunicipios(ano)
-  const { data: rank, isLoading: loadRank } = useQueimadasRanking(ano, 20)
+  // Single-year — hooks rodam sempre mas com queryKey distinta por modo.
+  // Quando isMulti, ignoramos o resultado (overridden abaixo).
+  const sy = {
+    vg:   useQueimadasVisaoGeral(ano),
+    muns: useQueimadasMunicipios(ano),
+    rank: useQueimadasRanking(ano, 20),
+  }
+  // Multi-ano — Migration 023, agrega [ANO_MIN, ANO_DEFAULT].
+  const my = {
+    vg:   useQueimadasVisaoGeralMultianual(ANO_MIN, ANO_DEFAULT),
+    muns: useQueimadasMunicipiosMultianual(ANO_MIN, ANO_DEFAULT),
+  }
+  // Mistura por modo: KPIs/mapa/ranking vêm de cada fonte conforme o filtro.
+  const vg       = isMulti ? my.vg.data        : sy.vg.data
+  const muns     = isMulti ? my.muns.data      : sy.muns.data
+  const rank     = isMulti ? my.muns.data?.slice(0, 20) : sy.rank.data  // top 20 do multianual
+  const loadKpis = isMulti ? my.vg.isLoading   : sy.vg.isLoading
+  const loadMap  = isMulti ? my.muns.isLoading : sy.muns.isLoading
+  const loadRank = isMulti ? my.muns.isLoading : sy.rank.isLoading
 
   const kpis = vg?.kpis
 
@@ -66,22 +88,22 @@ export function VisaoGeralView() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, height: '100%', padding: 14, overflow: 'hidden' }}>
 
-      {/* Badge informativo quando 'Todos os anos' é selecionado.
-          KPIs da view são single-year; 'all' cai em ANO_RECENTE_COMPLETO.
-          Para visão multi-ano agregada, ver abas Série Anual / Recorrência. */}
-      {anoFiltro === 'all' && (
+      {/* Badge informativo quando "Todos os anos" — KPIs e ranking agora
+          agregam de verdade [ANO_MIN..ANO_DEFAULT] via RPCs *_multianual
+          (migration 023). */}
+      {isMulti && (
         <div style={{
           flexShrink: 0,
           padding: '8px 12px',
-          background: 'rgba(252, 141, 89, 0.10)',
-          border: '1px solid rgba(252, 141, 89, 0.30)',
+          background: 'rgba(16, 185, 129, 0.10)',
+          border: '1px solid rgba(16, 185, 129, 0.30)',
           borderRadius: 6,
           fontSize: 11,
           color: 'var(--t2)',
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
-          <span style={{ color: '#FC8D59', fontWeight: 700 }}>📅 Mostrando: {ano}</span>
-          <span>(ano mais recente completo) — para visão multi-ano agregada use as abas <b>Série Anual</b> ou <b>Recorrência</b>.</span>
+          <span style={{ color: '#10B981', fontWeight: 700 }}>🌍 Acumulado {ANO_MIN}–{ANO_DEFAULT}</span>
+          <span>— soma de área queimada e contagem única de municípios ao longo de toda a série. Para tendência ano a ano use a aba <b>Série Anual</b>.</span>
         </div>
       )}
 
@@ -160,7 +182,7 @@ export function VisaoGeralView() {
               ? <div style={{ fontSize: 10, color: 'var(--t3)' }}>Carregando…</div>
               : rankExibido.length === 0
                 ? <div style={{ fontSize: 10, color: 'var(--t3)', padding: 8 }}>Nenhum município destacado no critério atual.</div>
-                : rankExibido.map((r) => (
+                : rankExibido.map((r, idx) => (
                 <div key={r.municipio_cod} style={{
                   display: 'flex', flexDirection: 'column', gap: 3,
                   padding: '7px 9px',
@@ -170,7 +192,7 @@ export function VisaoGeralView() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--t1)' }}>
-                      {r.rank}. {r.municipio_nome}
+                      {'rank' in r ? (r as { rank: number }).rank : idx + 1}. {r.municipio_nome}
                     </span>
                     <span className="font-mono" style={{ fontSize: 10, fontWeight: 700, color: '#FC8D59' }}>
                       {fmt(r.area_queimada_total_ha)} ha
