@@ -5,7 +5,7 @@
  */
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Cell,
+  Tooltip, ResponsiveContainer, Cell, LineChart, Line,
 } from 'recharts'
 import { StatusBadge } from '../../../shared/components/StatusBadge'
 import { useAppStore }  from '../../../core/store/useAppStore'
@@ -13,7 +13,8 @@ import {
   useMatopibaQueimadasVisaoGeralClient as useMatopibaQueimadasVisaoGeral,
   useMatopibaQueimadasRankingClient    as useMatopibaQueimadasRanking,
 } from '../hooks/useMatopibaQueimadasClient'
-import { fmtHa, MATOPIBA_N_MUNICIPIOS } from '../../../core/lib/constants'
+import { useMatopibaQueimadasTemporal } from '../hooks/useMatopibaQueimadas'
+import { fmtHa, MATOPIBA_N_MUNICIPIOS, MESES, ANO_RECENTE_COMPLETO } from '../../../core/lib/constants'
 import { CLASSE_COLORS, CLASSE_LABELS } from '../../queimadas_bdq/types'
 import type { ClassePrioridade } from '../../areas_prioritarias/types'
 import { MAT_COLOR } from '../types'
@@ -25,10 +26,12 @@ const TT = {
 
 export function QueimadasView() {
   const anoFiltro = useAppStore(s => s.anoFiltro)
-  const ano       = anoFiltro === 'all' ? 2025 : anoFiltro
+  const ano       = anoFiltro === 'all' ? ANO_RECENTE_COMPLETO : anoFiltro
 
   const { data: vg,  isLoading: vgLoad,  isError: vgErr, error: vgError } = useMatopibaQueimadasVisaoGeral(ano)
   const { data: rk,  isLoading: rkLoad  }                    = useMatopibaQueimadasRanking(ano, 10)
+  // Sazonalidade: chama get_qb_temporal_matopiba (RPC habilitada via migration 020).
+  const { data: temporal, isLoading: tempLoad, isError: tempErr } = useMatopibaQueimadasTemporal(ano)
 
   const live = !vgLoad && !vgErr && !!vg?.kpis
   const kpis = vg?.kpis
@@ -38,6 +41,21 @@ export function QueimadasView() {
 
   return (
     <div className="view-content" style={{ padding: 16 }}>
+
+      {/* Badge "Mostrando: ano" quando 'Todos os anos' selecionado.
+          KPIs single-year; 'all' cai em ANO_RECENTE_COMPLETO. */}
+      {anoFiltro === 'all' && (
+        <div style={{
+          padding: '8px 12px', marginBottom: 12,
+          background: 'rgba(252, 141, 89, 0.10)',
+          border: '1px solid rgba(252, 141, 89, 0.30)',
+          borderRadius: 6, fontSize: 11, color: 'var(--t2)',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span style={{ color: '#FC8D59', fontWeight: 700 }}>📅 Mostrando: {ano}</span>
+          <span>(ano mais recente completo) — para visão multi-ano agregada use as abas <b>Série Anual</b> ou <b>Recorrência</b>.</span>
+        </div>
+      )}
 
       {rpcMissing && (
         <div role="alert" style={{
@@ -84,19 +102,57 @@ export function QueimadasView() {
         </div>
       </div>
 
-      {/* Sazonalidade mensal */}
+      {/* Sazonalidade mensal — RPC get_qb_temporal_matopiba (migration 020) */}
       <div className="bento" style={{ marginTop: 12 }}>
         <div className="card b-3">
-          <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--t2)', marginBottom: 12 }}>
-            Sazonalidade {ano} — Área Queimada Mensal
+          <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--t2)', marginBottom: 12, display: 'flex', justifyContent: 'space-between' }}>
+            <span>Sazonalidade {ano} — Área Queimada Mensal (MATOPIBA-PI)</span>
+            <StatusBadge live={!tempLoad && !tempErr && !!temporal?.length} />
           </div>
-          <div style={{ color: 'var(--t3)', fontSize: 11, padding: 48, textAlign: 'center', lineHeight: 1.6 }}>
-            Sazonalidade depende da RPC <code>get_qb_temporal_matopiba</code>,<br />
-            que aguarda o cache do PostgREST destravar.<br />
-            <span style={{ color: 'var(--t2)', fontSize: 10 }}>
-              Demais KPIs e distribuição por classe abaixo estão ativos via agregação client-side.
-            </span>
-          </div>
+          {tempLoad && (
+            <div style={{ color: 'var(--t3)', fontSize: 12, padding: 48, textAlign: 'center' }}>Carregando…</div>
+          )}
+          {tempErr && (
+            <div style={{ color: 'var(--t3)', fontSize: 11, padding: 48, textAlign: 'center', lineHeight: 1.6 }}>
+              Falha ao carregar sazonalidade.<br />
+              <span style={{ color: 'var(--t3)', fontSize: 10 }}>Tente recarregar a página.</span>
+            </div>
+          )}
+          {!tempLoad && !tempErr && temporal && temporal.length > 0 && (() => {
+            const max = temporal.reduce((m, p) => p.area_ha > m.area_ha ? p : m)
+            const total = temporal.reduce((s, p) => s + p.area_ha, 0)
+            const chartData = temporal.map(p => ({
+              mes: MESES[p.mes - 1] ?? `M${p.mes}`,
+              area_ha: p.area_ha,
+              isPico: p.mes === max.mes,
+            }))
+            return (
+              <>
+                <div style={{ display: 'flex', gap: 16, fontSize: 11, color: 'var(--t3)', marginBottom: 8 }}>
+                  <span>Pico: <b style={{ color: '#EF4444' }}>{MESES[max.mes - 1]}</b> ({fmtHa(max.area_ha)})</span>
+                  <span>Total: <b style={{ color: 'var(--t1)' }}>{fmtHa(total)}</b></span>
+                  <span>{temporal.length} mês{temporal.length !== 1 ? 'es' : ''} com dado</span>
+                </div>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.06)" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 10, fill: 'var(--t2)' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: 'var(--t3)' }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip contentStyle={TT} formatter={(v: unknown) => [fmtHa(v as number), 'Área']} />
+                    <Line type="monotone" dataKey="area_ha" stroke="#EF4444" strokeWidth={2}
+                          dot={(props: { payload?: { isPico?: boolean }; cx?: number; cy?: number; index?: number }) =>
+                            props.payload?.isPico
+                              ? <circle key={props.index} cx={props.cx} cy={props.cy} r={5} fill="#EF4444" stroke="#111" strokeWidth={2} />
+                              : <circle key={props.index} cx={props.cx} cy={props.cy} r={3} fill="#EF4444" />
+                          } />
+                  </LineChart>
+                </ResponsiveContainer>
+              </>
+            )
+          })()}
+          {!tempLoad && !tempErr && (!temporal || temporal.length === 0) && (
+            <div style={{ color: 'var(--t3)', fontSize: 12, padding: 48, textAlign: 'center' }}>Sem dados mensais para {ano}.</div>
+          )}
         </div>
 
         {/* Distribuição por classe */}
