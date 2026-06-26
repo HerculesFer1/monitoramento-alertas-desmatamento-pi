@@ -10,6 +10,7 @@ Uso TypeScript: execute `python -m pipeline.constants` para gerar
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Final
 
@@ -30,7 +31,18 @@ M2_HA:                Final[int]   = 10_000
 CONCORDANCIA_PRODES_MIN_PCT: Final[float] = 0.0
 
 # ── Séries temporais ──────────────────────────────────────────────────────
-ANOS:         Final[tuple[int, ...]] = (2022, 2023, 2024, 2025)
+# ANO_MIN: primeiro ano da série histórica REDD+ Piauí (publicada).
+# Alterar invalida métricas já publicadas (NT-CGEO-001/2026).
+ANO_MIN: Final[int] = 2022
+
+# ANOS é dinâmico: inclui [ANO_MIN, ano corrente] para que o pipeline
+# processe automaticamente o ano atual quando os dados ficarem disponíveis,
+# sem código-mexido a cada virada de ano. Override via env REDD_ANO_MAX
+# para forçar (testes determinísticos).
+_ANO_MAX_ENV = __import__("os").environ.get("REDD_ANO_MAX", "").strip()
+ANO_MAX: Final[int] = int(_ANO_MAX_ENV) if _ANO_MAX_ENV.isdigit() else datetime.now().year
+ANOS:    Final[tuple[int, ...]] = tuple(range(ANO_MIN, ANO_MAX + 1))
+
 ANOS_DERADSA: Final[tuple[int, ...]] = (2024, 2025)  # únicos anos com DERADSA geoespacial
 
 # ── Classificações e sufixos de ID ───────────────────────────────────────
