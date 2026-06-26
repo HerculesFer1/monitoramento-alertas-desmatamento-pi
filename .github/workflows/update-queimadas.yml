@@ -138,16 +138,20 @@ jobs:
           set -euo pipefail
           ARGS="--module queimadas_bdq --ano ${{ steps.ano.outputs.ano }}"
           if [ "$SKIP_DL" = "true" ]; then ARGS="$ARGS --skip-download"; fi
-          conda run -n desmatamento python -m core.orchestrator $ARGS
-
-          # Sanity check: o pipeline tem que produzir saída. Se não produziu,
-          # provavelmente abortou cedo em silêncio (causa raiz do cron 2026-06-05).
-          if [ ! -f data/output/pipeline.log ]; then
-            echo "::error::Orchestrator terminou sem gerar data/output/pipeline.log — aborto silencioso."
-            exit 1
+          # Sanity check anti-no-op: capturamos stdout para detectar se o
+          # módulo abortou cedo em silêncio (causa raiz do cron 2026-06-05
+          # — terminava em 0,3s sem processar nada).
+          LOG=$(mktemp)
+          conda run -n desmatamento python -m core.orchestrator $ARGS 2>&1 | tee "$LOG"
+          STATUS="${PIPESTATUS[0]}"
+          if [ "$STATUS" -ne 0 ]; then
+            echo "::error::Orchestrator falhou com exit code $STATUS"
+            exit "$STATUS"
           fi
-          if ! ls data/output/qb_*.json >/dev/null 2>&1; then
-            echo "::error::Nenhum qb_*.json gerado — pipeline rodou no-op."
+          # No-op detection: pipeline real grava "registros inseridos" no log.
+          if ! grep -qE "registros inseridos|Upload queimadas_bdq concluído" "$LOG"; then
+            echo "::error::Orchestrator terminou sem evidência de upload — provável no-op silencioso."
+            tail -30 "$LOG"
             exit 1
           fi
 
