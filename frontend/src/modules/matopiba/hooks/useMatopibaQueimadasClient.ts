@@ -9,7 +9,7 @@
  */
 import { useMemo } from 'react'
 import { useQueimadasMunicipios } from '../../queimadas_bdq/hooks/useQueimadasMunicipios'
-import { MATOPIBA_SET, MATOPIBA_N_MUNICIPIOS, ANO_DEFAULT } from '../../../core/lib/constants'
+import { MATOPIBA_SET, MATOPIBA_N_MUNICIPIOS, ANO_RECENTE_COMPLETO as ANO_DEFAULT } from '../../../core/lib/constants'
 import type {
   QueimadasMunicipio, QueimadasPorClasse, QueimadasRankingItem,
 } from '../../queimadas_bdq/types'

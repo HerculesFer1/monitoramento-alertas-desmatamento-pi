@@ -5,7 +5,7 @@ import {
   YEARS, MESES,
   prodesData, prodesExtra,
   alertYr, classifYr, ipiYr, matopibaYr,
-  ANO_MIN, ANO_DEFAULT, YEARS_AVAILABLE, ANOS,
+  ANO_MIN, ANO_DEFAULT, YEARS_AVAILABLE, ANOS, ANO_RECENTE_COMPLETO,
 } from '../constants'
 
 // ── fmtHa ─────────────────────────────────────────────────────────────────
@@ -123,6 +123,16 @@ describe('B0 regressão — filtro de ano dinâmico', () => {
 
   it('ANO_DEFAULT >= maior ano de ANOS (pipeline)', () => {
     expect(ANO_DEFAULT).toBeGreaterThanOrEqual(Math.max(...ANOS))
+  })
+
+  it('ANO_RECENTE_COMPLETO < ANO_DEFAULT (sempre passado, nunca corrente)', () => {
+    // O ano corrente é parcial; ANO_RECENTE_COMPLETO sempre aponta para o
+    // ano fechado anterior (heurística: −1 se mês >=3, −2 se jan/fev).
+    expect(ANO_RECENTE_COMPLETO).toBeLessThan(ANO_DEFAULT)
+  })
+
+  it('ANO_RECENTE_COMPLETO >= ANO_MIN (não retroage além da série histórica)', () => {
+    expect(ANO_RECENTE_COMPLETO).toBeGreaterThanOrEqual(ANO_MIN)
   })
 })
 

@@ -4,7 +4,7 @@
  */
 import { useState, useMemo }         from 'react'
 import { useAppStore }               from '../../../core/store/useAppStore'
-import { ANO_DEFAULT }               from '../../../core/lib/constants'
+import { ANO_RECENTE_COMPLETO }      from '../../../core/lib/constants'
 import { useQueimadasMunicipiosMes } from '../hooks/useQueimadasMunicipiosMes'
 import { QueimadasMap }              from '../components/QueimadasMap'
 import { QueimadasCard }             from '../components/QueimadasCard'
@@ -15,7 +15,7 @@ import type { QueimadasMunicipio }   from '../types'
 export function MunicipalView() {
   const anoFiltro  = useAppStore(s => s.anoFiltro)
   const selectedMes = useAppStore(s => s.selectedMes)
-  const ano        = anoFiltro === 'all' ? ANO_DEFAULT : anoFiltro
+  const ano        = anoFiltro === 'all' ? ANO_RECENTE_COMPLETO : anoFiltro
 
   const [selectedMun, setSelectedMun] = useState<QueimadasMunicipio | null>(null)
   const [priorityOnly, setPriorityOnly] = useState(false)

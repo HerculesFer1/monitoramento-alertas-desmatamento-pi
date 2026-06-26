@@ -22,15 +22,29 @@ export const FLAGS_PRODES   = _pipeline.flags_prodes
 // completo). YEARS_AVAILABLE estende com o ano corrente automaticamente para
 // que módulos com ingestão contínua (queimadas_bdq via cron mensal) apareçam
 // no dropdown mesmo antes do próximo build do pipeline JSON.
-//
-// ANO_DEFAULT é o ano "mais recente disponível" — usado por views que precisam
-// de um valor concreto quando o usuário seleciona "Todos" (anoFiltro === 'all').
 export const ANO_MIN = ANOS.length > 0 ? Math.min(...ANOS) : 2022
 const _ANO_CORRENTE = new Date().getFullYear()
+const _MES_CORRENTE = new Date().getMonth() + 1   // 1..12
 export const YEARS_AVAILABLE: readonly number[] = Array.from(
   new Set([...ANOS, _ANO_CORRENTE].filter(a => a >= ANO_MIN && a <= _ANO_CORRENTE))
 ).sort((a, b) => a - b)
+
+// ANO_DEFAULT: ano "mais recente disponível" (= ano corrente). Usado para
+// dropdown e badges informativos.
 export const ANO_DEFAULT = YEARS_AVAILABLE[YEARS_AVAILABLE.length - 1] ?? _ANO_CORRENTE
+
+// ANO_RECENTE_COMPLETO: ano mais recente para o qual TODOS os 12 meses de
+// dados deveriam estar ingeridos. Heurística — INPE publica AQ1km do mês N
+// no início do mês N+1, e nosso cron roda dia 5. Logo:
+//   - jan/Y e fev/Y → dez/Y-1 ainda não chegou → ano completo é Y-2
+//   - mar/Y em diante → dez/Y-1 já chegou → ano completo é Y-1
+// Usado como fallback quando usuário seleciona "Todos os anos" — evita
+// mostrar dados parciais do ano corrente em KPIs que esperam ano fechado.
+// Para visão multi-ano de verdade (recorrência, série anual), os módulos
+// chamam RPCs *_multianual / *_serie_anual diretamente.
+export const ANO_RECENTE_COMPLETO = (
+  _MES_CORRENTE >= 3 ? _ANO_CORRENTE - 1 : _ANO_CORRENTE - 2
+)
 
 // Alias para compatibilidade com componentes existentes (séries históricas
 // com dados completos — preferir YEARS_AVAILABLE para dropdowns e seletores).

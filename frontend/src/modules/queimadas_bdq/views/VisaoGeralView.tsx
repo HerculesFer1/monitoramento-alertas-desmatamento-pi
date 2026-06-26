@@ -4,7 +4,7 @@
  */
 import { useState, useMemo } from 'react'
 import { useAppStore }                  from '../../../core/store/useAppStore'
-import { ANO_DEFAULT }                  from '../../../core/lib/constants'
+import { ANO_RECENTE_COMPLETO }         from '../../../core/lib/constants'
 import { useQueimadasVisaoGeral }       from '../hooks/useQueimadasVisaoGeral'
 import { useQueimadasMunicipios }       from '../hooks/useQueimadasMunicipios'
 import { useQueimadasRanking }          from '../hooks/useQueimadasRanking'
@@ -21,7 +21,7 @@ function fmt(n: number | null | undefined, dec = 0) {
 
 export function VisaoGeralView() {
   const anoFiltro    = useAppStore(s => s.anoFiltro)
-  const ano          = anoFiltro === 'all' ? ANO_DEFAULT : anoFiltro
+  const ano          = anoFiltro === 'all' ? ANO_RECENTE_COMPLETO : anoFiltro
   const [, setSelected] = useState<QueimadasMunicipio | null>(null)
 
   const { data: vg,   isLoading: loadKpis } = useQueimadasVisaoGeral(ano)
@@ -65,6 +65,25 @@ export function VisaoGeralView() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, height: '100%', padding: 14, overflow: 'hidden' }}>
+
+      {/* Badge informativo quando 'Todos os anos' é selecionado.
+          KPIs da view são single-year; 'all' cai em ANO_RECENTE_COMPLETO.
+          Para visão multi-ano agregada, ver abas Série Anual / Recorrência. */}
+      {anoFiltro === 'all' && (
+        <div style={{
+          flexShrink: 0,
+          padding: '8px 12px',
+          background: 'rgba(252, 141, 89, 0.10)',
+          border: '1px solid rgba(252, 141, 89, 0.30)',
+          borderRadius: 6,
+          fontSize: 11,
+          color: 'var(--t2)',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span style={{ color: '#FC8D59', fontWeight: 700 }}>📅 Mostrando: {ano}</span>
+          <span>(ano mais recente completo) — para visão multi-ano agregada use as abas <b>Série Anual</b> ou <b>Recorrência</b>.</span>
+        </div>
+      )}
 
       {/* KPI cards — usa .grid-5 + .kpi-card (design system + JetBrains Mono) */}
       <div className="grid-5" style={{ flexShrink: 0 }}>
