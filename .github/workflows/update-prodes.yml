@@ -107,7 +107,23 @@ jobs:
 
       # ── Executar pipeline completo ─────────────────────────────────────────
       - name: Executar Orquestrador v2 (com validação PRODES)
-        run: conda run -n desmatamento python -m core.orchestrator
+        run: |
+          set -euo pipefail
+          # Sanity check anti-no-op (padrão de update-queimadas.yml).
+          # Detecta orchestrator que sai exit 0 sem processar nada
+          # — bug histórico documentado em commit 958f481.
+          LOG=$(mktemp)
+          conda run -n desmatamento python -m core.orchestrator 2>&1 | tee "$LOG"
+          STATUS="${PIPESTATUS[0]}"
+          if [ "$STATUS" -ne 0 ]; then
+            echo "::error::Orchestrator falhou com exit code $STATUS"
+            exit "$STATUS"
+          fi
+          if ! grep -qE "inseridos/atualizados|concluído em [0-9]+\.[0-9]+s" "$LOG"; then
+            echo "::error::Orchestrator terminou sem evidência de upload — provável no-op silencioso."
+            tail -30 "$LOG"
+            exit 1
+          fi
 
       # ── Gerar documentação técnica atualizada ─────────────────────────────
       - name: Gerar documentação técnica

@@ -142,7 +142,24 @@ jobs:
 
       - name: Executar Orquestrador v2
         if: ${{ steps.check-change.outputs.changed == 'true' && github.event.inputs.dry_run != 'true' }}
-        run: conda run -n desmatamento python -m core.orchestrator
+        run: |
+          set -euo pipefail
+          # Sanity check anti-no-op (padrão de update-queimadas.yml).
+          # Pega caso histórico do cron 2026-06-05: orchestrator exit 0
+          # sem processar nada se pré-requisito ausente. tee + grep no
+          # stdout em vez de confiar no exit code.
+          LOG=$(mktemp)
+          conda run -n desmatamento python -m core.orchestrator 2>&1 | tee "$LOG"
+          STATUS="${PIPESTATUS[0]}"
+          if [ "$STATUS" -ne 0 ]; then
+            echo "::error::Orchestrator falhou com exit code $STATUS"
+            exit "$STATUS"
+          fi
+          if ! grep -qE "inseridos/atualizados|concluído em [0-9]+\.[0-9]+s" "$LOG"; then
+            echo "::error::Orchestrator terminou sem evidência de upload — provável no-op silencioso."
+            tail -30 "$LOG"
+            exit 1
+          fi
 
       - name: Salvar hash das ASVs
         if: steps.check-change.outputs.changed == 'true'

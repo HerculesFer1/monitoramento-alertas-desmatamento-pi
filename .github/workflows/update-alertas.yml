@@ -150,12 +150,32 @@ jobs:
 
       # ── 8. Executar pipeline (classify + aggregate + upload) ──────────────
       - name: Executar Orquestrador v2
+        env:
+          DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
         run: |
+          set -euo pipefail
           DRY_RUN_FLAG=""
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            DRY_RUN_FLAG="--dry-run"
+          if [ "${DRY_RUN_INPUT:-}" = "true" ]; then DRY_RUN_FLAG="--dry-run"; fi
+
+          # Sanity check anti-no-op (mesmo padrão de update-queimadas.yml).
+          # Causa raiz histórica: orchestrator pode terminar com exit 0 sem
+          # processar nada se um pré-requisito está ausente. Detectamos
+          # via stdout em vez de confiar no exit code.
+          LOG=$(mktemp)
+          conda run -n desmatamento python -m core.orchestrator $DRY_RUN_FLAG 2>&1 | tee "$LOG"
+          STATUS="${PIPESTATUS[0]}"
+          if [ "$STATUS" -ne 0 ]; then
+            echo "::error::Orchestrator falhou com exit code $STATUS"
+            exit "$STATUS"
           fi
-          conda run -n desmatamento python -m core.orchestrator $DRY_RUN_FLAG
+          # Em dry-run não há upload, então pulamos a no-op check.
+          if [ -z "$DRY_RUN_FLAG" ]; then
+            if ! grep -qE "inseridos/atualizados|concluído em [0-9]+\.[0-9]+s" "$LOG"; then
+              echo "::error::Orchestrator terminou sem evidência de upload — provável no-op silencioso."
+              tail -30 "$LOG"
+              exit 1
+            fi
+          fi
 
       # ── 9. Salvar artefatos da execução ───────────────────────────────────
       - name: Upload artefatos
