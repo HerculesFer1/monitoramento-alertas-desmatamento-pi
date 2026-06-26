@@ -5,6 +5,7 @@ import {
   YEARS, MESES,
   prodesData, prodesExtra,
   alertYr, classifYr, ipiYr, matopibaYr,
+  ANO_MIN, ANO_DEFAULT, YEARS_AVAILABLE, ANOS,
 } from '../constants'
 
 // ── fmtHa ─────────────────────────────────────────────────────────────────
@@ -67,8 +68,61 @@ describe('CHART_COLORS', () => {
 
 // ── YEARS / MESES ─────────────────────────────────────────────────────────
 describe('YEARS', () => {
-  it('contém exatamente os anos do pipeline', () => {
-    expect(YEARS).toEqual([2022, 2023, 2024, 2025])
+  it('é alias de ANOS (anos do pipeline com dados completos)', () => {
+    expect(YEARS).toEqual(ANOS)
+  })
+  it('contém pelo menos a série histórica original 2022–2025', () => {
+    for (const ano of [2022, 2023, 2024, 2025]) {
+      expect(YEARS).toContain(ano)
+    }
+  })
+})
+
+// ── REGRESSÃO B0: filtro de ano dinâmico ─────────────────────────────────
+// Bug original (commit d90a69f): dropdown de ano travado em [2022..2025]
+// mesmo com dados de 2026 ingeridos. Solução: YEARS_AVAILABLE inclui o
+// ano corrente automaticamente para que módulos com ingestão contínua
+// apareçam no UI sem rebuild do pipeline JSON.
+describe('B0 regressão — filtro de ano dinâmico', () => {
+  it('ANO_MIN é o menor ano da série histórica', () => {
+    expect(ANO_MIN).toBe(Math.min(...ANOS))
+    expect(ANO_MIN).toBeLessThanOrEqual(2022)
+  })
+
+  it('YEARS_AVAILABLE inclui o ano corrente do navegador', () => {
+    const anoCorrente = new Date().getFullYear()
+    expect(YEARS_AVAILABLE).toContain(anoCorrente)
+  })
+
+  it('YEARS_AVAILABLE inclui todos os anos de ANOS (pipeline)', () => {
+    for (const ano of ANOS) {
+      expect(YEARS_AVAILABLE, `Pipeline ano ${ano} deve estar em YEARS_AVAILABLE`).toContain(ano)
+    }
+  })
+
+  it('YEARS_AVAILABLE está ordenado crescente', () => {
+    const sorted = [...YEARS_AVAILABLE].sort((a, b) => a - b)
+    expect([...YEARS_AVAILABLE]).toEqual(sorted)
+  })
+
+  it('YEARS_AVAILABLE não tem duplicatas', () => {
+    expect(new Set(YEARS_AVAILABLE).size).toBe(YEARS_AVAILABLE.length)
+  })
+
+  it('YEARS_AVAILABLE não tem anos futuros (> ano corrente)', () => {
+    const anoCorrente = new Date().getFullYear()
+    for (const ano of YEARS_AVAILABLE) {
+      expect(ano, `${ano} é futuro`).toBeLessThanOrEqual(anoCorrente)
+    }
+  })
+
+  it('ANO_DEFAULT é o maior ano disponível (geralmente ano corrente)', () => {
+    expect(ANO_DEFAULT).toBe(YEARS_AVAILABLE[YEARS_AVAILABLE.length - 1])
+    expect(ANO_DEFAULT).toBe(Math.max(...YEARS_AVAILABLE))
+  })
+
+  it('ANO_DEFAULT >= maior ano de ANOS (pipeline)', () => {
+    expect(ANO_DEFAULT).toBeGreaterThanOrEqual(Math.max(...ANOS))
   })
 })
 
