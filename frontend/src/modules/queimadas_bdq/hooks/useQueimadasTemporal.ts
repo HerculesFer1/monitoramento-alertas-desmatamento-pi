@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase, isSupabaseConfigured } from '../../../core/lib/supabase'
+import { ANO_DEFAULT } from '../../../core/lib/constants'
 import type { QueimadasTemporalItem } from '../types'
 
-const STALE       = 5 * 60 * 1000
-const ANO_DEFAULT = 2025
+const STALE = 5 * 60 * 1000
 
 export function useQueimadasTemporal(ano: number | 'all' = ANO_DEFAULT) {
   const anoParam = ano === 'all' ? ANO_DEFAULT : ano

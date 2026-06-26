@@ -5,11 +5,12 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { supabase, isSupabaseConfigured } from '../../../core/lib/supabase'
+import { ANO_MIN, ANO_DEFAULT } from '../../../core/lib/constants'
 import type { QueimadasRecorrenciaItem } from '../types'
 
 const STALE = 5 * 60 * 1000
 
-export function useQueimadasRecorrencia(anoInicio = 2022, anoFim = 2025, limit = 50) {
+export function useQueimadasRecorrencia(anoInicio = ANO_MIN, anoFim = ANO_DEFAULT, limit = 50) {
   return useQuery<QueimadasRecorrenciaItem[]>({
     queryKey: ['qb_recorrencia', anoInicio, anoFim, limit],
     enabled:  isSupabaseConfigured,

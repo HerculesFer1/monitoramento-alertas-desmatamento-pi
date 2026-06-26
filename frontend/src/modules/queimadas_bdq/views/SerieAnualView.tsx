@@ -1,18 +1,19 @@
 /**
  * SerieAnualView.tsx — queimadas_bdq
- * Série anual 2022–2025 — tendência de área queimada, cicatrizes e
+ * Série anual — tendência de área queimada, cicatrizes e
  * % em classes prioritárias.
- * Responde: "Como a pressão de fogo evoluiu nos últimos 4 anos?"
+ * Responde: "Como a pressão de fogo evoluiu nos últimos anos?"
  */
 import {
   ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis,
   Tooltip, Legend, Bar, Line,
 } from 'recharts'
 import { useQueimadasSerieAnual } from '../hooks/useQueimadasSerieAnual'
+import { ANO_MIN, ANO_DEFAULT } from '../../../core/lib/constants'
 import type { QueimadasSerieAnualItem } from '../types'
 
-const ANO_INI = 2022
-const ANO_FIM = 2025
+const ANO_INI = ANO_MIN
+const ANO_FIM = ANO_DEFAULT
 
 function fmt(n: number | null | undefined, dec = 0) {
   if (n == null) return '—'

@@ -4,6 +4,7 @@
  * Responde: "Quando o fogo atinge as áreas prioritárias?"
  */
 import { useAppStore }             from '../../../core/store/useAppStore'
+import { ANO_DEFAULT }             from '../../../core/lib/constants'
 import { useQueimadasTemporal }    from '../hooks/useQueimadasTemporal'
 import { TemporalGrafico }         from '../components/TemporalGrafico'
 import { MESES_LABELS }           from '../types'
@@ -16,7 +17,7 @@ function fmt(n: number | null | undefined, dec = 0) {
 export function TemporalView() {
   const anoFiltro   = useAppStore(s => s.anoFiltro)
   const selectedMes = useAppStore(s => s.selectedMes)
-  const ano         = anoFiltro === 'all' ? 2025 : anoFiltro
+  const ano         = anoFiltro === 'all' ? ANO_DEFAULT : anoFiltro
 
   const { data: serie, isLoading } = useQueimadasTemporal(ano)
 

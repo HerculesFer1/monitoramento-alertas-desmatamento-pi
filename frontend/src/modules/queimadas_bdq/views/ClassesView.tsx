@@ -4,6 +4,7 @@
  * Responde: "O fogo incide mais nas áreas que mais precisamos proteger?"
  */
 import { useAppStore }             from '../../../core/store/useAppStore'
+import { ANO_DEFAULT }             from '../../../core/lib/constants'
 import { useQueimadasVisaoGeral }  from '../hooks/useQueimadasVisaoGeral'
 import { ClasseBarChart }          from '../components/ClasseBarChart'
 import { PrioridadeBadge }        from '../components/PrioridadeBadge'
@@ -16,7 +17,7 @@ function fmt(n: number | null | undefined, dec = 0) {
 
 export function ClassesView() {
   const anoFiltro = useAppStore(s => s.anoFiltro)
-  const ano       = anoFiltro === 'all' ? 2025 : anoFiltro
+  const ano       = anoFiltro === 'all' ? ANO_DEFAULT : anoFiltro
 
   const { data: vg, isLoading } = useQueimadasVisaoGeral(ano)
 

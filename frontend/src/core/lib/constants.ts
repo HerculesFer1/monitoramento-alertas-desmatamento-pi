@@ -17,7 +17,23 @@ export const VP_PTBR       = _pipeline.vp_ptbr as Record<string, string>
 export const CLASSES        = _pipeline.classes as string[]
 export const FLAGS_PRODES   = _pipeline.flags_prodes
 
-// Alias para compatibilidade com componentes existentes
+// ── Anos: fonte única ────────────────────────────────────────────────────
+// ANOS vem do JSON do pipeline (anos com pipeline rodado — fallback estático
+// completo). YEARS_AVAILABLE estende com o ano corrente automaticamente para
+// que módulos com ingestão contínua (queimadas_bdq via cron mensal) apareçam
+// no dropdown mesmo antes do próximo build do pipeline JSON.
+//
+// ANO_DEFAULT é o ano "mais recente disponível" — usado por views que precisam
+// de um valor concreto quando o usuário seleciona "Todos" (anoFiltro === 'all').
+export const ANO_MIN = ANOS.length > 0 ? Math.min(...ANOS) : 2022
+const _ANO_CORRENTE = new Date().getFullYear()
+export const YEARS_AVAILABLE: readonly number[] = Array.from(
+  new Set([...ANOS, _ANO_CORRENTE].filter(a => a >= ANO_MIN && a <= _ANO_CORRENTE))
+).sort((a, b) => a - b)
+export const ANO_DEFAULT = YEARS_AVAILABLE[YEARS_AVAILABLE.length - 1] ?? _ANO_CORRENTE
+
+// Alias para compatibilidade com componentes existentes (séries históricas
+// com dados completos — preferir YEARS_AVAILABLE para dropdowns e seletores).
 export const YEARS = ANOS
 
 // Set pré-computado para O(1) lookup (vs O(n) MATOPIBA_LIST.some())

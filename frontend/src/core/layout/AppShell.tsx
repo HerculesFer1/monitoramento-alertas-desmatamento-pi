@@ -10,6 +10,7 @@ import { useMetodologia }    from '../methodology/useMetodologia'
 import { ReportTrigger }     from '../report/ReportTrigger'
 import { ReportPage }        from '../report/ReportPage'
 import { useReportPage }     from '../report/useReportPage'
+import { YEARS_AVAILABLE }   from '../lib/constants'
 
 // ── Lazy views — alertas_mapbiomas ─────────────────────────────────────────
 const ExecutivaView   = React.lazy(() => import('../../modules/alertas_mapbiomas/ExecutivaView').then(m => ({ default: m.ExecutivaView })))
@@ -108,7 +109,7 @@ const MODULE_VIEWS: Record<Module, { id: string; label: string }[]> = {
   ],
 }
 
-const ANOS: AnoFiltro[] = ['all', 2022, 2023, 2024, 2025]
+const ANOS: AnoFiltro[] = ['all', ...YEARS_AVAILABLE]
 
 // ── Títulos por módulo ────────────────────────────────────────────────────
 // `key` recebe destaque temático (caixa alta + cor). O título completo é

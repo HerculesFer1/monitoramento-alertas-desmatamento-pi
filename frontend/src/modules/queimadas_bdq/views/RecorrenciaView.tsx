@@ -1,16 +1,17 @@
 /**
  * RecorrenciaView.tsx — queimadas_bdq
- * Recorrência de fogo 2022–2025 — municípios que queimaram em vários
- * anos consecutivos. IRF (Índice de Recorrência de Fogo) = anos com
+ * Recorrência de fogo — municípios que queimaram em vários anos
+ * consecutivos. IRF (Índice de Recorrência de Fogo) = anos com
  * queima / anos analisados.
  * Responde: "Quais municípios têm pressão de fogo crônica?"
  */
 import { useMemo } from 'react'
 import { useQueimadasRecorrencia } from '../hooks/useQueimadasRecorrencia'
+import { ANO_MIN, ANO_DEFAULT } from '../../../core/lib/constants'
 import type { QueimadasRecorrenciaItem } from '../types'
 
-const ANO_INI = 2022
-const ANO_FIM = 2025
+const ANO_INI = ANO_MIN
+const ANO_FIM = ANO_DEFAULT
 const N_ANOS  = ANO_FIM - ANO_INI + 1
 
 function fmt(n: number | null | undefined, dec = 0) {

@@ -9,7 +9,7 @@
  */
 import { useMemo } from 'react'
 import { useQueimadasMunicipios } from '../../queimadas_bdq/hooks/useQueimadasMunicipios'
-import { MATOPIBA_SET, MATOPIBA_N_MUNICIPIOS } from '../../../core/lib/constants'
+import { MATOPIBA_SET, MATOPIBA_N_MUNICIPIOS, ANO_DEFAULT } from '../../../core/lib/constants'
 import type {
   QueimadasMunicipio, QueimadasPorClasse, QueimadasRankingItem,
 } from '../../queimadas_bdq/types'
@@ -27,7 +27,7 @@ const round = (n: number, dp = 2) => {
 }
 
 /* ── Visão Geral MATOPIBA: KPIs + por_classe (sem por_mes) ───────────── */
-export function useMatopibaQueimadasVisaoGeralClient(ano: number | 'all' = 2025) {
+export function useMatopibaQueimadasVisaoGeralClient(ano: number | 'all' = ANO_DEFAULT) {
   const q = useQueimadasMunicipios(ano)
 
   const data = useMemo<MatopibaQueimadasVisaoGeral | null>(() => {
@@ -74,7 +74,7 @@ export function useMatopibaQueimadasVisaoGeralClient(ano: number | 'all' = 2025)
 }
 
 /* ── Ranking dos 33 MATOPIBA ─────────────────────────────────────────── */
-export function useMatopibaQueimadasRankingClient(ano: number | 'all' = 2025, limit = 33) {
+export function useMatopibaQueimadasRankingClient(ano: number | 'all' = ANO_DEFAULT, limit = 33) {
   const q = useQueimadasMunicipios(ano)
   const data = useMemo<QueimadasRankingItem[]>(() => {
     if (!q.data?.length) return []

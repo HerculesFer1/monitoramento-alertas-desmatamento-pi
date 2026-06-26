@@ -1,9 +1,10 @@
 /**
  * VisaoGeralView.tsx — queimadas_bdq
- * KPIs de queimadas 2025 + choropleth + top 10 municípios críticos.
+ * KPIs de queimadas + choropleth + top 10 municípios críticos.
  */
 import { useState, useMemo } from 'react'
 import { useAppStore }                  from '../../../core/store/useAppStore'
+import { ANO_DEFAULT }                  from '../../../core/lib/constants'
 import { useQueimadasVisaoGeral }       from '../hooks/useQueimadasVisaoGeral'
 import { useQueimadasMunicipios }       from '../hooks/useQueimadasMunicipios'
 import { useQueimadasRanking }          from '../hooks/useQueimadasRanking'
@@ -20,7 +21,7 @@ function fmt(n: number | null | undefined, dec = 0) {
 
 export function VisaoGeralView() {
   const anoFiltro    = useAppStore(s => s.anoFiltro)
-  const ano          = anoFiltro === 'all' ? 2025 : anoFiltro
+  const ano          = anoFiltro === 'all' ? ANO_DEFAULT : anoFiltro
   const [, setSelected] = useState<QueimadasMunicipio | null>(null)
 
   const { data: vg,   isLoading: loadKpis } = useQueimadasVisaoGeral(ano)

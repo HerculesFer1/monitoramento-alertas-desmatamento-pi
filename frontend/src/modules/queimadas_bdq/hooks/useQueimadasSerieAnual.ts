@@ -5,11 +5,12 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { supabase, isSupabaseConfigured } from '../../../core/lib/supabase'
+import { ANO_MIN, ANO_DEFAULT } from '../../../core/lib/constants'
 import type { QueimadasSerieAnualItem } from '../types'
 
 const STALE = 5 * 60 * 1000
 
-export function useQueimadasSerieAnual(anoInicio = 2022, anoFim = 2025) {
+export function useQueimadasSerieAnual(anoInicio = ANO_MIN, anoFim = ANO_DEFAULT) {
   return useQuery<QueimadasSerieAnualItem[]>({
     queryKey: ['qb_serie_anual', anoInicio, anoFim],
     enabled:  isSupabaseConfigured,
