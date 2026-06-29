@@ -4,8 +4,9 @@
  * Responde: "Quando o fogo atinge as áreas prioritárias?"
  */
 import { useAppStore }             from '../../../core/store/useAppStore'
-import { ANO_RECENTE_COMPLETO }    from '../../../core/lib/constants'
+import { ANO_MIN, ANO_DEFAULT, ANO_RECENTE_COMPLETO } from '../../../core/lib/constants'
 import { useQueimadasTemporal }    from '../hooks/useQueimadasTemporal'
+import { useQueimadasTemporalMultianual } from '../hooks/useQueimadasMultianual'
 import { TemporalGrafico }         from '../components/TemporalGrafico'
 import { MESES_LABELS }           from '../types'
 
@@ -17,9 +18,15 @@ function fmt(n: number | null | undefined, dec = 0) {
 export function TemporalView() {
   const anoFiltro   = useAppStore(s => s.anoFiltro)
   const selectedMes = useAppStore(s => s.selectedMes)
-  const ano         = anoFiltro === 'all' ? ANO_RECENTE_COMPLETO : anoFiltro
+  const isMulti     = anoFiltro === 'all'
+  const ano         = isMulti ? ANO_RECENTE_COMPLETO : anoFiltro
 
-  const { data: serie, isLoading } = useQueimadasTemporal(ano)
+  // Single-year usa get_qb_temporal; multi-ano usa get_qb_temporal_multianual
+  // (média mensal entre anos da janela — sazonalidade típica, não soma).
+  const sy = useQueimadasTemporal(ano)
+  const my = useQueimadasTemporalMultianual(ANO_MIN, ANO_DEFAULT)
+  const serie     = isMulti ? my.data      : sy.data
+  const isLoading = isMulti ? my.isLoading : sy.isLoading
 
   const pico = serie?.length
     ? serie.reduce((a, b) => a.area_ha > b.area_ha ? a : b)
@@ -31,6 +38,20 @@ export function TemporalView() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
+
+      {/* Badge multi-ano: chart mostra MÉDIA mensal entre anos */}
+      {isMulti && (
+        <div style={{
+          padding: '8px 12px',
+          background: 'rgba(16, 185, 129, 0.10)',
+          border: '1px solid rgba(16, 185, 129, 0.30)',
+          borderRadius: 6, fontSize: 11, color: 'var(--t2)',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span style={{ color: '#10B981', fontWeight: 700 }}>🌍 Sazonalidade média {ANO_MIN}–{ANO_DEFAULT}</span>
+          <span>— curva mensal típica (AVG entre anos). Para evolução ano a ano use a aba <b>Série Anual</b>.</span>
+        </div>
+      )}
 
       {/* KPIs temporais */}
       <div style={{ display: 'flex', gap: 10 }}>
@@ -74,7 +95,7 @@ export function TemporalView() {
       {/* Gráfico principal */}
       <div className="card" style={{ flex: 1 }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--t2)', marginBottom: 12 }}>
-          Área queimada mensal por classe de prioridade — {ano}
+          Área queimada mensal {isMulti ? `(média ${ANO_MIN}–${ANO_DEFAULT})` : `— ${ano}`}
         </div>
         {isLoading
           ? <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'var(--t3)' }}>

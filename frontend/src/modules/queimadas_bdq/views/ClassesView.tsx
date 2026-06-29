@@ -4,8 +4,9 @@
  * Responde: "O fogo incide mais nas áreas que mais precisamos proteger?"
  */
 import { useAppStore }             from '../../../core/store/useAppStore'
-import { ANO_RECENTE_COMPLETO }    from '../../../core/lib/constants'
+import { ANO_MIN, ANO_DEFAULT, ANO_RECENTE_COMPLETO } from '../../../core/lib/constants'
 import { useQueimadasVisaoGeral }  from '../hooks/useQueimadasVisaoGeral'
+import { useQueimadasVisaoGeralMultianual } from '../hooks/useQueimadasMultianual'
 import { ClasseBarChart }          from '../components/ClasseBarChart'
 import { PrioridadeBadge }        from '../components/PrioridadeBadge'
 import { CLASSE_LABELS }          from '../types'
@@ -17,9 +18,14 @@ function fmt(n: number | null | undefined, dec = 0) {
 
 export function ClassesView() {
   const anoFiltro = useAppStore(s => s.anoFiltro)
-  const ano       = anoFiltro === 'all' ? ANO_RECENTE_COMPLETO : anoFiltro
+  const isMulti   = anoFiltro === 'all'
+  const ano       = isMulti ? ANO_RECENTE_COMPLETO : anoFiltro
 
-  const { data: vg, isLoading } = useQueimadasVisaoGeral(ano)
+  // Switch entre single-year e multi-ano (RPC da migration 023).
+  const sy = useQueimadasVisaoGeral(ano)
+  const my = useQueimadasVisaoGeralMultianual(ANO_MIN, ANO_DEFAULT)
+  const vg        = isMulti ? my.data      : sy.data
+  const isLoading = isMulti ? my.isLoading : sy.isLoading
 
   const porClasse  = vg?.por_classe ?? []
   const totalHa    = porClasse.reduce((s, c) => s + c.area_queimada_ha, 0)
@@ -28,6 +34,20 @@ export function ClassesView() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
+
+      {/* Badge "Acumulado 2022–2026" quando isMulti */}
+      {isMulti && (
+        <div style={{
+          padding: '8px 12px',
+          background: 'rgba(16, 185, 129, 0.10)',
+          border: '1px solid rgba(16, 185, 129, 0.30)',
+          borderRadius: 6, fontSize: 11, color: 'var(--t2)',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span style={{ color: '#10B981', fontWeight: 700 }}>🌍 Acumulado {ANO_MIN}–{ANO_DEFAULT}</span>
+          <span>— soma da área queimada por classe AHP ao longo de toda a série.</span>
+        </div>
+      )}
 
       {/* Resumo */}
       <div style={{ display: 'flex', gap: 10 }}>
@@ -64,7 +84,7 @@ export function ClassesView() {
       {/* Gráfico de barras horizontal */}
       <div className="card" style={{ flex: 1 }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--t2)', marginBottom: 12 }}>
-          Área queimada por classe de prioridade — {ano}
+          Área queimada por classe de prioridade — {isMulti ? `${ANO_MIN}–${ANO_DEFAULT} (acumulado)` : ano}
         </div>
         {isLoading
           ? <div style={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'var(--t3)' }}>Carregando…</div>

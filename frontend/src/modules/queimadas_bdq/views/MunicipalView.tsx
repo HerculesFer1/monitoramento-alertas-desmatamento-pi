@@ -4,8 +4,9 @@
  */
 import { useState, useMemo }         from 'react'
 import { useAppStore }               from '../../../core/store/useAppStore'
-import { ANO_RECENTE_COMPLETO }      from '../../../core/lib/constants'
+import { ANO_MIN, ANO_DEFAULT, ANO_RECENTE_COMPLETO } from '../../../core/lib/constants'
 import { useQueimadasMunicipiosMes } from '../hooks/useQueimadasMunicipiosMes'
+import { useQueimadasMunicipiosMultianual } from '../hooks/useQueimadasMultianual'
 import { QueimadasMap }              from '../components/QueimadasMap'
 import { QueimadasCard }             from '../components/QueimadasCard'
 import { MesSeletor }                from '../components/MesSeletor'
@@ -15,14 +16,19 @@ import type { QueimadasMunicipio }   from '../types'
 export function MunicipalView() {
   const anoFiltro  = useAppStore(s => s.anoFiltro)
   const selectedMes = useAppStore(s => s.selectedMes)
+  // Multi-ano só faz sentido sem seletor de mês (multi-ano agrega ano-a-ano,
+  // não tem granularidade mensal). Se usuário pegou um mês, cai em fallback.
+  const isMulti    = anoFiltro === 'all' && selectedMes == null
   const ano        = anoFiltro === 'all' ? ANO_RECENTE_COMPLETO : anoFiltro
 
   const [selectedMun, setSelectedMun] = useState<QueimadasMunicipio | null>(null)
   const [priorityOnly, setPriorityOnly] = useState(false)
 
-  // useQueimadasMunicipiosMes: quando selectedMes está definido, busca dados
-  // do mês via get_qb_municipios_mes (Migration 012); caso contrário usa dados anuais.
-  const { data: muns, isLoading } = useQueimadasMunicipiosMes(ano, selectedMes ?? null)
+  // Switch: multi-ano vs single-year com seletor de mês opcional.
+  const sy = useQueimadasMunicipiosMes(ano, selectedMes ?? null)
+  const my = useQueimadasMunicipiosMultianual(ANO_MIN, ANO_DEFAULT)
+  const muns      = isMulti ? my.data      : sy.data
+  const isLoading = isMulti ? my.isLoading : sy.isLoading
 
   // Filtro "Prioridade alta": mesmo critério da Visão Geral —
   // classe_max_queimada ∈ {4,5} E pct_area_prioritaria > 50%.
@@ -41,10 +47,24 @@ export function MunicipalView() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%' }}>
 
+      {/* Badge multi-ano (só quando sem mês selecionado) */}
+      {isMulti && (
+        <div style={{
+          padding: '8px 12px',
+          background: 'rgba(16, 185, 129, 0.10)',
+          border: '1px solid rgba(16, 185, 129, 0.30)',
+          borderRadius: 6, fontSize: 11, color: 'var(--t2)',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span style={{ color: '#10B981', fontWeight: 700 }}>🌍 Acumulado {ANO_MIN}–{ANO_DEFAULT}</span>
+          <span>— área queimada total por município ao longo de toda a série. Selecione um mês abaixo para focar.</span>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span style={{ fontSize: 11, color: 'var(--t2)', fontWeight: 600 }}>
-          Queimadas por município — {ano}
+          Queimadas por município — {isMulti ? `${ANO_MIN}–${ANO_DEFAULT} (acumulado)` : ano}
         </span>
         <MesSeletor />
         {selectedMes && (

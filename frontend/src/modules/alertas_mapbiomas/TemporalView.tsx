@@ -101,8 +101,19 @@ export function TemporalView() {
   const hMax = allVals.length > 0 ? Math.max(...allVals) : 1
 
   // ── Dados de gráficos de barras ───────────────────────────────────────
-  const biomaData    = anos.map(a => ({ ano: a, Cerrado: staticData?.alertYr?.[a]?.cerrado ?? alertYr[a].cerrado, Caatinga: staticData?.alertYr?.[a]?.caatinga ?? alertYr[a].caatinga }))
-  const matopibaData = anos.map(a => ({ ano: a, MATOPIBA: staticData?.matopibaYr?.[a]?.mat ?? matopibaYr[a].mat, 'Restante PI': staticData?.matopibaYr?.[a]?.rest ?? matopibaYr[a].rest }))
+  // Guards `?? 0` no fallback: alertYr/matopibaYr são hardcoded com anos
+  // pré-2026; anos novos (introduzidos pelo ANOS dinâmico — commit f2)
+  // ficam sem dado estático até o pipeline regenerar resumo_estatico.json.
+  const biomaData    = anos.map(a => ({
+    ano: a,
+    Cerrado:  staticData?.alertYr?.[a]?.cerrado  ?? alertYr[a]?.cerrado  ?? 0,
+    Caatinga: staticData?.alertYr?.[a]?.caatinga ?? alertYr[a]?.caatinga ?? 0,
+  }))
+  const matopibaData = anos.map(a => ({
+    ano: a,
+    MATOPIBA:      staticData?.matopibaYr?.[a]?.mat  ?? matopibaYr[a]?.mat  ?? 0,
+    'Restante PI': staticData?.matopibaYr?.[a]?.rest ?? matopibaYr[a]?.rest ?? 0,
+  }))
 
   return (
     <div className="view-no-map">
