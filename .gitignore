@@ -53,3 +53,6 @@ CLAUDE.MD.md
 
 # Arquivo de estado do hook de fase (gerado por scripts/notificar_fase.ps1)
 .claude.fase_marker
+
+.vercel
+.env*

@@ -7,7 +7,7 @@
 # Pré-requisitos:
 #   - gh CLI autenticado (já está no PC)
 #   - Node.js (já está)
-#   - Conta Vercel com acesso ao projeto monitoramento-pi
+#   - Conta Vercel com acesso ao projeto cgeo-sync (ex-monitoramento-pi)
 #
 # Execução: clique direito > "Executar com PowerShell"
 #         ou no terminal: .\setup-vercel.ps1
@@ -47,7 +47,7 @@ Write-Host "  -> Logado como: $whoami" -ForegroundColor Green
 
 # 2. Link projeto
 Write-Host ""
-Write-Host "[2/5] Link com projeto 'monitoramento-pi'..." -ForegroundColor Yellow
+Write-Host "[2/5] Link com projeto 'cgeo-sync'..." -ForegroundColor Yellow
 if (Test-Path .vercel\project.json) {
     Write-Host "  -> .vercel/project.json já existe. Reusando." -ForegroundColor Gray
 } else {
@@ -55,7 +55,7 @@ if (Test-Path .vercel\project.json) {
     Write-Host "       Set up? -> Y" -ForegroundColor Gray
     Write-Host "       Which scope? -> escolha sua conta pessoal" -ForegroundColor Gray
     Write-Host "       Link to existing? -> Y" -ForegroundColor Gray
-    Write-Host "       Project name? -> monitoramento-pi" -ForegroundColor Gray
+    Write-Host "       Project name? -> cgeo-sync" -ForegroundColor Gray
     & npx vercel@latest link
     Assert-Exit "vercel link"
     if (-not (Test-Path .vercel\project.json)) {
@@ -120,5 +120,5 @@ Write-Host "  Monitorando (Ctrl+C interrompe)..." -ForegroundColor Yellow
 
 Write-Host ""
 Write-Host "=== CONCLUÍDO ===" -ForegroundColor Cyan
-Write-Host "Em ~30s teste: https://monitoramento-pi.vercel.app/ (Ctrl+Shift+R)" -ForegroundColor Green
+Write-Host "Em ~30s teste: https://cgeo-sync.vercel.app/ (Ctrl+Shift+R)" -ForegroundColor Green
 Pop-Location
