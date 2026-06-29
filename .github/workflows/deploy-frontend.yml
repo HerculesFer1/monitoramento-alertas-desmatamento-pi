@@ -64,18 +64,47 @@ jobs:
       # ── 5. Deploy para Vercel (CLI da raiz — o projeto já tem root=frontend) ───
       - name: Deploy para Vercel
         id: deploy
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/master" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            DEPLOY_URL=$(npx vercel@latest --token=$VERCEL_TOKEN --prod --yes 2>&1 | tail -1)
-          else
-            DEPLOY_URL=$(npx vercel@latest --token=$VERCEL_TOKEN --yes 2>&1 | tail -1)
-          fi
-          echo "preview-url=$DEPLOY_URL" >> $GITHUB_OUTPUT
-          echo "Deploy concluido: $DEPLOY_URL"
         env:
           VERCEL_TOKEN:      ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          # Sanity check anti-no-op (padrão de update-queimadas.yml).
+          # Bug histórico: CLI vercel saía 0 com warning "cannot-load-project-settings"
+          # quando VERCEL_ORG_ID/PROJECT_ID estavam desatualizados, e o workflow
+          # marcava success sem deployar. Pegamos esses sinais no stdout.
+          LOG=$(mktemp)
+          if [ "${{ github.ref }}" = "refs/heads/master" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            npx vercel@latest --token=$VERCEL_TOKEN --prod --yes 2>&1 | tee "$LOG"
+          else
+            npx vercel@latest --token=$VERCEL_TOKEN --yes 2>&1 | tee "$LOG"
+          fi
+          STATUS="${PIPESTATUS[0]}"
+
+          if [ "$STATUS" -ne 0 ]; then
+            echo "::error::Vercel CLI falhou com exit code $STATUS"
+            exit "$STATUS"
+          fi
+
+          # Detecta padrões de erro silencioso da CLI Vercel
+          if grep -qiE "cannot-load-project-settings|not authorized|invalid token|project not found" "$LOG"; then
+            echo "::error::Vercel CLI reportou erro silencioso (exit 0 mas com warning crítico):"
+            grep -iE "cannot|invalid|not authorized|not found" "$LOG" | head -5
+            echo "::error::Verifique secrets VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID."
+            echo "::error::Reparar com: scripts/setup-vercel.ps1"
+            exit 1
+          fi
+
+          # Deploy URL é a última linha que começa com https://
+          DEPLOY_URL=$(grep -oE 'https://[a-z0-9._-]+\.vercel\.app[^ ]*' "$LOG" | tail -1)
+          if [ -z "${DEPLOY_URL:-}" ]; then
+            echo "::error::Não foi possível extrair URL do deploy do output do CLI."
+            tail -10 "$LOG"
+            exit 1
+          fi
+          echo "preview-url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "✓ Deploy concluído: $DEPLOY_URL"
 
       # ── 6. Comentar URL no PR ────────────────────────────────────────────────
       - name: Comentar URL do preview no PR
