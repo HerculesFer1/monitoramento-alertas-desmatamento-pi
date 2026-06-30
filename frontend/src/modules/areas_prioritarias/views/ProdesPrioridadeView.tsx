@@ -84,9 +84,9 @@ export function ProdesPrioridadeView() {
     ? selectedMunicipio.nome
     : 'Piauí (estado)'
 
-  // Totais para contexto
-  const totalFloresta = porClasse.reduce((s, c) => s + c.area_floresta_ha, 0)
-  const totalDesmat   = porClasse.reduce((s, c) => s + c.area_desmat_ha,   0)
+  // Totais para contexto (?? 0 blinda contra RPC devolvendo undefined em campo numérico)
+  const totalFloresta = porClasse.reduce((s, c) => s + (c.area_floresta_ha ?? 0), 0)
+  const totalDesmat   = porClasse.reduce((s, c) => s + (c.area_desmat_ha   ?? 0), 0)
   const totalGeral    = totalFloresta + totalDesmat
 
   return (
@@ -198,7 +198,10 @@ export function ProdesPrioridadeView() {
           </thead>
           <tbody>
             {porClasse.map((c) => {
-              const pctFlor = c.pct_floresta_media
+              // Guards: RPC pode devolver undefined em campo numérico (regressão de schema).
+              // Sem isso a página inteira crasha em c.pct_floresta_media.toFixed().
+              const pctFlor = c.pct_floresta_media ?? 0
+              const haDeter = c.ha_deter_recente ?? 0
               const pctColor = pctFlor > 60 ? '#10B981' : pctFlor > 30 ? '#F97316' : '#EF4444'
               return (
                 <tr key={c.classe_prioridade}>
@@ -206,26 +209,26 @@ export function ProdesPrioridadeView() {
                     {c.prioridade_label ?? `Classe ${c.classe_prioridade}`}
                   </td>
                   <td style={{ textAlign: 'right', color: '#10B981', fontVariantNumeric: 'tabular-nums' }}>
-                    {fmtHa(c.area_floresta_ha)}
+                    {fmtHa(c.area_floresta_ha ?? 0)}
                   </td>
                   <td style={{ textAlign: 'right', color: '#EF4444', fontVariantNumeric: 'tabular-nums' }}>
-                    {fmtHa(c.area_desmat_ha)}
+                    {fmtHa(c.area_desmat_ha ?? 0)}
                   </td>
                   <td style={{ textAlign: 'right', color: 'var(--t2)', fontVariantNumeric: 'tabular-nums' }}>
-                    {fmtHa(c.area_total_ha)}
+                    {fmtHa(c.area_total_ha ?? 0)}
                   </td>
                   <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    <span style={{ color: pctColor, fontWeight: 600 }}>
-                      {pctFlor.toFixed(1)}%
-                    </span>
+                    {c.pct_floresta_media == null
+                      ? <span style={{ color: 'var(--t3)' }}>—</span>
+                      : <span style={{ color: pctColor, fontWeight: 600 }}>{pctFlor.toFixed(1)}%</span>}
                   </td>
                   <td style={{ textAlign: 'right', color: '#F97316', fontVariantNumeric: 'tabular-nums' }}>
-                    {c.ha_deter_recente > 0 ? fmtHa(c.ha_deter_recente) : (
+                    {haDeter > 0 ? fmtHa(haDeter) : (
                       <span style={{ color: 'var(--t3)' }}>—</span>
                     )}
                   </td>
                   <td style={{ textAlign: 'right', color: 'var(--t3)' }}>
-                    {c.n_municipios}
+                    {c.n_municipios ?? 0}
                   </td>
                 </tr>
               )

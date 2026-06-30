@@ -55,12 +55,17 @@ export function TemporalGrafico({ data, height, selectedMes }: Props) {
     </div>
   )
 
-  // Flatten: por_classe keys → colunas
+  // Flatten: por_classe keys → colunas + total (fallback quando por_classe vem vazio).
+  // Sem o total, se o RPC parar de devolver por_classe o gráfico fica vazio mesmo
+  // com area_ha rico (foi o que aconteceu com get_qb_temporal_multianual pré-migration 025).
   const chartData = data.map(item => ({
-    mes:  item.mes,
-    ...item.por_classe,
+    mes:     item.mes,
+    total:   item.area_ha,
+    ...(item.por_classe ?? {}),
   }))
 
+  // Se nenhum mês tem por_classe, mostra só a linha "Total" como fallback.
+  const temPorClasse = data.some(d => d.por_classe && Object.keys(d.por_classe).length > 0)
   const classes = [1, 2, 3, 4, 5] as const
 
   return (
@@ -100,7 +105,7 @@ export function TemporalGrafico({ data, height, selectedMes }: Props) {
               strokeDasharray="4 2"
             />
           )}
-          {classes.map(cls => (
+          {temPorClasse && classes.map(cls => (
             <Line
               key={cls}
               type="monotone"
@@ -112,6 +117,17 @@ export function TemporalGrafico({ data, height, selectedMes }: Props) {
               activeDot={{ r: 4 }}
             />
           ))}
+          {!temPorClasse && (
+            <Line
+              type="monotone"
+              dataKey="total"
+              name="Total"
+              stroke="#FC8D59"
+              strokeWidth={2}
+              dot={{ r: 3, fill: '#FC8D59' }}
+              activeDot={{ r: 5 }}
+            />
+          )}
         </LineChart>
       </ResponsiveContainer>
     </div>
