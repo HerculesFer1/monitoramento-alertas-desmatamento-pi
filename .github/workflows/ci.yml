@@ -150,7 +150,26 @@ jobs:
             echo "OK: $f ($lines linhas)"
           done
 
-  # ── 4. Verificar que constants.json está sincronizado ────────────────────
+  # ── 5. Schema check MapBiomas — detecta drift antes do agendamento mensal
+  mapbiomas-schema-check:
+    name: MapBiomas — contrato GraphQL (introspection)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências mínimas
+        run: pip install requests
+
+      - name: Verificar contrato com API MapBiomas Alerta v2
+        run: python -m modules.alertas_mapbiomas.schema_check
+
+  # ── 6. Verificar que constants.json está sincronizado ────────────────────
   constants-sync:
     name: Pipeline — constants.json sincronizado
     runs-on: ubuntu-latest

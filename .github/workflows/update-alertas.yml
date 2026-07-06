@@ -65,6 +65,11 @@ jobs:
             > .env
           chmod 600 .env
 
+      # ── 3.5. Sanity check da API (contrato + token) ─────────────────────
+      - name: Sanity check MapBiomas (schema + token)
+        run: |
+          conda run -n desmatamento python -m modules.alertas_mapbiomas.downloader --schema-check
+
       # ── 4. Download DERADSAs do Supabase Storage ──────────────────────────
       - name: Download DERADSAs (Supabase Storage)
         run: |
