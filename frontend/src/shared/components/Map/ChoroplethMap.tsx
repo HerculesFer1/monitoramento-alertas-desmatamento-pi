@@ -4,7 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { useMunicipiosGeoJSON } from '../../../core/lib/hooks'
 import { useAgregado } from '../../../core/lib/hooks'
 import { useAppStore } from '../../../core/store/useAppStore'
-import { fmtHa } from '../../../core/lib/constants'
+import { fmtHa, ANOS } from '../../../core/lib/constants'
 import { MATOPIBA_LIST } from '../../../core/lib/constants'
 
 const INITIAL_VIEW = { longitude: -42.8, latitude: -7.0, zoom: 5.8 }
@@ -38,7 +38,7 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
   const statsMap = useMemo(() => {
     if (!agregado?.length) return {}
     const acc: Record<string, { ipiSum: number; haIrr: number; haTotal: number; count: number }> = {}
-    const anos = anoFiltro === 'all' ? [2022, 2023, 2024, 2025] : [anoFiltro as number]
+    const anos = anoFiltro === 'all' ? ANOS : [anoFiltro as number]
     for (const r of agregado) {
       if (!anos.includes(r.ano)) continue
       const key = (r.municipio ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase()
@@ -102,15 +102,18 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
   const fillColor = mode === 'matopiba'
     ? ['case', ['==', ['get', '_matopiba'], true], '#F59E0B', '#2C2C2C'] as unknown as string
     : [
+        // Faixas discretas — idênticas às da legenda IPI.
+        // Antes usávamos `interpolate` (gradiente contínuo) que criava cores
+        // intermediárias (ex.: verde-azulado #6EBF8A em 30%) que a legenda
+        // não mostrava, causando divergência visual entre mapa e escala.
         'case',
         ['<', ['get', '_ipi'], 0], '#2C2C2C',
         [
-          'interpolate', ['linear'], ['get', '_ipi'],
-          0,   '#10B981',
-          30,  '#6EBF8A',
-          60,  '#F59E0B',
-          80,  '#F97316',
-          100, '#EF4444',
+          'step', ['get', '_ipi'],
+          '#10B981',           // 0 ≤ IPI < 30  → Baixo
+          30, '#F59E0B',       // 30 ≤ IPI < 60 → Médio
+          60, '#F97316',       // 60 ≤ IPI < 80 → Alto
+          80, '#EF4444',       // IPI ≥ 80      → Crítico
         ],
       ] as unknown as string
 
