@@ -35,22 +35,25 @@ export function ChoroplethMap({ mode = 'ipi' }: Props) {
   const [hover, setHover]       = useState<HoverInfo | null>(null)
 
   // Constrói mapa { nomeNormalizado → { ipi, haIrr, haTotal } }
+  //
+  // IPI ponderado por hectare (Σ ha_irr / Σ ha_total × 100) — não média simples
+  // dos pct_irregular anuais. Um ano com pouquíssimos hectares (ex.: 2026 no
+  // meio do ciclo de publicação MapBiomas) mas com pct=100% envenena a média
+  // simples e leva um município que seria Baixo (verde) a aparecer Médio (âmbar).
   const statsMap = useMemo(() => {
     if (!agregado?.length) return {}
-    const acc: Record<string, { ipiSum: number; haIrr: number; haTotal: number; count: number }> = {}
+    const acc: Record<string, { haIrr: number; haTotal: number }> = {}
     const anos = anoFiltro === 'all' ? ANOS : [anoFiltro as number]
     for (const r of agregado) {
       if (!anos.includes(r.ano)) continue
       const key = (r.municipio ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase()
-      if (!acc[key]) acc[key] = { ipiSum: 0, haIrr: 0, haTotal: 0, count: 0 }
-      acc[key].ipiSum  += r.pct_irregular ?? 0
-      acc[key].haIrr   += r.ha_irregular  ?? 0
-      acc[key].haTotal += r.ha_total       ?? 0
-      acc[key].count   += 1
+      if (!acc[key]) acc[key] = { haIrr: 0, haTotal: 0 }
+      acc[key].haIrr   += r.ha_irregular ?? 0
+      acc[key].haTotal += r.ha_total     ?? 0
     }
     return Object.fromEntries(
       Object.entries(acc).map(([k, v]) => [k, {
-        ipi:     v.count > 0 ? v.ipiSum / v.count : null,
+        ipi:     v.haTotal > 0 ? (v.haIrr / v.haTotal) * 100 : null,
         haIrr:   v.haIrr,
         haTotal: v.haTotal,
       }])
