@@ -50,8 +50,13 @@ def run(config: dict) -> dict:
             )
             return {"status": "warning", "records": n,
                     "message": f"{n} ASVs carregadas mas não enviadas — colunas ausentes: {sorted(_missing)}"}
+        # Projetar somente as colunas presentes no schema da tabela.
+        # O WFS/ArcGIS traz ~25 campos extras (area_pamgi, objectid, nu_cpf_cnp, …)
+        # que causariam PGRST204 "column not found" no upsert.
+        _SCHEMA_COLS = ["nu_autoriz", "status_aut", "bioma_pamg", "dt_valid_i", "dt_valid_f"]
+        gdf_upload = gdf[[*_SCHEMA_COLS, gdf.geometry.name]].copy()
         # conflict_col obrigatório: sem ele o uploader usa a 1ª coluna (não determinístico)
-        upload_geodataframe(gdf, table="asvs_sinaflor", if_exists="upsert",
+        upload_geodataframe(gdf_upload, table="asvs_sinaflor", if_exists="upsert",
                             conflict_col="nu_autoriz")
         log.info("  [asvs_sinaflor] Upload concluído")
 

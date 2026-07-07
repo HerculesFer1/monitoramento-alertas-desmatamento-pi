@@ -45,7 +45,7 @@ const MODULE_VIEWS: Record<Module, { id: string; label: string }[]> = {
   ],
 }
 
-const ANOS: AnoFiltro[] = ['all', 2022, 2023, 2024, 2025]
+const ANOS: AnoFiltro[] = ['all', 2022, 2023, 2024, 2025, 2026]
 
 // ── Dropdown de ano suspenso ───────────────────────────────────────────────
 function AnoDropdown() {

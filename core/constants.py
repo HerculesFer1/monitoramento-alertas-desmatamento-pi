@@ -30,7 +30,7 @@ M2_HA:                Final[int]   = 10_000
 CONCORDANCIA_PRODES_MIN_PCT: Final[float] = 0.0
 
 # ── Séries temporais ──────────────────────────────────────────────────────
-ANOS:         Final[tuple[int, ...]] = (2022, 2023, 2024, 2025)
+ANOS:         Final[tuple[int, ...]] = (2022, 2023, 2024, 2025, 2026)
 ANOS_DERADSA: Final[tuple[int, ...]] = (2024, 2025)  # únicos anos com DERADSA geoespacial
 
 # ── Classificações e sufixos de ID ───────────────────────────────────────

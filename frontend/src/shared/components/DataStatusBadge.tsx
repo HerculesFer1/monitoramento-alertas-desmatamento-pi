@@ -155,9 +155,11 @@ export function DataStatusBadge() {
               borderRadius: 6, fontSize: 10,
               color: frescor === 'desatualizado' ? '#ef4444' : '#f59e0b',
             }}>
-              {frescor === 'desatualizado'
-                ? `⚠ Dados com ${dias} dias — atualização necessária`
-                : `⚠ Dados com ${dias} dias — próxima atualização prevista`}
+              {exec.status === 'error'
+                ? `⚠ Última execução com erro — verifique os módulos abaixo`
+                : frescor === 'desatualizado'
+                  ? `⚠ Dados com ${dias} dias — atualização necessária`
+                  : `⚠ Dados com ${dias} dias — próxima atualização prevista`}
             </div>
           )}
         </div>

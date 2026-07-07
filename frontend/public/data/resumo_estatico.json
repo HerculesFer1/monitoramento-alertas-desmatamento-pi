@@ -1,386 +1,411 @@
 {
   "alertYr": {
     "2022": {
-      "count": 3062,
-      "area": 150350.0,
-      "cerrado": 137897.2,
-      "caatinga": 12452.8
+      "count": 3130,
+      "area": 150730.81,
+      "cerrado": 136117.1,
+      "caatinga": 14613.71
     },
     "2023": {
-      "count": 4527,
-      "area": 138035.57,
-      "cerrado": 117567.45,
-      "caatinga": 20468.12
+      "count": 4513,
+      "area": 143890.95,
+      "cerrado": 122970.74,
+      "caatinga": 20920.21
     },
     "2024": {
-      "count": 3034,
-      "area": 145146.33,
-      "cerrado": 111030.35,
-      "caatinga": 34115.98
+      "count": 2979,
+      "area": 145951.22,
+      "cerrado": 108795.53,
+      "caatinga": 37155.69
     },
     "2025": {
-      "count": 2676,
-      "area": 152526.7,
-      "cerrado": 116626.52,
-      "caatinga": 35900.18
+      "count": 2640,
+      "area": 152582.21,
+      "cerrado": 116078.73,
+      "caatinga": 36503.47
+    },
+    "2026": {
+      "count": 295,
+      "area": 8966.06,
+      "cerrado": 6072.23,
+      "caatinga": 2893.83
     }
   },
   "classifYr": {
     "2022": {
-      "irregular": 123393.61,
+      "irregular": 123769.34,
       "autorizado": 18652.56,
-      "autorizado_p": 8303.83,
+      "autorizado_p": 8308.91,
       "regularizado": 0.0
     },
     "2023": {
-      "irregular": 97996.99,
-      "autorizado": 7664.53,
-      "autorizado_p": 32374.05,
+      "irregular": 103801.64,
+      "autorizado": 7703.18,
+      "autorizado_p": 32386.14,
       "regularizado": 0.0
     },
     "2024": {
-      "irregular": 75227.82,
-      "autorizado": 39680.95,
-      "autorizado_p": 29987.8,
+      "irregular": 74660.1,
+      "autorizado": 40546.34,
+      "autorizado_p": 30495.03,
       "regularizado": 249.75
     },
     "2025": {
-      "irregular": 42375.66,
+      "irregular": 42449.11,
       "autorizado": 88167.76,
-      "autorizado_p": 21897.53,
+      "autorizado_p": 21879.6,
       "regularizado": 85.74
+    },
+    "2026": {
+      "irregular": 5270.24,
+      "autorizado": 3120.69,
+      "autorizado_p": 575.13,
+      "regularizado": 0.0
     }
   },
   "ipiYr": {
     "2022": 82.1,
-    "2023": 71.0,
-    "2024": 51.8,
-    "2025": 27.8
+    "2023": 72.1,
+    "2024": 51.2,
+    "2025": 27.8,
+    "2026": 58.8
   },
   "matopibaYr": {
     "2022": {
-      "mat": 80259.1,
-      "rest": 43134.51
+      "mat": 79156.23,
+      "rest": 44613.11
     },
     "2023": {
-      "mat": 54668.82,
-      "rest": 43328.16
+      "mat": 53571.91,
+      "rest": 50229.73
     },
     "2024": {
-      "mat": 30337.9,
-      "rest": 44889.92
+      "mat": 33155.15,
+      "rest": 41504.95
     },
     "2025": {
-      "mat": 14293.72,
-      "rest": 28081.95
+      "mat": 13982.38,
+      "rest": 28466.73
+    },
+    "2026": {
+      "mat": 1528.72,
+      "rest": 3741.53
     }
   },
   "top20": [
     [
-      "Uruçuí",
-      62333.77
+      "Baixa Grande do Ribeiro",
+      60970.81
     ],
     [
-      "Baixa Grande do Ribeiro",
-      58127.11
+      "Uruçuí",
+      58930.28
     ],
     [
       "Sebastião Leal",
-      43208.14
+      47467.62
     ],
     [
       "Canto do Buriti",
-      37661.84
+      37762.8
     ],
     [
       "Santa Filomena",
-      34441.05
-    ],
-    [
-      "Currais",
-      24186.3
+      32631.75
     ],
     [
       "Guadalupe",
-      22669.73
+      28100.5
+    ],
+    [
+      "Currais",
+      26774.09
     ],
     [
       "Floriano",
-      20530.15
-    ],
-    [
-      "Palmeira do Piauí",
-      18397.02
-    ],
-    [
-      "Ribeiro Gonçalves",
-      16592.57
+      24312.63
     ],
     [
       "Bom Jesus",
-      14512.09
+      16766.84
     ],
     [
-      "Jerumenha",
-      10244.33
-    ],
-    [
-      "Riacho Frio",
-      9660.49
+      "Ribeiro Gonçalves",
+      14413.91
     ],
     [
       "Parnaguá",
-      9261.87
+      13780.82
+    ],
+    [
+      "Palmeira do Piauí",
+      13538.72
     ],
     [
       "Alvorada do Gurguéia",
-      8812.43
-    ],
-    [
-      "Nazaré do Piauí",
-      8347.22
+      11039.37
     ],
     [
       "Corrente",
-      8118.87
+      9571.06
+    ],
+    [
+      "Riacho Frio",
+      9515.76
     ],
     [
       "Cristino Castro",
-      7729.12
+      7785.48
+    ],
+    [
+      "Gilbués",
+      7587.15
+    ],
+    [
+      "Jerumenha",
+      7374.74
     ],
     [
       "Cristalândia do Piauí",
-      6999.68
+      6789.26
     ],
     [
       "Piracuruca",
-      6812.9
+      6637.38
     ]
   ],
   "munIrrReal": {
-    "Acauã": 412.53,
+    "Acauã": 426.63,
     "Agricolândia": 67.57,
-    "Alagoinha do Piauí": 277.27,
+    "Alagoinha do Piauí": 391.59,
     "Alegrete do Piauí": 31.45,
-    "Alto Longá": 605.54,
-    "Altos": 862.26,
-    "Alvorada do Gurguéia": 8812.43,
-    "Amarante": 972.75,
-    "Angical do Piauí": 448.42,
-    "Antônio Almeida": 2092.91,
-    "Anísio de Abreu": 523.98,
-    "Aroazes": 994.41,
+    "Alto Longá": 617.56,
+    "Altos": 887.82,
+    "Alvorada do Gurguéia": 11039.37,
+    "Amarante": 1021.7,
+    "Angical do Piauí": 415.15,
+    "Antônio Almeida": 2345.99,
+    "Anísio de Abreu": 625.53,
+    "Araripina": 199.62,
+    "Aroazes": 1023.25,
     "Aroeiras do Itaim": 21.85,
-    "Arraial": 333.22,
-    "Assunção do Piauí": 200.23,
-    "Avelino Lopes": 464.89,
-    "Baixa Grande do Ribeiro": 16143.36,
-    "Barra D'Alcântara": 243.19,
-    "Barras": 1830.33,
+    "Arraial": 350.86,
+    "Assunção do Piauí": 291.47,
+    "Avelino Lopes": 498.35,
+    "Baixa Grande do Ribeiro": 17067.48,
+    "Barra D'Alcântara": 276.51,
+    "Barras": 2014.24,
     "Barreiras do Piauí": 174.49,
-    "Barro Duro": 24.99,
-    "Batalha": 823.9,
-    "Bela Vista do Piauí": 123.87,
-    "Belém do Piauí": 47.41,
-    "Beneditinos": 290.7,
-    "Bertolínia": 1661.91,
-    "Betânia do Piauí": 453.05,
-    "Boa Hora": 208.83,
-    "Bom Jesus": 10193.12,
-    "Bom Princípio do Piauí": 510.72,
-    "Bonfim do Piauí": 46.33,
-    "Boqueirão do Piauí": 451.34,
-    "Brasileira": 148.69,
-    "Brejo do Piauí": 446.58,
-    "Buriti dos Lopes": 1368.47,
-    "Buriti dos Montes": 281.9,
-    "Cabeceiras do Piauí": 277.06,
+    "Barro Duro": 32.33,
+    "Barão de Grajaú": 4212.2,
+    "Batalha": 863.65,
+    "Bela Vista do Piauí": 124.89,
+    "Belém do Piauí": 87.15,
+    "Beneditinos": 336.13,
+    "Bertolínia": 1980.31,
+    "Betânia do Piauí": 478.01,
+    "Boa Hora": 201.81,
+    "Bom Jesus": 11139.06,
+    "Bom Princípio do Piauí": 570.31,
+    "Bonfim do Piauí": 47.53,
+    "Boqueirão do Piauí": 468.83,
+    "Brasileira": 160.81,
+    "Brejo do Piauí": 453.89,
+    "Buriti dos Lopes": 1444.6,
+    "Buriti dos Montes": 316.22,
+    "Cabeceiras do Piauí": 252.83,
     "Cajazeiras do Piauí": 176.34,
-    "Cajueiro da Praia": 133.19,
-    "Caldeirão Grande do Piauí": 362.91,
+    "Cajueiro da Praia": 144.56,
+    "Caldeirão Grande do Piauí": 351.27,
     "Campinas do Piauí": 71.28,
-    "Campo Alegre do Fidalgo": 116.55,
+    "Campo Alegre de Lourdes": 42.42,
+    "Campo Alegre do Fidalgo": 161.67,
     "Campo Grande do Piauí": 15.15,
-    "Campo Largo do Piauí": 1072.84,
-    "Campo Maior": 1068.49,
-    "Canavieira": 1712.09,
-    "Canto do Buriti": 14639.13,
-    "Capitão Gervásio Oliveira": 181.63,
-    "Capitão de Campos": 393.25,
-    "Caracol": 1092.91,
-    "Caraúbas do Piauí": 319.54,
-    "Caridade do Piauí": 385.08,
-    "Castelo do Piauí": 233.51,
-    "Caxingó": 793.3,
-    "Cocal": 2185.27,
-    "Cocal de Telha": 94.76,
-    "Cocal dos Alves": 472.14,
-    "Coivaras": 65.28,
-    "Colônia do Gurguéia": 596.87,
+    "Campo Largo do Piauí": 1058.38,
+    "Campo Maior": 1230.9,
+    "Campos Sales": 13.02,
+    "Canavieira": 1824.3,
+    "Canto do Buriti": 14737.71,
+    "Capitão Gervásio Oliveira": 222.53,
+    "Capitão de Campos": 396.67,
+    "Caracol": 1162.35,
+    "Caraúbas do Piauí": 390.68,
+    "Caridade do Piauí": 456.78,
+    "Castelo do Piauí": 248.46,
+    "Caxingó": 719.55,
+    "Cocal": 2279.66,
+    "Cocal de Telha": 62.69,
+    "Cocal dos Alves": 559.38,
+    "Coivaras": 66.59,
+    "Colônia do Gurguéia": 607.66,
     "Colônia do Piauí": 355.84,
-    "Conceição do Canindé": 106.85,
+    "Conceição do Canindé": 151.2,
     "Coronel José Dias": 36.48,
-    "Corrente": 7182.56,
-    "Crateús": 11.76,
-    "Cristalândia do Piauí": 5683.43,
-    "Cristino Castro": 6241.81,
-    "Curimatá": 3255.65,
-    "Currais": 13524.38,
-    "Curral Novo do Piauí": 383.37,
-    "Curralinhos": 1462.33,
-    "Demerval Lobão": 90.52,
-    "Dirceu Arcoverde": 82.62,
+    "Corrente": 7364.17,
+    "Crateús": 12.23,
+    "Cristalândia do Piauí": 5799.18,
+    "Cristino Castro": 6298.16,
+    "Curimatá": 3372.92,
+    "Currais": 15347.38,
+    "Curral Novo do Piauí": 459.53,
+    "Curralinhos": 1463.45,
+    "Demerval Lobão": 88.69,
+    "Dirceu Arcoverde": 92.45,
     "Dom Expedito Lopes": 64.15,
-    "Dom Inocêncio": 172.27,
-    "Domingos Mourão": 51.69,
-    "Elesbão Veloso": 1766.62,
-    "Eliseu Martins": 647.57,
-    "Esperantina": 1041.84,
-    "Fartura do Piauí": 44.7,
-    "Flores do Piauí": 652.09,
+    "Dom Inocêncio": 123.53,
+    "Domingos Mourão": 46.87,
+    "Elesbão Veloso": 1862.08,
+    "Eliseu Martins": 356.36,
+    "Esperantina": 1128.58,
+    "Fartura do Piauí": 56.58,
+    "Flores do Piauí": 2817.63,
     "Floresta do Piauí": 20.71,
-    "Floriano": 5497.18,
-    "Francinópolis": 81.28,
-    "Francisco Ayres": 278.35,
-    "Francisco Macedo": 43.87,
-    "Francisco Santos": 308.81,
-    "Fronteiras": 142.03,
-    "Geminiano": 106.87,
-    "Gilbués": 5468.41,
-    "Guadalupe": 4998.3,
-    "Guaribas": 347.13,
-    "Hugo Napoleão": 661.41,
-    "Ilha Grande": 17.84,
-    "Inhuma": 543.71,
-    "Ipiranga do Piauí": 149.58,
-    "Isaías Coelho": 197.39,
+    "Floriano": 4688.88,
+    "Francinópolis": 104.69,
+    "Francisco Ayres": 268.04,
+    "Francisco Macedo": 38.72,
+    "Francisco Santos": 382.39,
+    "Fronteiras": 145.45,
+    "Geminiano": 108.42,
+    "Gilbués": 5504.12,
+    "Granja": 13.75,
+    "Guadalupe": 7388.67,
+    "Guaribas": 381.71,
+    "Hugo Napoleão": 802.09,
+    "Ilha Grande": 28.56,
+    "Inhuma": 531.27,
+    "Ipiranga do Piauí": 151.02,
+    "Isaías Coelho": 247.48,
     "Itainópolis": 88.58,
-    "Itaueira": 2903.01,
-    "Jacobina do Piauí": 1255.32,
-    "Jaicós": 324.77,
-    "Jardim do Mulato": 1130.84,
-    "Jatobá do Piauí": 320.06,
-    "Jerumenha": 4471.21,
-    "Joaquim Pires": 1408.79,
-    "Joca Marques": 543.14,
-    "José de Freitas": 2049.69,
-    "João Costa": 288.2,
-    "Juazeiro do Piauí": 132.51,
-    "Jurema": 1003.26,
-    "Júlio Borges": 355.92,
-    "Lagoa Alegre": 453.03,
-    "Lagoa de São Francisco": 112.93,
-    "Lagoa do Barro do Piauí": 236.81,
-    "Lagoa do Piauí": 89.56,
-    "Lagoa do Sítio": 368.64,
+    "Itaueira": 2879.96,
+    "Jacobina do Piauí": 1569.01,
+    "Jaicós": 344.35,
+    "Jardim do Mulato": 1031.54,
+    "Jatobá do Piauí": 311.3,
+    "Jerumenha": 2050.59,
+    "Joaquim Pires": 1525.27,
+    "Joca Marques": 555.86,
+    "José de Freitas": 1920.71,
+    "João Costa": 282.99,
+    "Juazeiro do Piauí": 110.19,
+    "Jurema": 979.54,
+    "Júlio Borges": 431.63,
+    "Lagoa Alegre": 457.91,
+    "Lagoa de São Francisco": 140.05,
+    "Lagoa do Barro do Piauí": 265.52,
+    "Lagoa do Piauí": 78.6,
+    "Lagoa do Sítio": 390.73,
     "Lagoinha do Piauí": 18.72,
-    "Landri Sales": 644.13,
-    "Luzilândia": 288.96,
-    "Luís Correia": 746.98,
-    "Madeiro": 174.0,
-    "Manoel Emídio": 3011.91,
-    "Marcolândia": 102.59,
-    "Marcos Parente": 1036.81,
-    "Massapê do Piauí": 100.19,
-    "Matias Olímpio": 445.35,
-    "Miguel Alves": 1185.33,
-    "Miguel Leão": 14.62,
-    "Milton Brandão": 101.53,
+    "Landri Sales": 786.92,
+    "Luzilândia": 333.41,
+    "Luís Correia": 850.71,
+    "Madeiro": 170.13,
+    "Manoel Emídio": 2763.62,
+    "Marcolândia": 114.91,
+    "Marcos Parente": 776.78,
+    "Massapê do Piauí": 121.61,
+    "Matias Olímpio": 430.71,
+    "Miguel Alves": 1227.9,
+    "Milton Brandão": 96.64,
     "Monsenhor Gil": 101.0,
-    "Monsenhor Hipólito": 203.54,
-    "Monte Alegre do Piauí": 2496.28,
-    "Morro Cabeça no Tempo": 1413.09,
-    "Morro do Chapéu do Piauí": 903.42,
-    "Murici dos Portelas": 707.8,
-    "Nazaré do Piauí": 569.08,
-    "Nazária": 1672.98,
-    "Nossa Senhora de Nazaré": 18.22,
-    "Nossa Senhora dos Remédios": 408.32,
-    "Nova Santa Rita": 185.03,
-    "Novo Oriente do Piauí": 417.39,
-    "Novo Santo Antônio": 108.01,
-    "Oeiras": 2014.21,
-    "Olho D'Água do Piauí": 636.44,
+    "Monsenhor Hipólito": 217.58,
+    "Monte Alegre do Piauí": 2508.15,
+    "Morro Cabeça no Tempo": 1435.01,
+    "Morro do Chapéu do Piauí": 811.69,
+    "Murici dos Portelas": 640.21,
+    "Nazaré do Piauí": 524.81,
+    "Nazária": 1896.4,
+    "Nossa Senhora de Nazaré": 11.65,
+    "Nossa Senhora dos Remédios": 341.83,
+    "Nova Santa Rita": 189.25,
+    "Novo Oriente": 14.25,
+    "Novo Oriente do Piauí": 669.77,
+    "Novo Santo Antônio": 104.03,
+    "Oeiras": 1643.72,
+    "Olho D'Água do Piauí": 631.55,
     "Padre Marcos": 11.58,
-    "Paes Landim": 104.59,
-    "Pajeú do Piauí": 916.78,
-    "Palmeira do Piauí": 14805.43,
-    "Palmeirais": 1794.31,
+    "Paes Landim": 106.94,
+    "Pajeú do Piauí": 865.85,
+    "Palmeira do Piauí": 11514.2,
+    "Palmeirais": 1782.06,
     "Paquetá": 108.05,
-    "Parnaguá": 8156.44,
-    "Parnaíba": 250.92,
-    "Passagem Franca do Piauí": 1063.8,
-    "Patos do Piauí": 279.11,
-    "Pau D'Arco do Piauí": 68.24,
-    "Paulistana": 1509.14,
-    "Pavussu": 803.3,
-    "Pedro II": 195.91,
+    "Parambu": 51.22,
+    "Parnaguá": 11305.38,
+    "Parnaíba": 303.9,
+    "Passagem Franca do Piauí": 1073.41,
+    "Patos do Piauí": 335.18,
+    "Pau D'Arco do Piauí": 190.9,
+    "Paulistana": 1801.24,
+    "Pavussu": 736.24,
+    "Pedro II": 279.22,
     "Pedro Laurentino": 103.73,
-    "Picos": 118.63,
-    "Pimenteiras": 1301.25,
-    "Pio IX": 776.61,
-    "Piracuruca": 2976.62,
-    "Piripiri": 1173.99,
+    "Picos": 124.23,
+    "Pimenteiras": 1498.72,
+    "Pio IX": 732.99,
+    "Piracuruca": 2801.1,
+    "Piripiri": 1114.33,
     "Porto": 110.96,
-    "Porto Alegre do Piauí": 1388.68,
-    "Prata do Piauí": 24.23,
-    "Queimada Nova": 618.03,
-    "Redenção do Gurguéia": 4519.99,
-    "Regeneração": 589.36,
-    "Riacho Frio": 9473.26,
-    "Ribeira do Piauí": 115.47,
-    "Ribeiro Gonçalves": 6076.94,
-    "Rio Grande do Piauí": 465.78,
-    "Santa Cruz do Piauí": 100.77,
-    "Santa Cruz dos Milagres": 481.02,
-    "Santa Filomena": 23729.22,
-    "Santa Luz": 1288.82,
-    "Santa Rosa do Piauí": 188.24,
-    "Santana do Piauí": 44.9,
+    "Porto Alegre do Piauí": 1076.7,
+    "Prata do Piauí": 113.73,
+    "Queimada Nova": 735.26,
+    "Redenção do Gurguéia": 3822.82,
+    "Regeneração": 559.54,
+    "Riacho Frio": 9330.9,
+    "Ribeira do Piauí": 103.29,
+    "Ribeiro Gonçalves": 5339.18,
+    "Rio Grande do Piauí": 448.05,
+    "Santa Cruz do Piauí": 122.8,
+    "Santa Cruz dos Milagres": 650.21,
+    "Santa Filomena": 23592.07,
+    "Santa Luz": 1166.9,
+    "Santa Rita de Cássia": 869.08,
+    "Santa Rosa do Piauí": 184.35,
+    "Santana do Piauí": 43.18,
     "Santo Antônio de Lisboa": 54.03,
     "Santo Antônio dos Milagres": 82.9,
-    "Santo Inácio do Piauí": 73.18,
-    "Sebastião Barros": 3290.9,
-    "Sebastião Leal": 17821.96,
-    "Sigefredo Pacheco": 344.82,
-    "Simplício Mendes": 388.58,
-    "Simões": 292.08,
+    "Santo Inácio do Piauí": 95.78,
+    "Sebastião Barros": 2757.74,
+    "Sebastião Leal": 22348.57,
+    "Sigefredo Pacheco": 392.61,
+    "Simplício Mendes": 441.6,
+    "Simões": 368.23,
     "Socorro do Piauí": 96.04,
-    "São Braz do Piauí": 133.05,
-    "São Francisco de Assis do Piauí": 620.1,
-    "São Francisco do Piauí": 690.98,
-    "São Félix do Piauí": 532.43,
-    "São Gonçalo do Gurguéia": 584.06,
-    "São Gonçalo do Piauí": 348.58,
-    "São José do Divino": 122.5,
-    "São José do Peixe": 4332.47,
-    "São José do Piauí": 131.39,
-    "São João da Canabrava": 264.48,
-    "São João da Fronteira": 149.18,
-    "São João da Serra": 101.96,
+    "Sussuapara": 4.84,
+    "São Braz do Piauí": 131.85,
+    "São Francisco de Assis do Piauí": 487.1,
+    "São Francisco do Piauí": 1019.34,
+    "São Félix do Piauí": 311.1,
+    "São Gonçalo do Gurguéia": 582.53,
+    "São Gonçalo do Piauí": 245.4,
+    "São José do Divino": 101.52,
+    "São José do Peixe": 2310.41,
+    "São José do Piauí": 130.87,
+    "São João da Canabrava": 315.01,
+    "São João da Fronteira": 150.08,
+    "São João da Serra": 123.19,
     "São João da Varjota": 22.98,
-    "São João do Arraial": 306.95,
-    "São João do Piauí": 134.65,
-    "São Julião": 7.12,
+    "São João do Arraial": 286.02,
+    "São João do Piauí": 133.25,
+    "São Julião": 9.14,
     "São Lourenço do Piauí": 34.5,
-    "São Luis do Piauí": 14.67,
-    "São Miguel da Baixa Grande": 272.82,
-    "São Miguel do Fidalgo": 157.43,
-    "São Miguel do Tapuio": 1140.46,
-    "São Pedro do Piauí": 726.0,
-    "São Raimundo Nonato": 377.78,
+    "São Luis do Piauí": 1.2,
+    "São Miguel da Baixa Grande": 268.5,
+    "São Miguel do Fidalgo": 173.63,
+    "São Miguel do Tapuio": 1110.44,
+    "São Pedro do Piauí": 676.14,
+    "São Raimundo Nonato": 343.37,
     "Tamboril do Piauí": 249.46,
-    "Tanque do Piauí": 118.48,
-    "Teresina": 1179.97,
-    "União": 903.08,
-    "Uruçuí": 37406.82,
-    "Valença do Piauí": 1200.0,
-    "Vera Mendes": 46.19,
+    "Tanque do Piauí": 118.38,
+    "Teresina": 832.83,
+    "União": 877.52,
+    "Uruçuí": 32468.45,
+    "Valença do Piauí": 1151.68,
+    "Vera Mendes": 43.5,
     "Vila Nova do Piauí": 43.22,
-    "Várzea Branca": 217.02,
-    "Várzea Grande": 152.93,
+    "Várzea Branca": 218.15,
+    "Várzea Grande": 151.45,
     "Wall Ferraz": 11.75,
-    "Água Branca": 42.93
+    "Água Branca": 154.88
   },
   "munBiome": {
     "Acauã": "Caatinga",
@@ -394,6 +419,7 @@
     "Angical do Piauí": "Cerrado",
     "Antônio Almeida": "Cerrado",
     "Anísio de Abreu": "Caatinga",
+    "Araripina": "Caatinga",
     "Aroazes": "Cerrado",
     "Aroeiras do Itaim": "Caatinga",
     "Arraial": "Caatinga",
@@ -404,6 +430,7 @@
     "Barras": "Cerrado",
     "Barreiras do Piauí": "Cerrado",
     "Barro Duro": "Cerrado",
+    "Barão de Grajaú": "Cerrado",
     "Batalha": "Cerrado",
     "Bela Vista do Piauí": "Caatinga",
     "Belém do Piauí": "Caatinga",
@@ -424,10 +451,12 @@
     "Cajueiro da Praia": "Caatinga",
     "Caldeirão Grande do Piauí": "Caatinga",
     "Campinas do Piauí": "Caatinga",
+    "Campo Alegre de Lourdes": "Caatinga",
     "Campo Alegre do Fidalgo": "Caatinga",
     "Campo Grande do Piauí": "Caatinga",
     "Campo Largo do Piauí": "Cerrado",
     "Campo Maior": "Cerrado",
+    "Campos Sales": "Caatinga",
     "Canavieira": "Cerrado",
     "Canto do Buriti": "Caatinga",
     "Capitão Gervásio Oliveira": "Caatinga",
@@ -472,6 +501,7 @@
     "Fronteiras": "Caatinga",
     "Geminiano": "Caatinga",
     "Gilbués": "Cerrado",
+    "Granja": "Caatinga",
     "Guadalupe": "Cerrado",
     "Guaribas": "Caatinga",
     "Hugo Napoleão": "Cerrado",
@@ -509,7 +539,6 @@
     "Massapê do Piauí": "Caatinga",
     "Matias Olímpio": "Cerrado",
     "Miguel Alves": "Cerrado",
-    "Miguel Leão": "Cerrado",
     "Milton Brandão": "Caatinga",
     "Monsenhor Gil": "Cerrado",
     "Monsenhor Hipólito": "Caatinga",
@@ -522,6 +551,7 @@
     "Nossa Senhora de Nazaré": "Cerrado",
     "Nossa Senhora dos Remédios": "Cerrado",
     "Nova Santa Rita": "Caatinga",
+    "Novo Oriente": "Caatinga",
     "Novo Oriente do Piauí": "Cerrado",
     "Novo Santo Antônio": "Cerrado",
     "Oeiras": "Caatinga",
@@ -532,6 +562,7 @@
     "Palmeira do Piauí": "Cerrado",
     "Palmeirais": "Cerrado",
     "Paquetá": "Caatinga",
+    "Parambu": "Caatinga",
     "Parnaguá": "Caatinga",
     "Parnaíba": "Caatinga",
     "Passagem Franca do Piauí": "Cerrado",
@@ -560,6 +591,7 @@
     "Santa Cruz dos Milagres": "Cerrado",
     "Santa Filomena": "Cerrado",
     "Santa Luz": "Cerrado",
+    "Santa Rita de Cássia": "Cerrado",
     "Santa Rosa do Piauí": "Caatinga",
     "Santana do Piauí": "Caatinga",
     "Santo Antônio de Lisboa": "Caatinga",
@@ -571,6 +603,7 @@
     "Simplício Mendes": "Caatinga",
     "Simões": "Caatinga",
     "Socorro do Piauí": "Caatinga",
+    "Sussuapara": "Caatinga",
     "São Braz do Piauí": "Caatinga",
     "São Francisco de Assis do Piauí": "Caatinga",
     "São Francisco do Piauí": "Caatinga",
@@ -610,28 +643,28 @@
   "prodesSummary": {
     "ciclos": {
       "2022": {
-        "n": 619,
-        "concordantes": 376,
-        "discordantes": 243,
-        "pct": 60.7
+        "n": 0,
+        "concordantes": 0,
+        "discordantes": 0,
+        "pct": 0.0
       },
       "2023": {
-        "n": 2874,
-        "concordantes": 1996,
-        "discordantes": 878,
-        "pct": 69.5
+        "n": 0,
+        "concordantes": 0,
+        "discordantes": 0,
+        "pct": 0.0
       },
       "2024": {
-        "n": 1421,
-        "concordantes": 1061,
-        "discordantes": 360,
-        "pct": 74.7
+        "n": 0,
+        "concordantes": 0,
+        "discordantes": 0,
+        "pct": 0.0
       },
       "2025": {
-        "n": 1004,
-        "concordantes": 765,
-        "discordantes": 239,
-        "pct": 76.2
+        "n": 0,
+        "concordantes": 0,
+        "discordantes": 0,
+        "pct": 0.0
       },
       "2026": {
         "n": 0,
@@ -640,10 +673,10 @@
         "pct": 0.0
       }
     },
-    "totalValidados": 5918,
-    "totalConcordantes": 4198,
-    "totalDiscordantes": 1720,
-    "semProdes": 747
+    "totalValidados": 0,
+    "totalConcordantes": 0,
+    "totalDiscordantes": 0,
+    "semProdes": 0
   },
   "prodesExtra": {
     "irrAnual": {
@@ -651,31 +684,36 @@
         2022,
         2023,
         2024,
-        2025
+        2025,
+        2026
       ],
       "confirmado": [
-        91588.15,
-        67494.05,
-        42854.59,
-        17357.08
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
       ],
       "discordante": [
-        19652.36,
-        11953.16,
-        3843.31,
-        965.29
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
       ],
       "caatinga": [
-        12153.11,
-        18549.78,
-        28529.92,
-        9221.95
+        14308.94,
+        18963.23,
+        30238.8,
+        9822.85,
+        2756.76
       ],
       "semProdes": [
         0.0,
         0.0,
         0.0,
-        14831.35
+        0.0,
+        0.0
       ]
     },
     "distCob": {
@@ -688,143 +726,33 @@
         "90–100%"
       ],
       "n": [
-        1720,
-        495,
-        620,
-        1040,
-        1001,
-        1042
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
       "ha": [
-        36414.11,
-        52273.59,
-        13551.13,
-        34797.38,
-        31418.98,
-        87252.79
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
       ]
     },
     "mediaCob": {
-      "2022": 66.0,
-      "2023": 63.9,
-      "2024": 68.5,
-      "2025": 69.6,
+      "2022": 0.0,
+      "2023": 0.0,
+      "2024": 0.0,
+      "2025": 0.0,
       "2026": 0.0
     },
-    "topMun": [
-      {
-        "mun": "Uruçuí",
-        "conc": 34560.35,
-        "total": 37406.82,
-        "pct": 92
-      },
-      {
-        "mun": "Santa Filomena",
-        "conc": 18710.12,
-        "total": 23729.22,
-        "pct": 79
-      },
-      {
-        "mun": "Sebastião Leal",
-        "conc": 17374.99,
-        "total": 17821.96,
-        "pct": 97
-      },
-      {
-        "mun": "Baixa Grande do Ribeiro",
-        "conc": 14765.89,
-        "total": 16143.36,
-        "pct": 91
-      },
-      {
-        "mun": "Currais",
-        "conc": 11492.77,
-        "total": 13524.38,
-        "pct": 85
-      },
-      {
-        "mun": "Palmeira do Piauí",
-        "conc": 10290.15,
-        "total": 14805.43,
-        "pct": 70
-      },
-      {
-        "mun": "Riacho Frio",
-        "conc": 8150.16,
-        "total": 9466.53,
-        "pct": 86
-      },
-      {
-        "mun": "Bom Jesus",
-        "conc": 6049.88,
-        "total": 10193.12,
-        "pct": 59
-      },
-      {
-        "mun": "Cristino Castro",
-        "conc": 5747.88,
-        "total": 6241.81,
-        "pct": 92
-      },
-      {
-        "mun": "Corrente",
-        "conc": 5622.13,
-        "total": 7111.32,
-        "pct": 79
-      }
-    ],
-    "porVetor": [
-      {
-        "vp": "Agricultura",
-        "n": 5715,
-        "conc": 4075,
-        "pct": 71.3
-      },
-      {
-        "vp": "Expansão Urbana",
-        "n": 141,
-        "conc": 92,
-        "pct": 65.2
-      },
-      {
-        "vp": "Abertura de Estradas",
-        "n": 39,
-        "conc": 14,
-        "pct": 35.9
-      },
-      {
-        "vp": "Outros",
-        "n": 11,
-        "conc": 8,
-        "pct": 72.7
-      },
-      {
-        "vp": "Projeto de Energia Renovável",
-        "n": 5,
-        "conc": 4,
-        "pct": 80.0
-      },
-      {
-        "vp": "Mineração",
-        "n": 4,
-        "conc": 3,
-        "pct": 75.0
-      },
-      {
-        "vp": "Mineração Ilegal",
-        "n": 2,
-        "conc": 1,
-        "pct": 50.0
-      },
-      {
-        "vp": "Aquicultura",
-        "n": 1,
-        "conc": 1,
-        "pct": 100.0
-      }
-    ],
-    "haIrrConfirmado": 219293.87,
-    "pctIrrConfirmado": 64.7,
-    "pctIrrCerradoDisponivel": 85.8
+    "topMun": [],
+    "porVetor": [],
+    "haIrrConfirmado": 0.0,
+    "pctIrrConfirmado": 0.0,
+    "pctIrrCerradoDisponivel": 0.0
   }
 }

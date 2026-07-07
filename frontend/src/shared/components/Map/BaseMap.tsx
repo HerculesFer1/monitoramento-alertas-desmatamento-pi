@@ -3,7 +3,10 @@ import Map, { Layer, Source, NavigationControl } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useAlertasGeoJson } from '../../../core/lib/hooks'
 import { useAppStore } from '../../../core/store/useAppStore'
-import { CHART_COLORS, fmtHa } from '../../../core/lib/constants'
+import { CHART_COLORS, fmtHa, ANOS } from '../../../core/lib/constants'
+
+// Ano mais recente disponível — vem do constants.json gerado pelo pipeline.
+const ANO_MAIS_RECENTE = ANOS[ANOS.length - 1]
 
 const COR_CLASSE: Record<string, string> = {
   IRREGULAR:               CHART_COLORS.irr,
@@ -27,8 +30,8 @@ export function MapView() {
   const { anoFiltro } = useAppStore()
   const [hover, setHover] = useState<HoverInfo | null>(null)
 
-  // Quando "Todos", exibe 2025 (ano mais recente) com label indicativo
-  const anoQuery = anoFiltro === 'all' ? 2025 : (anoFiltro as number)
+  // Quando "Todos", exibe o ano mais recente disponível com label indicativo
+  const anoQuery = anoFiltro === 'all' ? ANO_MAIS_RECENTE : (anoFiltro as number)
 
   const { data: geojson, isLoading } = useAlertasGeoJson({
     ano:   anoQuery,
@@ -55,7 +58,7 @@ export function MapView() {
           background: 'rgba(26,26,26,.9)', border: '1px solid rgba(255,255,255,.1)',
           borderRadius: 6, padding: '3px 10px', fontSize: 11, color: '#ABABAB',
         }}>
-          Mapa · 2025 (mais recente)
+          Mapa · {ANO_MAIS_RECENTE} (mais recente)
         </div>
       )}
 

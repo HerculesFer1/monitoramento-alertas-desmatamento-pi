@@ -158,8 +158,10 @@ export function TemporalView() {
         {/* ── Gráfico mensal contínuo ────────────────────────────────── */}
         <div className="card">
           <div style={{ fontWeight: 600, fontSize: 12, color: 'var(--t2)', marginBottom: 12 }}>
-            Alertas Mensais 2022–2025{' '}
-            <span style={{ fontWeight: 400, color: 'var(--t3)' }}>(ha · dados reais por data de detecção)</span>
+            Alertas Mensais {YEARS[0]}–{YEARS[YEARS.length - 1]}{' '}
+            <span style={{ fontWeight: 400, color: 'var(--t3)' }}>
+              (ha · dados reais por data de detecção · <b style={{ color: 'var(--t2)' }}>~5 meses de defasagem</b> MapBiomas — meses recentes ainda serão publicados)
+            </span>
           </div>
           {monthlyLoading ? (
             <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--t3)', fontSize: 12 }}>
