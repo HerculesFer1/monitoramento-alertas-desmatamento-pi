@@ -3,17 +3,16 @@
  * Panorama do estado: mapa coroplético das 16 classes por município + KPIs.
  * Mapa leve — sem rasters, só GeoJSON municipal simplificado.
  */
-import React, { useRef, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import { Map as MapLibreMap, NavigationControl } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { useAppStore }    from '../../../../core/store/useAppStore'
+import { useAppStore }    from '../../../core/store/useAppStore'
+import type { AppState }  from '../../../core/store/useAppStore'
 import { useVisaoGeral, useAreasGeoJson } from '../hooks/useAreasData'
 import { useMunicipioSelect }             from '../hooks/useMunicipioSelect'
-import { MunicipioCard }   from '../components/MunicipioCard'
 import { ClasseBarChart }  from '../components/ClasseBarChart'
 import {
   LAYER_IDS,
-  DEFAULT_VISIBLE_LAYERS,
   CLASSE_COLORS,
   type MunicipioFeatureProps,
 } from '../types'
@@ -22,8 +21,8 @@ export function VisaoGeralView() {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef       = useRef<MapLibreMap | null>(null)
 
-  const anoFiltro          = useAppStore((s) => s.anoFiltro)
-  const selectedMunicipio  = useAppStore((s) => s.selectedMunicipio)
+  const anoFiltro          = useAppStore((s: AppState) => s.anoFiltro)
+  const selectedMunicipio  = useAppStore((s: AppState) => s.selectedMunicipio)
   const { select, clear }  = useMunicipioSelect(mapRef)
 
   const { data: visaoGeral, isLoading: loadingKpis } = useVisaoGeral(anoFiltro)
@@ -74,11 +73,12 @@ export function VisaoGeralView() {
         type:   'fill',
         source: sourceId,
         paint:  {
-          'fill-color': [
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          'fill-color': ([
             'match', ['get', 'classe_max'],
             ...Object.entries(CLASSE_COLORS).flatMap(([k, v]) => [Number(k), v]),
             '#cccccc',
-          ],
+          ] as any),
           'fill-opacity': 0.75,
         },
       })

@@ -57,6 +57,36 @@ const MODULE_META: Record<Module, { name: string; views: ViewItem[] }> = {
     name: 'Gestão de Dados',
     views: [],
   },
+  areas_prioritarias: {
+    name: 'Áreas Prioritárias REDD+',
+    views: [
+      {
+        id: 'visao_geral',
+        label: 'Visão Geral',
+        icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z"/></svg>,
+      },
+      {
+        id: 'municipal',
+        label: 'Municipal',
+        icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>,
+      },
+      {
+        id: 'prodes_prioridade',
+        label: 'PRODES × Prioridade',
+        icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="17" y="3" width="4" height="17"/></svg>,
+      },
+      {
+        id: 'ranking',
+        label: 'Ranking',
+        icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="10" y2="18"/></svg>,
+      },
+      {
+        id: 'metodologia',
+        label: 'Metodologia',
+        icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>,
+      },
+    ],
+  },
 }
 
 export function SecondaryPanel() {

@@ -25,7 +25,7 @@ export type DadosView     = 'gestao'
 // Backward-compat: Tab ainda exportado para componentes que ainda o referenciam
 export type Tab = MapBiomasView | ProdesView | MatopibaView | DadosView
 
-interface AppState {
+export interface AppState {
   activeModule: Module
   setActiveModule: (m: Module) => void
 

@@ -3,7 +3,6 @@
  * Gráfico de barras: área florestal × desmatamento por classe de prioridade.
  * Reutilizado em VisaoGeralView e ProdesPrioridadeView.
  */
-import React from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
@@ -42,9 +41,9 @@ export function ClasseBarChart({ data, height }: Props) {
             tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
           />
           <Tooltip
-            formatter={(value: number, name: string) => [
-              `${Number(value).toLocaleString('pt-BR')} ha`,
-              name,
+            formatter={(value, name) => [
+              `${Number(value ?? 0).toLocaleString('pt-BR')} ha`,
+              String(name ?? ''),
             ]}
             labelFormatter={(label) => `Classe ${label}`}
           />

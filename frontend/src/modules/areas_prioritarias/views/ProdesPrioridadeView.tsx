@@ -3,18 +3,18 @@
  * Quantificação de áreas: floresta remanescente × desmatado por classe de prioridade.
  * Gráfico de barras empilhadas + tabela filtrável por município.
  */
-import React, { useState } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
-import { useAppStore }  from '../../../../core/store/useAppStore'
+import { useAppStore }  from '../../../core/store/useAppStore'
+import type { AppState } from '../../../core/store/useAppStore'
 import { useVisaoGeral, useMunicipioDetalhe } from '../hooks/useAreasData'
 import type { ClasseMunicipio, ClasseResumo } from '../types'
 
 export function ProdesPrioridadeView() {
-  const anoFiltro         = useAppStore((s) => s.anoFiltro)
-  const selectedMunicipio = useAppStore((s) => s.selectedMunicipio)
+  const anoFiltro         = useAppStore((s: AppState) => s.anoFiltro)
+  const selectedMunicipio = useAppStore((s: AppState) => s.selectedMunicipio)
 
   const { data: visaoGeral } = useVisaoGeral(anoFiltro)
   const { data: detalhe }    = useMunicipioDetalhe(
@@ -57,9 +57,9 @@ export function ProdesPrioridadeView() {
               tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}
             />
             <Tooltip
-              formatter={(value: number, name: string) => [
-                `${value.toLocaleString('pt-BR')} ha`,
-                name,
+              formatter={(value, name) => [
+                `${Number(value ?? 0).toLocaleString('pt-BR')} ha`,
+                String(name ?? ''),
               ]}
             />
             <Legend />

@@ -5,12 +5,13 @@
  */
 import { useCallback } from 'react'
 import type { Map as MapLibreMap } from 'maplibre-gl'
-import { useAppStore } from '../../../../core/store/useAppStore'
+import { useAppStore } from '../../../core/store/useAppStore'
+import type { AppState } from '../../../core/store/useAppStore'
 import type { LayerId } from '../types'
 
 export function useLayerToggle(mapRef: React.RefObject<MapLibreMap | null>) {
-  const activeLayerIds    = useAppStore((s) => s.activeLayerIds)
-  const toggleLayerStore  = useAppStore((s) => s.toggleLayer)
+  const activeLayerIds    = useAppStore((s: AppState) => s.activeLayerIds)
+  const toggleLayerStore  = useAppStore((s: AppState) => s.toggleLayer)
 
   const toggle = useCallback(
     (layerId: LayerId) => {

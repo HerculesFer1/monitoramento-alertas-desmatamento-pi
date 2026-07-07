@@ -3,8 +3,9 @@
  * Tabela de ranking de municípios ordenável por qualquer coluna.
  * Clique na linha navega para MunicipalView com o município selecionado.
  */
-import React, { useState } from 'react'
-import { useAppStore }  from '../../../../core/store/useAppStore'
+import { useState } from 'react'
+import { useAppStore }  from '../../../core/store/useAppStore'
+import type { AppState } from '../../../core/store/useAppStore'
 import { useRanking }   from '../hooks/useAreasData'
 import type { MunicipioResumo } from '../types'
 
@@ -27,9 +28,9 @@ export function RankingView() {
   const [orderBy, setOrderBy] = useState<OrderBy>('area_floresta_ha')
   const [search,  setSearch]  = useState('')
 
-  const anoFiltro          = useAppStore((s) => s.anoFiltro)
-  const setSelectedMunicipio = useAppStore((s) => s.setSelectedMunicipio)
-  const setActiveView      = useAppStore((s) => s.setActiveView)
+  const anoFiltro            = useAppStore((s: AppState) => s.anoFiltro)
+  const setSelectedMunicipio = useAppStore((s: AppState) => s.setSelectedMunicipio)
+  const setActiveView        = useAppStore((s: AppState) => s.setActiveView)
 
   const { data: ranking, isLoading } = useRanking(anoFiltro, orderBy)
 

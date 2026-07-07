@@ -5,16 +5,17 @@
  *   - Aciona fitBounds no mapa MapLibre GL
  *   - Filtra features para mostrar só o selecionado
  */
-import { useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 import type { Map as MapLibreMap } from 'maplibre-gl'
-import { useAppStore } from '../../../../core/store/useAppStore'
-import type { MunicipioSelecionado, BBox } from '../types'
+import { useAppStore } from '../../../core/store/useAppStore'
+import type { AppState } from '../../../core/store/useAppStore'
+import type { MunicipioSelecionado } from '../types'
 import { LAYER_IDS } from '../types'
 
 export function useMunicipioSelect(mapRef: React.RefObject<MapLibreMap | null>) {
-  const setSelectedMunicipio = useAppStore((s) => s.setSelectedMunicipio)
-  const setActiveLayerIds    = useAppStore((s) => s.setActiveLayerIds)
-  const activeLayerIds       = useAppStore((s) => s.activeLayerIds)
+  const setSelectedMunicipio = useAppStore((s: AppState) => s.setSelectedMunicipio)
+  const setActiveLayerIds    = useAppStore((s: AppState) => s.setActiveLayerIds)
+  const activeLayerIds       = useAppStore((s: AppState) => s.activeLayerIds)
 
   const select = useCallback(
     (municipio: MunicipioSelecionado) => {

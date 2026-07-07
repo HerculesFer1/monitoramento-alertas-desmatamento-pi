@@ -2,7 +2,6 @@
  * MunicipioCard.tsx
  * Cards de stats do município selecionado: área por classe + resumo.
  */
-import React from 'react'
 import type { ClasseMunicipio, MunicipioResumo } from '../types'
 import { CLASSE_COLORS } from '../types'
 

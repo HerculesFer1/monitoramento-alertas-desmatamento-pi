@@ -3,7 +3,6 @@
  * Painel de checkboxes para toggle de camadas MapLibre GL.
  * Operação instantânea via setLayoutProperty — sem re-render do mapa.
  */
-import React from 'react'
 import { LAYER_IDS, LAYER_CONFIG, type LayerId } from '../types'
 
 interface Props {

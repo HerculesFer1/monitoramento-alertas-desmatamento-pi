@@ -4,16 +4,16 @@
  * Click no município: fitBounds + carrega camadas do município + atualiza stats.
  * LayerTogglePanel: visibilidade por camada sem re-render do mapa.
  */
-import React, { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback } from 'react'
 import { Map as MapLibreMap, NavigationControl } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { useAppStore }           from '../../../../core/store/useAppStore'
+import { useAppStore }           from '../../../core/store/useAppStore'
+import type { AppState }         from '../../../core/store/useAppStore'
 import { useMunicipioDetalhe, useAreasGeoJson } from '../hooks/useAreasData'
 import { useMunicipioSelect }    from '../hooks/useMunicipioSelect'
 import { useLayerToggle }        from '../hooks/useLayerToggle'
 import { LayerTogglePanel }      from '../components/LayerTogglePanel'
 import { MunicipioCard }         from '../components/MunicipioCard'
-import { ClasseBarChart }        from '../components/ClasseBarChart'
 import {
   LAYER_IDS,
   DEFAULT_VISIBLE_LAYERS,
@@ -25,9 +25,9 @@ export function MunicipalView() {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef       = useRef<MapLibreMap | null>(null)
 
-  const anoFiltro         = useAppStore((s) => s.anoFiltro)
-  const selectedMunicipio = useAppStore((s) => s.selectedMunicipio)
-  const setActiveLayerIds = useAppStore((s) => s.setActiveLayerIds)
+  const anoFiltro         = useAppStore((s: AppState) => s.anoFiltro)
+  const selectedMunicipio = useAppStore((s: AppState) => s.selectedMunicipio)
+  const setActiveLayerIds = useAppStore((s: AppState) => s.setActiveLayerIds)
 
   const { select, clear } = useMunicipioSelect(mapRef)
   const { toggle, isVisible } = useLayerToggle(mapRef)
@@ -93,11 +93,14 @@ export function MunicipalView() {
       id: LAYER_IDS.PRIORIDADE_FILL, type: 'fill',
       source: 'municipios-source',
       paint: {
-        'fill-color': [
+        // MapLibre GL 'match' com spread não é inferível estaticamente.
+        // Cast para o tipo esperado da paint spec.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'fill-color': ([
           'match', ['get', 'classe_max'],
           ...Object.entries(CLASSE_COLORS).flatMap(([k, v]) => [Number(k), v]),
           '#cccccc',
-        ],
+        ] as any),
         'fill-opacity': 0.7,
       },
     })
