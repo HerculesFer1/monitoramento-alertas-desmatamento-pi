@@ -643,28 +643,28 @@
   "prodesSummary": {
     "ciclos": {
       "2022": {
-        "n": 0,
-        "concordantes": 0,
-        "discordantes": 0,
-        "pct": 0.0
+        "n": 615,
+        "concordantes": 372,
+        "discordantes": 243,
+        "pct": 60.5
       },
       "2023": {
-        "n": 0,
-        "concordantes": 0,
-        "discordantes": 0,
-        "pct": 0.0
+        "n": 2789,
+        "concordantes": 1930,
+        "discordantes": 859,
+        "pct": 69.2
       },
       "2024": {
-        "n": 0,
-        "concordantes": 0,
-        "discordantes": 0,
-        "pct": 0.0
+        "n": 1373,
+        "concordantes": 1029,
+        "discordantes": 344,
+        "pct": 74.9
       },
       "2025": {
-        "n": 0,
-        "concordantes": 0,
-        "discordantes": 0,
-        "pct": 0.0
+        "n": 980,
+        "concordantes": 750,
+        "discordantes": 230,
+        "pct": 76.5
       },
       "2026": {
         "n": 0,
@@ -673,10 +673,10 @@
         "pct": 0.0
       }
     },
-    "totalValidados": 0,
-    "totalConcordantes": 0,
-    "totalDiscordantes": 0,
-    "semProdes": 0
+    "totalValidados": 5757,
+    "totalConcordantes": 4081,
+    "totalDiscordantes": 1676,
+    "semProdes": 897
   },
   "prodesExtra": {
     "irrAnual": {
@@ -688,17 +688,17 @@
         2026
       ],
       "confirmado": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        89812.27,
+        73062.55,
+        40851.77,
+        17040.66,
         0.0
       ],
       "discordante": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        19648.14,
+        11775.86,
+        3569.54,
+        764.11,
         0.0
       ],
       "caatinga": [
@@ -712,8 +712,8 @@
         0.0,
         0.0,
         0.0,
-        0.0,
-        0.0
+        14821.48,
+        2513.48
       ]
     },
     "distCob": {
@@ -726,33 +726,143 @@
         "90–100%"
       ],
       "n": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
+        1676,
+        487,
+        595,
+        1009,
+        966,
+        1024
       ],
       "ha": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
+        35757.65,
+        58981.09,
+        12553.22,
+        34484.47,
+        30198.85,
+        84549.61
       ]
     },
     "mediaCob": {
-      "2022": 0.0,
-      "2023": 0.0,
-      "2024": 0.0,
-      "2025": 0.0,
+      "2022": 66.0,
+      "2023": 63.9,
+      "2024": 68.7,
+      "2025": 69.4,
       "2026": 0.0
     },
-    "topMun": [],
-    "porVetor": [],
-    "haIrrConfirmado": 0.0,
-    "pctIrrConfirmado": 0.0,
-    "pctIrrCerradoDisponivel": 0.0
+    "topMun": [
+      {
+        "mun": "Uruçuí",
+        "conc": 29984.23,
+        "total": 32468.45,
+        "pct": 92
+      },
+      {
+        "mun": "Sebastião Leal",
+        "conc": 21900.2,
+        "total": 22348.57,
+        "pct": 98
+      },
+      {
+        "mun": "Santa Filomena",
+        "conc": 18547.33,
+        "total": 23592.07,
+        "pct": 79
+      },
+      {
+        "mun": "Baixa Grande do Ribeiro",
+        "conc": 15355.54,
+        "total": 17067.48,
+        "pct": 90
+      },
+      {
+        "mun": "Currais",
+        "conc": 13305.26,
+        "total": 15347.38,
+        "pct": 87
+      },
+      {
+        "mun": "Palmeira do Piauí",
+        "conc": 8357.57,
+        "total": 11514.2,
+        "pct": 73
+      },
+      {
+        "mun": "Riacho Frio",
+        "conc": 7956.65,
+        "total": 9274.19,
+        "pct": 86
+      },
+      {
+        "mun": "Guadalupe",
+        "conc": 7333.56,
+        "total": 7388.67,
+        "pct": 99
+      },
+      {
+        "mun": "Bom Jesus",
+        "conc": 6891.28,
+        "total": 11139.06,
+        "pct": 62
+      },
+      {
+        "mun": "Cristino Castro",
+        "conc": 5773.57,
+        "total": 6298.16,
+        "pct": 92
+      }
+    ],
+    "porVetor": [
+      {
+        "vp": "Agricultura",
+        "n": 5562,
+        "conc": 3963,
+        "pct": 71.3
+      },
+      {
+        "vp": "Expansão Urbana",
+        "n": 137,
+        "conc": 89,
+        "pct": 65.0
+      },
+      {
+        "vp": "Abertura de Estradas",
+        "n": 36,
+        "conc": 13,
+        "pct": 36.1
+      },
+      {
+        "vp": "Outros",
+        "n": 10,
+        "conc": 7,
+        "pct": 70.0
+      },
+      {
+        "vp": "Projeto de Energia Renovável",
+        "n": 5,
+        "conc": 4,
+        "pct": 80.0
+      },
+      {
+        "vp": "Mineração",
+        "n": 4,
+        "conc": 3,
+        "pct": 75.0
+      },
+      {
+        "vp": "Mineração Ilegal",
+        "n": 2,
+        "conc": 1,
+        "pct": 50.0
+      },
+      {
+        "vp": "Aquicultura",
+        "n": 1,
+        "conc": 1,
+        "pct": 100.0
+      }
+    ],
+    "haIrrConfirmado": 220767.25,
+    "pctIrrConfirmado": 63.1,
+    "pctIrrCerradoDisponivel": 86.1
   }
 }

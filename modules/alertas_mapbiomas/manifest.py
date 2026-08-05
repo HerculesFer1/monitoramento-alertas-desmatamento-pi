@@ -206,7 +206,7 @@ def run(config: dict) -> dict:
         upload_geodataframe(
             gdf_upload,
             table="alertas_classificados",
-            if_exists="upsert",
+            if_exists="replace",   # recomputado por inteiro; id_fragmento não é estável → replace evita acúmulo
             conflict_col="id_fragmento",
         )
         upload_json(

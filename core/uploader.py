@@ -131,6 +131,23 @@ def _upsert_with_retry(sb, table: str, batch: list, conflict_col: str) -> None:
             delay *= 2  # backoff exponencial
 
 
+def _delete_all(sb, table: str, pk_col: str) -> None:
+    """Remove TODAS as linhas de `table` antes de um upload 'replace'.
+
+    Necessário para tabelas cujo pipeline recomputa o conjunto inteiro e cuja
+    chave de conflito NÃO é estável entre execuções (ex.: id_fragmento, que usa
+    um contador por-run). Sem isto, cada re-execução com upsert acumularia
+    duplicatas — inflando os hectares totais. Ver correção da inflação de
+    alertas_classificados.
+
+    `pk_col` deve referenciar uma coluna TEXT NOT NULL (usa filtro gte '' que
+    casa qualquer valor não-nulo — PostgREST exige um filtro no DELETE).
+    """
+    pk = pk_col.split(",")[0].strip()
+    sb.table(table).delete().gte(pk, "").execute()
+    log.info("[%s] replace: linhas antigas removidas antes do insert (pk=%s)", table, pk)
+
+
 # ── Upload: alertas_classificados ─────────────────────────────────────────
 def upload_alertas(sb):
     log.info("Lendo %s ...", GEO_IN.name)
@@ -214,6 +231,12 @@ def upload_alertas(sb):
 
     total      = len(registros)
     n_batches  = math.ceil(total / BATCH)
+
+    # REPLACE (não upsert): o conjunto de fragmentos é recomputado por inteiro a
+    # cada execução e o id_fragmento não é estável entre runs. Sem limpar antes,
+    # cada run acumularia uma cópia — a causa da inflação histórica de hectares.
+    _delete_all(sb, "alertas_classificados", "id_fragmento")
+
     log.info("  Enviando em batches de %d (%d batches)...", BATCH, n_batches)
 
     for i, batch in enumerate(_batches(registros, BATCH)):
@@ -382,6 +405,12 @@ def upload_geodataframe(
 
     total = len(registros)
     n_batches = math.ceil(total / BATCH) if total else 0
+
+    # if_exists='replace': remove tudo antes de inserir (para tabelas recomputadas
+    # por inteiro cuja chave de conflito não é estável entre runs).
+    if if_exists == "replace":
+        _delete_all(sb, table, col_conf)
+
     log.info("[%s] Enviando %d registros em %d batches...", table, total, n_batches)
     for i, batch in enumerate(_batches(registros, BATCH)):
         log.info("  [%3d%%] batch %d / %d", int(i * BATCH / max(total, 1) * 100), i + 1, n_batches)
