@@ -118,7 +118,7 @@ export function RankingView() {
                 <td className="p-2 text-right font-medium">
                   <span
                     className="inline-block px-1.5 py-0.5 rounded text-white text-xs"
-                    style={{ backgroundColor: m.classe_max_prioridade ? `hsl(${(m.classe_max_prioridade / 16) * 120}, 70%, 40%)` : '#ccc' }}
+                    style={{ backgroundColor: m.classe_max_prioridade ? `hsl(${(1 - (m.classe_max_prioridade - 1) / 4) * 120}, 70%, 40%)` : '#ccc' }}
                   >
                     {m.classe_max_prioridade ?? '—'}
                   </span>

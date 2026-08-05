@@ -17,7 +17,7 @@ export function MetodologiaView() {
         <p>
           Identificar espacialmente as áreas prioritárias para apoiar as Ações de
           Monitoramento e Controle do Desmatamento no estado do Piauí, cruzando dados
-          PRODES 2024 com o raster de 16 classes de prioridade gerado por AHP.
+          PRODES com o raster de 5 classes de prioridade gerado por AHP.
         </p>
       </Section>
 
@@ -63,7 +63,7 @@ export function MetodologiaView() {
           </thead>
           <tbody>
             {[
-              ['Raster 16 classes de prioridade', 'Programa REDD+ PI (Luciane Sato, Graciela Tejada, Isabela Noronha)', 'Abr/2026'],
+              ['Raster 5 classes de prioridade', 'Programa REDD+ PI (Luciane Sato, Graciela Tejada, Isabela Noronha)', 'Abr/2026'],
               ['Máscara florestal 2025', 'FREL — Programa REDD+ PI', '2025'],
               ['Biomassa AGB/BGB/DW/Litter', 'Rasterização mapa vegetação antiga — FREL', '2025'],
               ['PRODES 2024 — Cerrado', 'INPE / TerraBrasilis', '2024'],

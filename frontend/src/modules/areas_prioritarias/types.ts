@@ -6,8 +6,9 @@
 
 // ── Tipos base ────────────────────────────────────────────────────────────────
 
-/** Classe de prioridade AHP: 1 (mais urgente) a 16 (menos urgente) */
-export type ClassePrioridade = 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16
+/** Classe de prioridade AHP: 1 (menor prioridade/pressão) a 5 (maior prioridade/pressão).
+ *  O raster entregue (16_prioridade_classes_final.tif) codifica 5 grupos AHP (quintis). */
+export type ClassePrioridade = 1|2|3|4|5
 
 /** Bounding box para MapLibre GL fitBounds: [[minX,minY],[maxX,maxY]] */
 export type BBox = [[number, number], [number, number]]
@@ -103,8 +104,16 @@ export interface ClasseResumo {
   n_municipios:        number
 }
 
+/** KPIs DETER (alertas provisórios pós-PRODES) — bloco irmão de KpisEstado na RPC */
+export interface KpisDeter {
+  area_alertas_ha:         number
+  n_municipios_com_alerta: number
+  disponivel:              boolean
+}
+
 export interface VisaoGeralResponse {
-  kpis:       KpisEstado
+  // A RPC get_ap_visao_geral separa os KPIs por fonte: prodes (confirmado) e deter (alertas).
+  kpis:       { prodes: KpisEstado; deter: KpisDeter }
   por_classe: ClasseResumo[]
 }
 
@@ -126,10 +135,11 @@ export interface MunicipioFeatureProps {
 
 // ── Paleta de cores para as 16 classes ───────────────────────────────────────
 
-/** Verde escuro (alta floresta, baixa pressão) → vermelho (alta pressão) */
+/** 5 classes (quintis AHP): 1 = menor prioridade (verde) → 5 = maior prioridade (vermelho) */
 export const CLASSE_COLORS: Record<ClassePrioridade, string> = {
-  1:  '#006837', 2:  '#1a9850', 3:  '#66bd63', 4:  '#a6d96a',
-  5:  '#d9ef8b', 6:  '#ffffbf', 7:  '#fee08b', 8:  '#fdae61',
-  9:  '#f46d43', 10: '#d73027', 11: '#a50026', 12: '#7f0000',
-  13: '#5c0011', 14: '#3f000d', 15: '#260008', 16: '#1a0005',
+  1: '#1a9850',   // menor prioridade / pressão
+  2: '#a6d96a',
+  3: '#fee08b',
+  4: '#fdae61',
+  5: '#d73027',   // maior prioridade / pressão
 }

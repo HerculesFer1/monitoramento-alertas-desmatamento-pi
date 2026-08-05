@@ -112,7 +112,7 @@ export function VisaoGeralView() {
     return <div className="flex items-center justify-center h-full">Carregando...</div>
   }
 
-  const kpis = visaoGeral?.kpis
+  const kpis = visaoGeral?.kpis?.prodes
 
   return (
     <div className="flex flex-col h-full gap-4 p-4">
